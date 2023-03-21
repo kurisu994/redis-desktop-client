@@ -1,0 +1,68 @@
+.logo.vite:hover {
+  filter: drop-shadow(0 0 2em #747bff);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafb);
+}
+/** 上面的暂时留着当参考 */
+.layout-collapse-mangguo {
+  height: 100vh;
+  border: 1px solid var(--color-border);
+  background: var(--color-fill-2);
+}
+
+.layout-collapse-mangguo .arco-layout-sider .logo {
+  height: 32px;
+  margin: 12px 8px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.layout-collapse-mangguo .arco-layout-sider-light .logo {
+  background: var(--color-fill-2);
+}
+
+.layout-collapse-mangguo .arco-layout-footer,
+.layout-collapse-mangguo .arco-layout-content {
+  color: var(--color-white);
+  text-align: center;
+  font-stretch: condensed;
+  font-size: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.layout-collapse-mangguo .arco-layout-footer {
+  color: var(--color-text-2);
+  height: 48px;
+  line-height: 48px;
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.layout-collapse-mangguo .arco-layout-content {
+  background: var(--color-bg-3);
+  color: var(--color-text-2);
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.layout-collapse-mangguo .arco-layout-header {
+  height: 64px;
+  line-height: 64px;
+  background: var(--color-bg-3);
+}
+
+.layout-collapse-mangguo .arco-layout-header .trigger {
+  margin-left: 20px;
+}
+.layout-collapse-mangguo svg {
+  transform: rotate(0);
+}
+.tree-node {
+  -webkit-user-select: none; /*谷歌 /Chrome*/
+  -moz-user-select: none; /*火狐/Firefox*/
+  -ms-user-select: none; /*IE 10+*/
+  user-select: none;
+}

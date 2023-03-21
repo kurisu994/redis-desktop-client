@@ -1,0 +1,19 @@
+# .prettierignore 文件配置
+
+*.min.js
+*.handle.js
+*.min.css
+lib/
+node_modules/
+build/
+src-tauri
+run/
+logs/
+/docs
+/.vscode
+.eslintrc.js
+.prettierrc.js
+package.json
+package-lock.json
+yarn.lock
+yarn-error.log
