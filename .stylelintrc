@@ -7,6 +7,7 @@
     "no-duplicate-selectors": null,
     "color-function-notation": null,
     "font-family-no-missing-generic-family-keyword": null,
+    "property-no-vendor-prefix": null,
     "selector-pseudo-class-no-unknown": [
       true,
       {
