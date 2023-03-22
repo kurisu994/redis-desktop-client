@@ -64,8 +64,6 @@
 }
 
 .tree-node {
-  /* 谷歌 /Chrome */
-  user-select: none; /* 火狐/Firefox */
-  user-select: none; /* IE 10+ */
+  user-select: none;
   user-select: none;
 }
