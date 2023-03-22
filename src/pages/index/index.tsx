@@ -21,10 +21,9 @@ export default function Index() {
   const currentTime = useRef(0);
   const lastNodeKey = useRef<number | string>();
   const [collapsed, setCollapsed] = useState<boolean>(false);
-  const [name, setName] = useState('');
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
-  async function greet() {
+  async function greet(name: string) {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
     console.info(await invoke('greet', { name }));
   }

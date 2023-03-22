@@ -5,6 +5,7 @@
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafb);
 }
+
 /** 上面的暂时留着当参考 */
 .layout-collapse-mangguo {
   height: 100vh;
@@ -15,7 +16,7 @@
 .layout-collapse-mangguo .arco-layout-sider .logo {
   height: 32px;
   margin: 12px 8px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 20%);
 }
 
 .layout-collapse-mangguo .arco-layout-sider-light .logo {
@@ -57,12 +58,14 @@
 .layout-collapse-mangguo .arco-layout-header .trigger {
   margin-left: 20px;
 }
+
 .layout-collapse-mangguo svg {
   transform: rotate(0);
 }
+
 .tree-node {
-  -webkit-user-select: none; /*谷歌 /Chrome*/
-  -moz-user-select: none; /*火狐/Firefox*/
-  -ms-user-select: none; /*IE 10+*/
+  user-select: none; /* 谷歌 /Chrome */
+  user-select: none; /* 火狐/Firefox */
+  user-select: none; /* IE 10+ */
   user-select: none;
 }

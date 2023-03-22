@@ -5,12 +5,12 @@
   "description": "A cross-platform redis gui client",
   "type": "module",
   "scripts": {
-    "dev": "vite --host=local.lihuacats.com",
+    "dev": "vite --host=localhost",
     "build": "tsc && vite build",
     "eslint": "eslint src/ --ext .ts,.tsx,.js,.jsx --fix --cache",
     "stylelint": "stylelint 'src/**/*.less' 'src/**/*.css' --fix --cache",
+    "postinstall": "husky install",
     "pre-commit": "pretty-quick --staged && npm run eslint && npm run stylelint",
-    "prepare": "husky install && husky add .husky/pre-commit 'npm run pre-commit'",
     "preview": "vite preview",
     "tauri": "tauri"
   },
@@ -30,6 +30,8 @@
     "@types/node": "^18.7.10",
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
     "@vitejs/plugin-react": "^3.0.0",
     "eslint": "^8.36.0",
     "eslint-config-prettier": "^8.8.0",

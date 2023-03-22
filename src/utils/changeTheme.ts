@@ -1,4 +1,6 @@
-function changeTheme(theme: 'dark' | any) {
+export type Theme = 'light' | 'dark' | 'auto';
+
+function changeTheme(theme: Theme) {
   if (theme === 'dark') {
     document.body.setAttribute('arco-theme', 'dark');
   } else {

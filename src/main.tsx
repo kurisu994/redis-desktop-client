@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ConfigProvider } from '@arco-design/web-react';
@@ -7,10 +7,9 @@ import App from './pages/index';
 import Setting from './pages/setting';
 import zhCN from '@arco-design/web-react/es/locale/zh-CN';
 import enUS from '@arco-design/web-react/es/locale/en-US';
+import { Theme } from './utils/changeTheme';
+import { LangType } from './utils/useLocale';
 import './styles.css';
-
-type Theme = 'light' | 'dark' | 'auto';
-type LangType = 'en-US' | 'zh-CN';
 
 function Index() {
   const [lang, setLang] = useState<LangType>('zh-CN');
@@ -22,7 +21,8 @@ function Index() {
     theme,
     setTheme,
   };
-  const getArcoLocale = () => {
+
+  const locale = useMemo(() => {
     switch (lang) {
       case 'zh-CN':
         return zhCN;
@@ -31,11 +31,11 @@ function Index() {
       default:
         return zhCN;
     }
-  };
+  }, [lang]);
 
   return (
     <ConfigProvider
-      locale={getArcoLocale()}
+      locale={locale}
       componentConfig={{
         Card: {
           bordered: false,
