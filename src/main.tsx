@@ -9,6 +9,7 @@ import zhCN from '@arco-design/web-react/es/locale/zh-CN';
 import enUS from '@arco-design/web-react/es/locale/en-US';
 import { Theme } from './utils/changeTheme';
 import { LangType } from './utils/useLocale';
+import '@icon-park/react/styles/index.css';
 import './styles.css';
 
 function Index() {

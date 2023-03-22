@@ -11,12 +11,7 @@ export default defineConfig(async () => ({
   resolve: {
     alias: [{ find: '@', replacement: '/src' }],
   },
-  plugins: [
-    react(),
-    vitePluginForArco({
-
-    }),
-  ],
+  plugins: [react(), vitePluginForArco({})],
   css: {
     preprocessorOptions: {
       less: {

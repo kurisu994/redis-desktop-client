@@ -23,46 +23,7 @@
   background: var(--color-fill-2);
 }
 
-.layout-collapse-mangguo .arco-layout-footer,
-.layout-collapse-mangguo .arco-layout-content {
-  color: var(--color-white);
-  text-align: center;
-  font-stretch: condensed;
-  font-size: 16px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.layout-collapse-mangguo .arco-layout-footer {
-  color: var(--color-text-2);
-  height: 48px;
-  line-height: 48px;
-  font-weight: 400;
-  font-size: 14px;
-}
-
-.layout-collapse-mangguo .arco-layout-content {
-  background: var(--color-bg-3);
-  color: var(--color-text-2);
-  font-weight: 400;
-  font-size: 14px;
-}
-
-.layout-collapse-mangguo .arco-layout-header {
-  height: 64px;
-  line-height: 64px;
-  background: var(--color-bg-3);
-}
-
-.layout-collapse-mangguo .arco-layout-header .trigger {
-  margin-left: 20px;
-}
-
-.layout-collapse-mangguo svg {
-  transform: rotate(0);
-}
-
-.tree-node {
-  user-select: none;
+.layout-collapse-mangguo .arco-layout-sider-light .arco-icon {
+  font-size: 18px;
+  stroke-linejoin: arcs;
 }
