@@ -8,4 +8,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sqlite = "0.30.4"
+sqlite = "^0.30.4"
+serde_json = "^1.0.94"
+serde_derive="^1.0.158"
+serde="^1.0.158"
