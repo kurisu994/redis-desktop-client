@@ -1899,6 +1899,7 @@ checksum = "4f851a03551ceefd30132e447f07f96cb7011d6b658374f3aed847333adb5559"
 name = "redis_manager"
 version = "0.0.1"
 dependencies = [
+ "dal",
  "serde",
  "serde_json",
  "tauri",
