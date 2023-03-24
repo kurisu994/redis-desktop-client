@@ -1,9 +1,12 @@
-use diesel::prelude::*;
-use diesel::sqlite::SqliteConnection;
+use std::env;
 use std::path;
 
+use diesel::prelude::*;
+use diesel::sql_types::Text;
+use diesel::sqlite::SqliteConnection;
 use dotenv::dotenv;
-use std::env;
+
+use crate::dao::models::ServerInfo;
 
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
@@ -29,5 +32,15 @@ pub fn establish_connection() -> SqliteConnection {
             SqliteConnection::establish(&database_url)
                 .expect(&format!("Error connecting to {}", &database_url))
         }
+    }
+}
+/// 查询全部连接
+pub fn query_all(kw: &str) -> Vec<ServerInfo> {
+    let sql_query = diesel::sql_query("select id,name,host,port from connections where name like %?% order by id asc")
+        .bind::<Text, _>(kw);
+    let con = &mut establish_connection();
+    match sql_query.load::<ServerInfo>(con) {
+        Ok(list) => { list }
+        Err(_) => { vec![] }
     }
 }

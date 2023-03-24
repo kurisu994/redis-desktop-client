@@ -1,7 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use serde::Serialize;
 use tauri::{GlobalWindowEvent, Manager, Theme, WindowEvent, Wry};
@@ -11,6 +10,8 @@ use crate::dao::db;
 mod dao;
 mod ui;
 mod cmd;
+mod tests;
+pub mod schema;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
@@ -52,6 +53,7 @@ fn main() {
     connection
         .run_pending_migrations(MIGRATIONS)
         .expect("Error migrating");
+
     tauri::Builder::default()
         .menu(ui::menu::AppMenu::get_menu(&context))
         .setup(|_app| {
@@ -61,8 +63,7 @@ fn main() {
         .system_tray(ui::tray::Tray::get_tray_menu())
         .on_system_tray_event(ui::tray::Tray::on_system_tray_event)
         .on_window_event(handle_window_event)
-        .invoke_handler(tauri::generate_handler![cmd::greet,cmd::save])
+        .invoke_handler(tauri::generate_handler![cmd::greet,cmd::save,cmd::query_all])
         .run(context)
-        .expect("error while running tauri application")
-        ;
+        .expect("error while running tauri application");
 }

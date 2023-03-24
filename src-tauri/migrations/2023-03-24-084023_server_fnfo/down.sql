@@ -1,4 +1,4 @@
 -- This file should undo anything in `up.sql`
 
-DROP TABLE connections;
-DROP TABLE setting;
+DROP TABLE IF EXISTS connections;
+DROP TABLE IF EXISTS setting;
