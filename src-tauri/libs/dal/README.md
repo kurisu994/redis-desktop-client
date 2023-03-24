@@ -1,2 +1,0 @@
-# dal
-sqlite access lib

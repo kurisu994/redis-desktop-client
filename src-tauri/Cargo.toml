@@ -13,15 +13,15 @@ edition = "2021"
 tauri-build = { version = "1.2", features = [] }
 
 [dependencies]
-tauri = { version = "1.2", features = ["shell-open"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-dal = { path = "libs/dal" }
+serde_json = "^1.0.94"
+serde = { version = "^1.0.158", features = ["derive"] }
+tauri = { version = "1.2", features = ["devtools", "shell-open", "system-tray"] }
+diesel = { version = "^2.0.3", features = ["sqlite", "chrono", "uuid"] }
+diesel_migrations = { version = "^2.0.0", features = ["sqlite"] }
+dotenv = "^0.15.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
+default = [ "custom-protocol" ]
 custom-protocol = ["tauri/custom-protocol"]
-
-[workspace]
-members = ["libs/dal"]
