@@ -22,6 +22,10 @@ export default function Index() {
     console.info(await invoke('save', { data }));
   }
 
+  async function queryAll() {
+    await invoke('query_all');
+  }
+
   const handleCollapsed = () => {
     setCollapsed(!collapsed);
   };
