@@ -22,6 +22,7 @@ pub struct ServerInfo {
 #[derive(Serialize, Deserialize, Insertable, Debug)]
 #[diesel(table_name = connections)]
 pub struct NewServer {
+    pub id: Option<i32>,
     // 名称
     pub name: String,
     // 服务器ip/域名

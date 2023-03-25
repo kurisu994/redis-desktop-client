@@ -7,11 +7,13 @@ use tauri::{GlobalWindowEvent, Manager, Theme, WindowEvent, Wry};
 
 use crate::dao::db;
 
-mod dao;
-mod ui;
 mod cmd;
+mod dao;
+mod response;
+mod schema;
 mod tests;
-pub mod schema;
+mod ui;
+mod core;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
@@ -35,17 +37,14 @@ fn handle_window_event(event: GlobalWindowEvent<Wry>) {
             window.hide().unwrap();
         }
         // 主题发生改变时
-        WindowEvent::ThemeChanged(theme) => {
-            match theme {
-                Theme::Light => {}
-                Theme::Dark => {}
-                _ => {}
-            }
-        }
+        WindowEvent::ThemeChanged(theme) => match theme {
+            Theme::Light => {}
+            Theme::Dark => {}
+            _ => {}
+        },
         _ => {}
     }
 }
-
 
 fn main() {
     let context = tauri::generate_context!();
@@ -56,14 +55,17 @@ fn main() {
 
     tauri::Builder::default()
         .menu(ui::menu::AppMenu::get_menu(&context))
-        .setup(|_app| {
-            Ok(())
-        })
+        .setup(|_app| Ok(()))
         .on_menu_event(ui::menu::AppMenu::on_menu_event)
         .system_tray(ui::tray::Tray::get_tray_menu())
         .on_system_tray_event(ui::tray::Tray::on_system_tray_event)
         .on_window_event(handle_window_event)
-        .invoke_handler(tauri::generate_handler![cmd::greet,cmd::save,cmd::query_all])
+        .invoke_handler(tauri::generate_handler![
+            cmd::all_con,
+            cmd::save_con,
+            cmd::delete_con,
+            cmd::query_setting
+        ])
         .run(context)
         .expect("error while running tauri application");
 }

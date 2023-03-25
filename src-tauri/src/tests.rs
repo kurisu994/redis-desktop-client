@@ -4,11 +4,18 @@ mod tests {
 
     use crate::dao::db;
     use crate::dao::models::{NewServer, ServerInfo};
-    use crate::schema::connections::dsl::connections;
+    use crate::dao::server::{save_or_update, delete_by_id};
 
     impl NewServer {
+        pub fn create_simple_by_id(id: i32, name: String, host: String, port: i32) -> Self {
+            let mut ser = NewServer::create_simple(name, host, port);
+            ser.id = Some(id);
+            return ser;
+        }
+
         pub fn create_simple(name: String, host: String, port: i32) -> Self {
             Self {
+                id: None,
                 name,
                 host,
                 port,
@@ -35,28 +42,23 @@ mod tests {
         println!("{:?}", result);
     }
 
-    pub fn inert() {
-        let new_servers = vec![
-            NewServer::create_simple("dev".to_string(), "127.0.0.1".to_string(), 3333),
-            NewServer::create_simple("test".to_string(), "127.0.0.1".to_string(), 3334),
-            NewServer::create_simple("prd".to_string(), "127.0.0.1".to_string(), 3335),
-            NewServer::create_simple("dev1".to_string(), "127.0.0.2".to_string(), 4444),
-            NewServer::create_simple("test1".to_string(), "127.0.0.2".to_string(), 4445),
-            NewServer::create_simple("dev2".to_string(), "127.0.0.2".to_string(), 4446),
-        ];
-        let mut con = db::establish_connection();
-        let result = diesel::insert_into(connections)
-            .values(&new_servers)
-            .execute(&mut con);
-        match result {
-            Ok(size) => { size.to_string() }
-            Err(err) => { err.to_string() }
-        };
-    }
-
     #[test]
     fn test_get_all() {
-        inert();
         all_list();
+    }
+     #[test]
+    fn test_save() {
+        let server = NewServer::create_simple("dev1".to_string(), "127.0.0.1".to_string(), 14333);
+        save_or_update(server).unwrap();
+    }
+     #[test]
+    fn test_get_update() {
+        let server =
+            NewServer::create_simple_by_id(2, "dev12".to_string(), "127.0.0.1".to_string(), -1);
+        save_or_update(server).unwrap();
+    }
+     #[test]
+    fn test_get_delete() {
+        delete_by_id(2).unwrap();
     }
 }

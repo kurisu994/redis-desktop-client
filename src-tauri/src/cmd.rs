@@ -1,18 +1,35 @@
-use crate::dao::db;
-use crate::dao::models::ServerInfo;
+use crate::dao::{server, setting};
+use crate::dao::models::{NewServer, ServerInfo};
+use crate::response::Message;
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-pub fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+pub fn all_con() -> Message<Vec<ServerInfo>> {
+    match server::query_all("") {
+        Ok(data) => Message::ok(data),
+        Err(err) => Message::err(&err),
+    }
 }
 
 #[tauri::command]
-pub fn save(_data: &str) -> String {
-    format!("Hello! You've been greeted from Rust!")
+pub fn save_con(data: Option<NewServer>) -> Message<bool> {
+    if let None = data {
+        return Message::err("连接信息不能为空");
+    }
+    match server::save_or_update(data.unwrap()) {
+        Ok(data) => Message::ok(data),
+        Err(err) => Message::err(&err),
+    }
 }
 
 #[tauri::command]
-pub fn query_all() -> Vec<ServerInfo> {
-    db::query_all("")
+pub fn delete_con(id: i32) -> Message<bool> {
+    match server::delete_by_id(id) {
+        Ok(data) => Message::ok(data),
+        Err(err) => Message::err(&err),
+    }
+}
+
+#[tauri::command]
+pub fn query_setting() -> Message<()> {
+    Message::ok(setting::query())
 }
