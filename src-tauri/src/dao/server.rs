@@ -6,7 +6,6 @@ use crate::dao::db;
 use crate::dao::models::{NewServer, ServerInfo};
 use crate::schema::connections::dsl::*;
 
-
 ///
 /// 查询连接列表
 /// # Arguments
@@ -21,10 +20,14 @@ use crate::schema::connections::dsl::*;
 /// query_all("");
 /// ```
 pub fn query_all(kw: &str) -> Result<Vec<ServerInfo>, String> {
+    let mut key_word = String::from("%");
+    key_word.push_str(kw);
+    key_word.push_str("%");
+
     let sql_query = diesel::sql_query(
-        "select id,name,host,port from connections where name like %?% order by id asc",
+        "select id,name,host,port,username,password from connections where name like ? order by id asc",
     )
-    .bind::<Text, _>(kw);
+        .bind::<Text, _>(key_word);
     let con = &mut db::establish_connection();
     match sql_query.load::<ServerInfo>(con) {
         Ok(list) => Ok(list),
@@ -62,6 +65,7 @@ pub fn save_or_update(data: NewServer) -> Result<bool, String> {
         update(data.id.unwrap(), data, con)
     }
 }
+
 ///
 /// 删除连接
 /// # Arguments

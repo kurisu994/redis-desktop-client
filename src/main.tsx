@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ConfigProvider } from '@arco-design/web-react';
@@ -22,6 +22,10 @@ function Index() {
     theme,
     setTheme,
   };
+  useEffect(() => {
+    // 设置为暗黑主题s
+    document.body.setAttribute('arco-theme', 'dark');
+  }, []);
 
   const locale = useMemo(() => {
     switch (lang) {

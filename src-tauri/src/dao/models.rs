@@ -1,5 +1,5 @@
-use diesel::{Insertable, Queryable, QueryableByName};
 use diesel::sql_types::*;
+use diesel::{Insertable, Queryable, QueryableByName};
 use serde::{Deserialize, Serialize};
 
 use crate::schema::{connections, setting};
@@ -17,6 +17,12 @@ pub struct ServerInfo {
     // 端口号 default 6379
     #[diesel(sql_type = Integer)]
     pub port: i32,
+    // 用户名
+    #[diesel(sql_type = Text)]
+    pub username: String,
+    // 密码
+    #[diesel(sql_type = Text)]
+    pub password: String,
 }
 
 #[derive(Serialize, Deserialize, Insertable, Debug)]

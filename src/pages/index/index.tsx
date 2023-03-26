@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Button, Layout } from '@arco-design/web-react';
 import { IconPlus } from '@arco-design/web-react/icon';
-import { invoke } from '@tauri-apps/api/tauri';
 import LeftTree from './components/LeftTree';
 import RightContent from './components/RightContent';
+import { useRequest } from 'ahooks';
+import { getConList } from './api';
 
 import './index.css';
 
@@ -11,20 +12,9 @@ const Sider = Layout.Sider;
 
 export default function Index() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
+  const { loading, data, run } = useRequest(getConList);
 
-  async function addCon() {
-    const data = JSON.stringify({
-      name: 'dev',
-      host: '127.0.0.1',
-      port: 6379,
-    });
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    console.info(await invoke('save', { data }));
-  }
-
-  async function queryAll() {
-    await invoke('query_all');
-  }
+  console.log(data);
 
   const handleCollapsed = () => {
     setCollapsed(!collapsed);
@@ -44,10 +34,17 @@ export default function Index() {
         breakpoint="xl"
         width="25%"
       >
-        <Button long icon={<IconPlus />} onClick={addCon}>
+        <Button long icon={<IconPlus />}>
           添加
         </Button>
-        <LeftTree ip="192.168.0.8" port={6379} alias="dev" />
+        {data?.map((con) => (
+          <LeftTree
+            key={con.id}
+            ip={con.host}
+            port={con.port}
+            alias={con.name}
+          />
+        ))}
       </Sider>
       <RightContent
         siderCollapsed={collapsed}
