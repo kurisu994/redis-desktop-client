@@ -1,0 +1,12 @@
+.modal-wrapper {
+  width: 650px;
+}
+.colon {
+  text-align: center;
+  margin: 0 5px;
+  height: 32px;
+  line-height: 2;
+}
+.tabpane {
+  height: 350px;
+}

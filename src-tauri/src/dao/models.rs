@@ -64,6 +64,11 @@ pub struct NewServer {
     // 私钥文件路径
     #[serde(rename = "privateKeyPath")]
     pub private_key_path: String,
+    // 默认过滤
+    #[serde(rename = "keyFilter")]
+    pub key_filter: String,
+    // 命名空间分割符
+    pub delimiter: String,
 }
 
 #[derive(Serialize, Deserialize, Queryable, Debug)]

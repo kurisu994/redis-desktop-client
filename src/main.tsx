@@ -14,7 +14,7 @@ import './styles.css';
 
 function Index() {
   const [lang, setLang] = useState<LangType>('zh-CN');
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('auto');
   const darkThemeMq = window.matchMedia('(prefers-color-scheme: dark)');
 
   const listener = (e: MediaQueryListEvent) => {

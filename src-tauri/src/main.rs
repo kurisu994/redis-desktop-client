@@ -8,12 +8,12 @@ use tauri::{GlobalWindowEvent, Manager, Theme, WindowEvent, Wry};
 use crate::dao::db;
 
 mod cmd;
+mod core;
 mod dao;
 mod response;
 mod schema;
 mod tests;
 mod ui;
-mod core;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
@@ -64,7 +64,8 @@ fn main() {
             cmd::all_con,
             cmd::save_con,
             cmd::delete_con,
-            cmd::query_setting
+            cmd::query_setting,
+            cmd::read_redis
         ])
         .run(context)
         .expect("error while running tauri application");

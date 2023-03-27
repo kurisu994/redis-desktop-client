@@ -1,5 +1,6 @@
-use crate::dao::{server, setting};
+use crate::core::redis_helper::fettle;
 use crate::dao::models::{NewServer, ServerInfo};
+use crate::dao::{server, setting};
 use crate::response::Message;
 
 #[tauri::command]
@@ -10,12 +11,13 @@ pub fn all_con() -> Message<Vec<ServerInfo>> {
     }
 }
 
-#[tauri::command]
-pub fn save_con(data: Option<NewServer>) -> Message<bool> {
-    if let None = data {
+#[tauri::command(rename_all = "snake_case")]
+pub fn save_con(server: Option<NewServer>) -> Message<bool> {
+    println!("{:?}", server);
+    if let None = server {
         return Message::err("连接信息不能为空");
     }
-    match server::save_or_update(data.unwrap()) {
+    match server::save_or_update(server.unwrap()) {
         Ok(data) => Message::ok(data),
         Err(err) => Message::err(&err),
     }
@@ -32,4 +34,9 @@ pub fn delete_con(id: i32) -> Message<bool> {
 #[tauri::command]
 pub fn query_setting() -> Message<()> {
     Message::ok(setting::query())
+}
+
+#[tauri::command]
+pub fn read_redis() -> () {
+    fettle();
 }

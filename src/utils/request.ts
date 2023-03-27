@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/tauri';
 
-interface CommArgs {
+export interface CommArgs {
   [key: string]: unknown;
 }
 
@@ -18,11 +18,13 @@ export default async function request<T>(api: string, args?: CommArgs) {
         if (res.success) {
           resolve(res.data);
         } else {
-          reject(res.msg);
+          console.log(res);
+          reject(new Error(res.msg));
         }
       })
       .catch((e) => {
-        reject(e.message);
+        console.log(e);
+        reject(new Error(e));
       });
   });
 }

@@ -26,7 +26,7 @@ impl<T: Serialize> Message<T> {
         Message {
             data: None,
             code: -1,
-            success: true,
+            success: false,
             msg: message.to_owned(),
         }
     }

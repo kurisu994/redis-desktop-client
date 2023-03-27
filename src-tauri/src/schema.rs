@@ -17,6 +17,8 @@ diesel::table! {
         ssh_port -> Integer,
         ssh_password -> Text,
         private_key_path -> Text,
+        key_filter -> Text,
+        delimiter -> Text,
         create_date -> Timestamp,
         update_date -> Timestamp,
     }

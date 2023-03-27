@@ -1,7 +1,7 @@
 -- Your SQL goes here
 CREATE TABLE IF NOT EXISTS connections
 (
-    id              INTEGER  NOT null
+    id               INTEGER  NOT null
         constraint connections_pk primary key autoincrement,
     name             TEXT     NOT null,
     host             TEXT     NOT NULL,
@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS connections
     ssh_port         INTEGER  NOT null default 22,
     ssh_password     TEXT     NOT null default '',
     private_key_path TEXT     NOT null default '',
+    key_filter       TEXT     NOT null default '*',
+    delimiter        TEXT     NOT null default ':',
     create_date      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (host, port)
@@ -24,7 +26,7 @@ CREATE TABLE IF NOT EXISTS connections
 
 CREATE TABLE IF NOT EXISTS setting
 (
-    id              INTEGER NOT null
+    id               INTEGER NOT null
         constraint connections_pk primary key autoincrement,
     language         TEXT    NOT null,
     font_size        INTEGER NOT null default 12,
