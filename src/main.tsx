@@ -15,17 +15,36 @@ import './styles.css';
 function Index() {
   const [lang, setLang] = useState<LangType>('zh-CN');
   const [theme, setTheme] = useState<Theme>('light');
+  const darkThemeMq = window.matchMedia('(prefers-color-scheme: dark)');
 
+  const listener = (e: MediaQueryListEvent) => {
+    if (e.matches) {
+      document.body.setAttribute('arco-theme', 'dark');
+    } else {
+      document.body.removeAttribute('arco-theme');
+    }
+  };
   const contextValue = {
     lang,
     setLang,
     theme,
     setTheme,
   };
+
   useEffect(() => {
-    // 设置为暗黑主题s
-    document.body.setAttribute('arco-theme', 'dark');
-  }, []);
+    if (theme === 'auto') {
+      darkThemeMq.addEventListener('change', listener);
+      if (darkThemeMq.matches) {
+        document.body.setAttribute('arco-theme', 'dark');
+      } else {
+        document.body.removeAttribute('arco-theme');
+      }
+    } else if (theme === 'dark') {
+      document.body.setAttribute('arco-theme', 'dark');
+    } else {
+      document.body.removeAttribute('arco-theme');
+    }
+  }, [darkThemeMq, theme]);
 
   const locale = useMemo(() => {
     switch (lang) {

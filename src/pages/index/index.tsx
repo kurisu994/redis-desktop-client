@@ -14,8 +14,6 @@ export default function Index() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const { loading, data, run } = useRequest(getConList);
 
-  console.log(data);
-
   const handleCollapsed = () => {
     setCollapsed(!collapsed);
   };
