@@ -1,6 +1,6 @@
+use diesel::{RunQueryDsl, SqliteConnection};
 use diesel::prelude::*;
 use diesel::sql_types::Text;
-use diesel::{RunQueryDsl, SqliteConnection};
 
 use crate::dao::db;
 use crate::dao::models::{NewServer, ServerInfo};
@@ -25,7 +25,10 @@ pub fn query_all(kw: &str) -> Result<Vec<ServerInfo>, String> {
     key_word.push_str("%");
 
     let sql_query = diesel::sql_query(
-        "select id,name,host,port,username,password from connections where name like ? order by id asc",
+        "select \
+        id,name,host,port,username,password,read_only,security_type,\
+        key_filter,delimiter,con_timeout,execution_timeout \
+        from connections where name like ? order by id asc",
     )
         .bind::<Text, _>(key_word);
     let con = &mut db::establish_connection();

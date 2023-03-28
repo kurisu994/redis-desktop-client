@@ -1,6 +1,5 @@
-use crate::core::redis_helper::fettle;
-use crate::dao::models::{NewServer, ServerInfo};
 use crate::dao::{server, setting};
+use crate::dao::models::{NewServer, ServerInfo, Settings};
 use crate::response::Message;
 
 #[tauri::command]
@@ -32,11 +31,24 @@ pub fn delete_con(id: i32) -> Message<bool> {
 }
 
 #[tauri::command]
-pub fn query_setting() -> Message<()> {
-    Message::ok(setting::query())
+pub fn query_setting() -> Message<Settings> {
+    match setting::query() {
+        Ok(data) => Message::ok(data),
+        Err(err) => Message::err(&err),
+    }
 }
 
 #[tauri::command]
-pub fn read_redis() -> () {
-    fettle();
+pub fn update_setting(settings: Option<Settings>) -> Message<bool> {
+    println!("{:?}", settings);
+    if let None = settings {
+        return Message::err("设置信息不能为空");
+    }
+    match setting::update(settings.unwrap()) {
+        Ok(data) => Message::ok(data),
+        Err(err) => Message::err(&err),
+    }
 }
+
+#[tauri::command]
+pub fn read_redis() -> () {}

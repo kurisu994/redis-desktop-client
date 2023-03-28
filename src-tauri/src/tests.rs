@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::dao::models::NewServer;
+    use crate::dao::models::{NewServer};
     use crate::dao::server::{delete_by_id, query_all, save_or_update};
+    use crate::dao::setting::query;
 
     impl NewServer {
         pub fn create_simple_by_id(id: i32, name: String, host: String, port: i32) -> Self {
@@ -16,19 +17,22 @@ mod tests {
                 name,
                 host,
                 port,
-                username: "".to_string(),
-                password: "".to_string(),
+                read_only: "YES".to_string(),
+                username: None,
+                password: None,
                 cluster: 0,
-                nodes: "".to_string(),
+                nodes: None,
                 security_type: 0,
-                use_private_key: 0,
-                ssh_username: "".to_string(),
-                ssh_host: "".to_string(),
-                ssh_port: 0,
-                ssh_password: "".to_string(),
-                private_key_path: "".to_string(),
+                use_private_key: None,
+                ssh_username: None,
+                ssh_host: None,
+                ssh_port: None,
+                ssh_password: None,
+                private_key_path: None,
                 key_filter: "*".to_string(),
                 delimiter: ":".to_string(),
+                con_timeout: 10,
+                execution_timeout: 10,
             }
         }
     }
@@ -59,5 +63,14 @@ mod tests {
     #[test]
     fn test_get_delete() {
         delete_by_id(2).unwrap();
+    }
+
+
+    #[test]
+    fn test_query_setting() {
+        match query() {
+            Ok(data) => { println!("data: {:?}", data); }
+            Err(e) => { println!("err: {:?}", e); }
+        }
     }
 }

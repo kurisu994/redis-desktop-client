@@ -1,36 +1,39 @@
 -- Your SQL goes here
 CREATE TABLE IF NOT EXISTS connections
 (
-    id               INTEGER  NOT null
+    id                INTEGER  NOT null
         constraint connections_pk primary key autoincrement,
-    name             TEXT     NOT null,
-    host             TEXT     NOT NULL,
-    port             INTEGER  NOT null default 6379,
-    username         TEXT     NOT null default '',
-    password         TEXT     NOT null default '',
-    cluster          INTEGER  NOT null default 0,
-    nodes            TEXT     NOT null default '',
-    security_type    INTEGER  NOT null default 0,
-    use_private_key  int      NOT null default 0,
-    ssh_username     TEXT     NOT null default '',
-    ssh_host         TEXT     NOT null default '',
-    ssh_port         INTEGER  NOT null default 22,
-    ssh_password     TEXT     NOT null default '',
-    private_key_path TEXT     NOT null default '',
-    key_filter       TEXT     NOT null default '*',
-    delimiter        TEXT     NOT null default ':',
-    create_date      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    name              TEXT     NOT null,
+    host              TEXT     NOT NULL,
+    port              INTEGER  NOT null default 6379,
+    read_only         TEXT     NOT NULL default 'NO',
+    username          TEXT     null,
+    password          TEXT     null,
+    cluster           INTEGER  null,
+    nodes             TEXT     null,
+    security_type     INTEGER  not null,
+    use_private_key   INTEGER  null,
+    ssh_username      TEXT     null,
+    ssh_host          TEXT     null,
+    ssh_port          INTEGER  null,
+    ssh_password      TEXT     null,
+    private_key_path  TEXT     null,
+    key_filter        TEXT     NOT null default '*',
+    delimiter         TEXT     NOT null default ':',
+    con_timeout       INTEGER  NOT null default 10,
+    execution_timeout INTEGER  NOT null default 10,
+    create_date       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (host, port)
 );
 
 CREATE TABLE IF NOT EXISTS setting
 (
     id               INTEGER NOT null
-        constraint connections_pk primary key autoincrement,
+        constraint connections_pk primary key,
     language         TEXT    NOT null,
     font_size        INTEGER NOT null default 12,
     theme            TEXT    NOT null,
-    refresh_interval INT     NOT null default 0,
+    refresh_interval INTEGER NOT null default 10,
     editor_font_size INTEGER NOT null default 12
 );
