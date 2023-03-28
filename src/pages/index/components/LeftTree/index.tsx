@@ -1,20 +1,87 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Tree } from '@arco-design/web-react';
-import { IconFolder, IconStorage } from '@arco-design/web-react/icon';
-import { NodeInstance } from '@arco-design/web-react/es/Tree/interface';
-import st from './index.module.css';
-import { KeyOne } from '@icon-park/react';
+import {
+  IconFolder,
+  IconRefresh,
+  IconStorage,
+} from '@arco-design/web-react/icon';
+import {
+  NodeInstance,
+  NodeProps,
+} from '@arco-design/web-react/es/Tree/interface';
+import './index.css';
+import {
+  CopyLink,
+  DeleteFive,
+  KeyOne,
+  Redo,
+  SettingTwo,
+  Unlink,
+} from '@icon-park/react';
 
 const TreeNode = Tree.Node;
 
 interface Props {
-  ip: string;
+  host: string;
   port: number;
   alias: string;
+  onEdit?: () => unknown;
 }
 
-function LeftContent({ ip, port, alias }: Props) {
+function LeftContent({ host, port, alias, onEdit }: Props) {
+  const [treeData, setTreeData] = useState([
+    {
+      title: alias,
+      key: `${host}:${port}`,
+    },
+  ]);
+
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+  const extraRender = useCallback((node: NodeProps) => {
+    console.log(node);
+    if (!node.parentKey && node?.selected) {
+      return (
+        <>
+          <Redo
+            theme="outline"
+            className="root-node-icon"
+            size="18"
+            strokeWidth={3}
+            strokeLinecap="butt"
+          />
+          <Unlink
+            theme="outline"
+            className="root-node-icon"
+            size="18"
+            strokeWidth={3}
+            strokeLinecap="butt"
+          />
+          <SettingTwo
+            theme="outline"
+            className="root-node-icon"
+            size="18"
+            strokeWidth={3}
+            strokeLinecap="butt"
+          />
+          <CopyLink
+            theme="outline"
+            className="root-node-icon"
+            size="18"
+            strokeWidth={3}
+            strokeLinecap="butt"
+          />
+          <DeleteFive
+            theme="outline"
+            className="root-node-icon"
+            size="18"
+            strokeWidth={3}
+            strokeLinecap="butt"
+          />
+        </>
+      );
+    }
+    return null;
+  }, []);
 
   const onDoubleClick = (
     keys: string[],
@@ -26,50 +93,23 @@ function LeftContent({ ip, port, alias }: Props) {
   ) => {
     setExpandedKeys(keys);
   };
+
+  const loadMore = (treeNode: NodeInstance) => {
+    console.log('加载更多');
+  };
+
   return (
     <Tree
       size="large"
-      actionOnClick={['expand']}
+      blockNode
+      virtualListProps={{ height: '100%' }}
+      actionOnClick={['select']}
       expandedKeys={expandedKeys}
       onExpand={onDoubleClick}
-    >
-      <TreeNode
-        key={`${ip}:${port}`}
-        className={st['tree-node']}
-        icon={<IconStorage />}
-        icons={{
-          switcherIcon: null,
-        }}
-        title={alias ?? `${ip}:${port}`}
-      >
-        <TreeNode
-          icon={<IconFolder />}
-          key="node2"
-          title="db0"
-          className={st['tree-node']}
-        >
-          <TreeNode
-            icon={<KeyOne theme="outline" size="18" fill="#333" />}
-            key="node2-1"
-            title="setting:xxx"
-            className={st['tree-node']}
-          />
-        </TreeNode>
-        <TreeNode
-          icon={<IconFolder />}
-          key="node1-1"
-          className={st['tree-node']}
-          title="db1"
-        >
-          <TreeNode
-            icon={<KeyOne theme="outline" size="18" fill="#333" />}
-            key="node1-2"
-            className={st['tree-node']}
-            title="start:xxx"
-          />
-        </TreeNode>
-      </TreeNode>
-    </Tree>
+      // loadMore={loadMore}
+      treeData={treeData}
+      renderExtra={extraRender}
+    />
   );
 }
 

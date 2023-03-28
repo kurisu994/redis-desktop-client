@@ -11,10 +11,21 @@ import './index.css';
 
 const Sider = Layout.Sider;
 
+const defaulttree = [
+  {
+    id: 1,
+    host: '127.0.0.1',
+    port: 6379,
+    name: 'dev',
+  },
+];
+
 export default function Index() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
-  const { data, run } = useRequest(getConList);
+  const { data = defaulttree, run } = useRequest(getConList, {
+    manual: true,
+  });
   const { loading: saveLoading, run: save } = useRequest(saveCon, {
     manual: true,
     onSuccess: () => {
@@ -66,7 +77,7 @@ export default function Index() {
         {data?.map((con) => (
           <LeftTree
             key={con.id}
-            ip={con.host}
+            host={con.host}
             port={con.port}
             alias={con.name}
           />

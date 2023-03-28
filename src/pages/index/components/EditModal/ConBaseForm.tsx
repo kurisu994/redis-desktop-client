@@ -1,4 +1,5 @@
 import {
+  Checkbox,
   Form,
   Grid,
   Input,
@@ -19,9 +20,22 @@ function ConBaseForm() {
       <FormItem field="id" label="id" hidden>
         <Input />
       </FormItem>
-      <FormItem field="name" label="名称" rules={[{ required: true }]}>
-        <Input placeholder="连接别名" />
-      </FormItem>
+      <Form.Item label="名称" required style={{ marginBottom: 0 }}>
+        <Row>
+          <Col flex={'auto'}>
+            <Form.Item field="name" rules={[{ required: true }]}>
+              <Input placeholder="连接别名" />
+            </Form.Item>
+          </Col>
+          <Col flex="30px" />
+          <Col flex="60px">
+            <Form.Item field="readOnly" initialValue={false}>
+              <Checkbox>只读</Checkbox>
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form.Item>
+
       <Form.Item label="地址" required style={{ marginBottom: 0 }}>
         <Row>
           <Col flex={'auto'}>
@@ -44,7 +58,7 @@ function ConBaseForm() {
         </Row>
       </Form.Item>
       <FormItem field="password" label="密码">
-        <Input placeholder="(可选) Redis 服务器验证密码" />
+        <Input.Password placeholder="(可选) Redis 服务器验证密码" />
       </FormItem>
       <FormItem field="username" label="用户名">
         <Input placeholder="(可选) 服务器认证用户名 (redis>6.0)" />

@@ -1,4 +1,10 @@
-import { Form, Grid, Input, Typography } from '@arco-design/web-react';
+import {
+  Form,
+  Grid,
+  Input,
+  InputNumber,
+  Typography,
+} from '@arco-design/web-react';
 
 const FormItem = Form.Item;
 const Row = Grid.Row;
@@ -11,7 +17,7 @@ function AdvancedForm() {
         <Col span={3}>
           <Typography.Title
             heading={6}
-            style={{ marginTop: 0, marginBottom: '1em' }}
+            style={{ marginTop: 0, marginBottom: 15 }}
           >
             键加载
           </Typography.Title>
@@ -35,6 +41,35 @@ function AdvancedForm() {
         initialValue=":"
       >
         <Input placeholder=":" />
+      </FormItem>
+      <Row>
+        <Col span={4}>
+          <Typography.Title
+            heading={6}
+            style={{ marginTop: 0, marginBottom: 15 }}
+          >
+            超时设置
+          </Typography.Title>
+        </Col>
+        <Col />
+      </Row>
+      <FormItem
+        field="conTimeout"
+        label="连接超时(秒)"
+        wrapperCol={{ span: 18 }}
+        labelCol={{ span: 5 }}
+        initialValue="10"
+      >
+        <InputNumber mode="button" min={0} />
+      </FormItem>
+      <FormItem
+        field="executionTimeout"
+        label="执行超时(秒)"
+        wrapperCol={{ span: 18 }}
+        labelCol={{ span: 5 }}
+        initialValue="10"
+      >
+        <InputNumber mode="button" min={0} />
       </FormItem>
     </>
   );

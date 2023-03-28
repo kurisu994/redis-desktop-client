@@ -10,6 +10,20 @@ export interface Connection {
   host: string;
   /** 端口 */
   port: number;
+  /** 用户名 */
+  username?: string;
+  /** 密码 */
+  password?: string;
+  /** 只读 */
+  readOnly?: string;
+  /** 默认过滤 */
+  keyFilter: string;
+  /** 命名空间分隔符 */
+  delimiter: string;
+  /** 连接超时时间 */
+  conTimeout: number;
+  /** 执行超时时间 */
+  executionTimeout: number;
 }
 
 export function getConList() {
@@ -20,6 +34,8 @@ export interface SaveParams extends Connection, CommArgs {
   username?: string;
   /** 密码 */
   password?: string;
+  /** 只读 */
+  readOnly?: string;
   /** 集群 */
   cluster?: number;
   /** 集群节点 */
@@ -42,6 +58,10 @@ export interface SaveParams extends Connection, CommArgs {
   keyFilter: string;
   /** 命名空间分隔符 */
   delimiter: string;
+  /** 连接超时时间 */
+  conTimeout: number;
+  /** 执行超时时间 */
+  executionTimeout: number;
 }
 
 export function saveCon(params: SaveParams) {

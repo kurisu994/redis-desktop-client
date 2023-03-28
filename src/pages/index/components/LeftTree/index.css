@@ -1,0 +1,16 @@
+.tree-node {
+  -webkit-user-select: none;
+  user-select: none;
+  align-items: center;
+}
+
+.arco-tree-node {
+  align-items: center;
+}
+.arco-tree-node-selected {
+  background-color: var(--color-fill-2);
+}
+
+.root-node-icon {
+  margin: 0 2px;
+}
