@@ -5,7 +5,7 @@ import LeftTree from './components/LeftTree';
 import RightContent from './components/RightContent';
 import EditModal from './components/EditModal';
 import { useRequest } from 'ahooks';
-import { getConList, saveCon, SaveParams } from './api';
+import { getConList, saveCon, SaveParams, Connection } from './api';
 
 import './index.less';
 
@@ -17,12 +17,13 @@ const defaulttree = [
     host: '127.0.0.1',
     port: 6379,
     name: 'dev',
-  },
+  } as Connection,
 ];
 
 export default function Index() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
+  const [connection, setConnection] = useState<Connection>();
   const { data = defaulttree, run } = useRequest(getConList, {
     manual: true,
   });
@@ -41,20 +42,12 @@ export default function Index() {
     setCollapsed(!collapsed);
   };
 
-  const handleSave = (data: SaveParams) => {
-    save({
-      ...data,
-      username: '',
-      password: '',
-      cluster: 0,
-      nodes: '',
-      usePrivateKey: 0,
-      sshUsername: '',
-      sshHost: '',
-      sshPort: 22,
-      sshPassword: '',
-      privateKeyPath: '',
-    });
+  const onEditCon = (_connection: Connection) => {
+    setConnection(_connection);
+    setVisible(true);
+  };
+  const handSave = (item: SaveParams) => {
+    save(item);
   };
 
   return (
@@ -72,8 +65,8 @@ export default function Index() {
         width="25%"
       >
         <Button
-          className="add-btn"
           long
+          type="secondary"
           icon={<IconPlus />}
           onClick={() => setVisible(true)}
         >
@@ -85,6 +78,7 @@ export default function Index() {
             host={con.host}
             port={con.port}
             alias={con.name}
+            onEdit={() => onEditCon(con)}
           />
         ))}
       </Sider>
@@ -94,9 +88,10 @@ export default function Index() {
       />
       <EditModal
         visible={visible}
+        data={connection}
         loading={saveLoading}
         onCancel={() => setVisible(false)}
-        onOk={handleSave}
+        onOk={(item) => handSave(item)}
       />
     </Layout>
   );

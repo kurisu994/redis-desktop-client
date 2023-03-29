@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Form, Grid, Modal, Spin, Tabs } from '@arco-design/web-react';
 import ConBaseForm from './ConBaseForm';
 import AdvancedForm from './AdvancedForm';
-import { SaveParams } from '../../api';
+import { SaveParams, Connection } from '../../api';
 
 import st from './index.module.css';
 
@@ -11,15 +11,22 @@ const Col = Grid.Col;
 
 interface Props {
   visible?: boolean;
+  data?: Connection;
   loading?: boolean;
   onOk?: (data: SaveParams) => unknown;
   onCancel?: () => unknown;
 }
 
 const TabPane = Tabs.TabPane;
-function EditModal({ visible, loading, onOk, onCancel }: Props) {
+function EditModal({ visible, data, loading, onOk, onCancel }: Props) {
   const [activeTab, setActiveTab] = useState('1');
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    if (visible && data) {
+      form.setFieldsValue({ ...data, readOnly: data.readOnly === 'TRUE' });
+    }
+  }, [data, form, visible]);
 
   const _onCancel = () => {
     onCancel?.();
@@ -30,6 +37,7 @@ function EditModal({ visible, loading, onOk, onCancel }: Props) {
     const params = {
       ...v,
       securityType: Number(v.securityType),
+      readOnly: v.readOnly ? 'TRUE' : 'FALSE',
     } as SaveParams;
     onOk?.(params);
   };

@@ -13,8 +13,6 @@ import {
   Unlink,
 } from '@icon-park/react';
 
-const TreeNode = Tree.Node;
-
 interface Props {
   host: string;
   port: number;
@@ -52,6 +50,7 @@ function LeftContent({ host, port, alias, onEdit }: Props) {
           />
           <SettingTwo
             theme="outline"
+            onClick={onEdit}
             className={st['root-node-icon']}
             size="18"
             strokeWidth={3}
@@ -86,10 +85,6 @@ function LeftContent({ host, port, alias, onEdit }: Props) {
     }
   ) => {
     setExpandedKeys(keys);
-  };
-
-  const loadMore = (treeNode: NodeInstance) => {
-    console.log('加载更多');
   };
 
   return (
