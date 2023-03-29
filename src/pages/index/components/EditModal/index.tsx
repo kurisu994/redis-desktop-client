@@ -40,7 +40,10 @@ function EditModal({ visible, loading, onOk, onCancel }: Props) {
       visible={visible}
       mountOnEnter={false}
       className={st['modal-wrapper']}
-      afterClose={() => form.resetFields()}
+      afterClose={() => {
+        form.resetFields();
+        setActiveTab('1');
+      }}
       autoFocus={false}
       closable={false}
       focusLock={true}
