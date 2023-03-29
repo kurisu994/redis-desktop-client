@@ -1,37 +1,41 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Tree } from '@arco-design/web-react';
 import {
   NodeInstance,
   NodeProps,
+  TreeDataType,
 } from '@arco-design/web-react/es/Tree/interface';
 import st from './index.module.css';
 import {
   CopyLink,
+  Data,
   DeleteFive,
   Redo,
   SettingTwo,
   Unlink,
 } from '@icon-park/react';
+import { Connection } from '../../api';
+import { IconDesktop } from '@arco-design/web-react/icon';
 
 interface Props {
-  host: string;
-  port: number;
-  alias: string;
-  onEdit?: () => unknown;
+  servers: Connection[];
+  onEdit?: (id?: number) => unknown;
+  onRemove?: (id?: number) => unknown;
 }
 
-function LeftContent({ host, port, alias, onEdit }: Props) {
-  const [treeData, setTreeData] = useState([
-    {
-      title: alias,
-      key: `${host}:${port}`,
-    },
-  ]);
-
+function LeftContent({ servers, onEdit, onRemove }: Props) {
+  const [treeData, setTreeData] = useState<TreeDataType[]>();
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  useEffect(() => {
+    setTreeData(servers.map((item) => ({ ...item, icon: <IconDesktop /> })));
+  }, [servers]);
   const extraRender = useCallback((node: NodeProps) => {
-    console.log(node);
-    if (!node.parentKey && node?.selected) {
+    if (!node?.selected) {
+      return null;
+    }
+    if (!node.parentKey) {
+      const { id } = node.dataRef || {};
       return (
         <>
           <Redo
@@ -50,7 +54,7 @@ function LeftContent({ host, port, alias, onEdit }: Props) {
           />
           <SettingTwo
             theme="outline"
-            onClick={onEdit}
+            onClick={() => onEdit?.(id)}
             className={st['root-node-icon']}
             size="18"
             strokeWidth={3}
@@ -65,7 +69,39 @@ function LeftContent({ host, port, alias, onEdit }: Props) {
           />
           <DeleteFive
             theme="outline"
+            onClick={() => onRemove?.(id)}
             className={st['root-node-icon']}
+            size="18"
+            strokeWidth={3}
+            strokeLinecap="butt"
+          />
+        </>
+      );
+    }
+    if (node._level == 1) {
+      return (
+        <Redo
+          theme="outline"
+          className={st['children-node-icon']}
+          size="18"
+          strokeWidth={3}
+          strokeLinecap="butt"
+        />
+      );
+    }
+    if (!node.isLeaf) {
+      return (
+        <>
+          <Redo
+            theme="outline"
+            className={st['children-node-icon']}
+            size="18"
+            strokeWidth={3}
+            strokeLinecap="butt"
+          />
+          <DeleteFive
+            theme="outline"
+            className={st['children-node-icon']}
             size="18"
             strokeWidth={3}
             strokeLinecap="butt"
@@ -76,26 +112,58 @@ function LeftContent({ host, port, alias, onEdit }: Props) {
     return null;
   }, []);
 
-  const onDoubleClick = (
-    keys: string[],
-    extra?: {
-      expanded: boolean;
-      node: NodeInstance;
-      expandedNodes: NodeInstance[];
-    }
-  ) => {
-    setExpandedKeys(keys);
+  const handSelect = (selectedKeys: string[]) => {
+    console.log(selectedKeys);
+    setSelectedKeys(selectedKeys);
+  };
+
+  const loadMore = (treeNode: NodeInstance): Promise<void> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (!treeNode.props.dataRef) {
+          return resolve();
+        }
+        const dbs = [
+          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+        ];
+        treeNode.props.dataRef.children = dbs.map((t) => ({
+          name: `db${t}`,
+          id: `${treeNode.props._key}-${t}`,
+          isLeaf: false,
+          icon: (
+            <Data
+              theme="outline"
+              size="14"
+              strokeWidth={3}
+              strokeLinecap="butt"
+            />
+          ),
+        }));
+        setTreeData([...(treeData || [])]);
+        if (treeNode.props._key) {
+          setExpandedKeys([...expandedKeys, treeNode.props._key]);
+        }
+        resolve();
+      }, 1000);
+    });
   };
 
   return (
     <Tree
       size="large"
       blockNode
-      virtualListProps={{ height: '100%' }}
       actionOnClick={['select']}
-      expandedKeys={expandedKeys}
-      onExpand={onDoubleClick}
-      // loadMore={loadMore}
+      selectedKeys={selectedKeys}
+      onSelect={handSelect}
+      virtualListProps={{ height: '100%' }}
+      // expandedKeys={expandedKeys}
+      // onExpand={onDoubleClick}
+      fieldNames={{
+        key: 'id',
+        title: 'name',
+        children: 'children',
+      }}
+      loadMore={loadMore}
       treeData={treeData}
       renderExtra={extraRender}
     />

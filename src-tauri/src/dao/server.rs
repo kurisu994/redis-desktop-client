@@ -1,6 +1,6 @@
-use diesel::{RunQueryDsl, SqliteConnection};
 use diesel::prelude::*;
 use diesel::sql_types::Text;
+use diesel::{RunQueryDsl, SqliteConnection};
 
 use crate::dao::db;
 use crate::dao::models::{NewServer, ServerInfo};
@@ -30,7 +30,7 @@ pub fn query_all(kw: &str) -> Result<Vec<ServerInfo>, String> {
         key_filter,delimiter,con_timeout,execution_timeout \
         from connections where name like ? order by id asc",
     )
-        .bind::<Text, _>(key_word);
+    .bind::<Text, _>(key_word);
     let con = &mut db::establish_connection();
     match sql_query.load::<ServerInfo>(con) {
         Ok(list) => Ok(list),
@@ -52,16 +52,6 @@ pub fn save_or_update(data: NewServer) -> Result<bool, String> {
         return Err(String::from("端口号必须在1-65536之间"));
     }
     let con = &mut db::establish_connection();
-    let count = connections
-        .select(id)
-        .filter(port.eq(data.port))
-        .filter(host.eq(&data.host))
-        .load::<i32>(con)
-        .unwrap_or(vec![])
-        .len();
-    if count > 0 {
-        return Err(String::from("已存在该连接，无法重复添加"));
-    }
     if let None = data.id {
         inert(data, con)
     } else {
@@ -106,8 +96,14 @@ fn update(id_no: i32, data: NewServer, con: &mut SqliteConnection) -> Result<boo
             name.eq(data.name),
             host.eq(data.host),
             port.eq(data.port),
+            read_only.eq(data.read_only),
             username.eq(data.username),
             password.eq(data.password),
+            security_type.eq(data.security_type),
+            key_filter.eq(data.key_filter),
+            delimiter.eq(data.delimiter),
+            con_timeout.eq(data.con_timeout),
+            execution_timeout.eq(data.execution_timeout),
         ))
         .execute(con);
 

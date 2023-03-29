@@ -21,10 +21,12 @@ const TabPane = Tabs.TabPane;
 function EditModal({ visible, data, loading, onOk, onCancel }: Props) {
   const [activeTab, setActiveTab] = useState('1');
   const [form] = Form.useForm();
-
   useEffect(() => {
     if (visible && data) {
-      form.setFieldsValue({ ...data, readOnly: data.readOnly === 'TRUE' });
+      form.setFieldsValue({
+        ...data,
+        securityType: `${data?.securityType ?? ''}`,
+      });
     }
   }, [data, form, visible]);
 
@@ -37,7 +39,6 @@ function EditModal({ visible, data, loading, onOk, onCancel }: Props) {
     const params = {
       ...v,
       securityType: Number(v.securityType),
-      readOnly: v.readOnly ? 'TRUE' : 'FALSE',
     } as SaveParams;
     onOk?.(params);
   };

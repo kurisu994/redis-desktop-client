@@ -3,7 +3,7 @@ import request, { CommArgs } from '@/utils/request';
 
 export interface Connection {
   /** id */
-  id?: number;
+  id: number;
   /** 名称 */
   name: string;
   /** 地址 */
@@ -15,7 +15,9 @@ export interface Connection {
   /** 密码 */
   password?: string;
   /** 只读 */
-  readOnly?: string;
+  readOnly?: boolean;
+  /** 安全类型 0: 不使用 1：ssl/tls  2：ssh tunnel */
+  securityType: number;
   /** 默认过滤 */
   keyFilter: string;
   /** 命名空间分隔符 */
@@ -30,18 +32,10 @@ export function getConList() {
   return request<Connection[]>(cmd.GET_CONS);
 }
 export interface SaveParams extends Connection, CommArgs {
-  /** 用户名 */
-  username?: string;
-  /** 密码 */
-  password?: string;
-  /** 只读 */
-  readOnly?: string;
   /** 集群 */
   cluster?: number;
   /** 集群节点 */
   nodes?: string;
-  /** 安全类型 0: 不使用 1：ssl/tls  2：ssh tunnel */
-  securityType?: number;
   /** 是否使用私钥  */
   usePrivateKey?: number;
   /** ssh 隧道的用户名  */
@@ -54,16 +48,15 @@ export interface SaveParams extends Connection, CommArgs {
   sshPassword?: string;
   /** 私钥文件路径 */
   privateKeyPath?: string;
-  /** 默认过滤 */
-  keyFilter: string;
-  /** 命名空间分隔符 */
-  delimiter: string;
-  /** 连接超时时间 */
-  conTimeout: number;
-  /** 执行超时时间 */
-  executionTimeout: number;
 }
 
 export function saveCon(params: SaveParams) {
-  return request<SaveParams>(cmd.SAVE_CON, { server: params });
+  return request<boolean>(cmd.SAVE_CON, { server: params });
+}
+
+export function removeCon(id?: number) {
+  if (!id) {
+    return Promise.resolve(true);
+  }
+  return request<boolean>(cmd.REMOVE_CON, { id });
 }

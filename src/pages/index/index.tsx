@@ -1,37 +1,27 @@
 import { useState } from 'react';
-import { Button, Layout, Message } from '@arco-design/web-react';
+import { Button, Layout, Message, Modal } from '@arco-design/web-react';
 import { IconPlus } from '@arco-design/web-react/icon';
 import LeftTree from './components/LeftTree';
 import RightContent from './components/RightContent';
 import EditModal from './components/EditModal';
 import { useRequest } from 'ahooks';
-import { getConList, saveCon, SaveParams, Connection } from './api';
+import { getConList, saveCon, SaveParams, Connection, removeCon } from './api';
 
 import './index.less';
 
 const Sider = Layout.Sider;
 
-const defaulttree = [
-  {
-    id: 1,
-    host: '127.0.0.1',
-    port: 6379,
-    name: 'dev',
-  } as Connection,
-];
-
 export default function Index() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [connection, setConnection] = useState<Connection>();
-  const { data = defaulttree, run } = useRequest(getConList, {
-    manual: true,
-  });
+  const { data, run, mutate } = useRequest(getConList);
   const { loading: saveLoading, run: save } = useRequest(saveCon, {
     manual: true,
     onSuccess: () => {
       Message.success('success');
       run();
+      setVisible(false);
     },
     onError: (e, _) => {
       Message.error(e.message);
@@ -42,12 +32,35 @@ export default function Index() {
     setCollapsed(!collapsed);
   };
 
-  const onEditCon = (_connection: Connection) => {
-    setConnection(_connection);
-    setVisible(true);
+  const onEditCon = (id?: number) => {
+    if (!id) {
+      return;
+    }
+    const con = data?.find((t) => t.id == id);
+    if (con) {
+      setConnection(con);
+      setVisible(true);
+    }
   };
+
   const handSave = (item: SaveParams) => {
-    save(item);
+    save({ ...item, cluster: 0, nodes: undefined });
+  };
+
+  const handRemove = (id?: number) => {
+    if (!id) {
+      return;
+    }
+    Modal.confirm({
+      icon: null,
+      title: null,
+      isNotice: false,
+      content: 'Do you really want to delete connection?',
+      onOk: async () => {
+        await removeCon(id);
+        mutate(data?.filter((t) => t.id != id));
+      },
+    });
   };
 
   return (
@@ -62,25 +75,22 @@ export default function Index() {
         }}
         resizeDirections={['right']}
         breakpoint="xl"
-        width="25%"
+        width="30%"
       >
         <Button
           long
           type="secondary"
+          className="add-btn"
           icon={<IconPlus />}
           onClick={() => setVisible(true)}
         >
           添加新连接
         </Button>
-        {data?.map((con) => (
-          <LeftTree
-            key={con.id}
-            host={con.host}
-            port={con.port}
-            alias={con.name}
-            onEdit={() => onEditCon(con)}
-          />
-        ))}
+        <LeftTree
+          servers={data || []}
+          onEdit={(id) => onEditCon(id)}
+          onRemove={(id) => handRemove(id)}
+        />
       </Sider>
       <RightContent
         siderCollapsed={collapsed}
@@ -90,7 +100,10 @@ export default function Index() {
         visible={visible}
         data={connection}
         loading={saveLoading}
-        onCancel={() => setVisible(false)}
+        onCancel={() => {
+          setVisible(false);
+          setConnection(undefined);
+        }}
         onOk={(item) => handSave(item)}
       />
     </Layout>

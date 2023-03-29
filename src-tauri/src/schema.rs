@@ -6,7 +6,7 @@ diesel::table! {
         name -> Text,
         host -> Text,
         port -> Integer,
-        read_only -> Text,
+        read_only -> Bool,
         username -> Nullable<Text>,
         password -> Nullable<Text>,
         cluster -> Nullable<Integer>,

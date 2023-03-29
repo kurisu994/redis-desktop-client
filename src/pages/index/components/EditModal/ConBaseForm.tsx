@@ -29,7 +29,11 @@ function ConBaseForm() {
           </Col>
           <Col flex="30px" />
           <Col flex="60px">
-            <Form.Item field="readOnly" initialValue={false}>
+            <Form.Item
+              field="readOnly"
+              triggerPropName="checked"
+              initialValue={false}
+            >
               <Checkbox>只读</Checkbox>
             </Form.Item>
           </Col>
@@ -76,6 +80,7 @@ function ConBaseForm() {
         label={<div />}
         field="securityType"
         initialValue={'0'}
+        disabled
       >
         <Radio.Group>
           <Radio value={'0'}>无</Radio>

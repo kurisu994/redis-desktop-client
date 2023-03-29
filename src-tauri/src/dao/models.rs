@@ -19,8 +19,8 @@ pub struct ServerInfo {
     pub port: i32,
     // 是否只读
     #[serde(rename = "readOnly")]
-    #[diesel(sql_type = Text)]
-    pub read_only: String,
+    #[diesel(sql_type = Bool)]
+    pub read_only: bool,
     // 用户名
     #[diesel(sql_type = Nullable < Text >)]
     pub username: Option<String>,
@@ -60,13 +60,13 @@ pub struct NewServer {
     pub port: i32,
     // 是否只读
     #[serde(rename = "readOnly")]
-    pub read_only: String,
+    pub read_only: bool,
     // 用户名
     pub username: Option<String>,
     // 密码
     pub password: Option<String>,
     // 集群
-    pub cluster: i32,
+    pub cluster: Option<i32>,
     // 集群节点
     pub nodes: Option<String>,
     // 安全类型 0: 不使用 1：ssl/tls  2：ssh tunnel
