@@ -30,87 +30,90 @@ function LeftContent({ servers, onEdit, onRemove }: Props) {
   useEffect(() => {
     setTreeData(servers.map((item) => ({ ...item, icon: <IconDesktop /> })));
   }, [servers]);
-  const extraRender = useCallback((node: NodeProps) => {
-    if (!node?.selected) {
+  const extraRender = useCallback(
+    (node: NodeProps) => {
+      if (!node?.selected) {
+        return null;
+      }
+      if (!node.parentKey) {
+        const { id } = node.dataRef || {};
+        return (
+          <>
+            <Redo
+              theme="outline"
+              className={st['root-node-icon']}
+              size="18"
+              strokeWidth={3}
+              strokeLinecap="butt"
+            />
+            <Unlink
+              theme="outline"
+              className={st['root-node-icon']}
+              size="18"
+              strokeWidth={3}
+              strokeLinecap="butt"
+            />
+            <SettingTwo
+              theme="outline"
+              onClick={() => onEdit?.(id)}
+              className={st['root-node-icon']}
+              size="18"
+              strokeWidth={3}
+              strokeLinecap="butt"
+            />
+            <CopyLink
+              theme="outline"
+              className={st['root-node-icon']}
+              size="18"
+              strokeWidth={3}
+              strokeLinecap="butt"
+            />
+            <DeleteFive
+              theme="outline"
+              onClick={() => onRemove?.(id)}
+              className={st['root-node-icon']}
+              size="18"
+              strokeWidth={3}
+              strokeLinecap="butt"
+            />
+          </>
+        );
+      }
+      if (node._level == 1) {
+        return (
+          <Redo
+            theme="outline"
+            className={st['children-node-icon']}
+            size="18"
+            strokeWidth={3}
+            strokeLinecap="butt"
+          />
+        );
+      }
+      if (!node.isLeaf) {
+        return (
+          <>
+            <Redo
+              theme="outline"
+              className={st['children-node-icon']}
+              size="18"
+              strokeWidth={3}
+              strokeLinecap="butt"
+            />
+            <DeleteFive
+              theme="outline"
+              className={st['children-node-icon']}
+              size="18"
+              strokeWidth={3}
+              strokeLinecap="butt"
+            />
+          </>
+        );
+      }
       return null;
-    }
-    if (!node.parentKey) {
-      const { id } = node.dataRef || {};
-      return (
-        <>
-          <Redo
-            theme="outline"
-            className={st['root-node-icon']}
-            size="18"
-            strokeWidth={3}
-            strokeLinecap="butt"
-          />
-          <Unlink
-            theme="outline"
-            className={st['root-node-icon']}
-            size="18"
-            strokeWidth={3}
-            strokeLinecap="butt"
-          />
-          <SettingTwo
-            theme="outline"
-            onClick={() => onEdit?.(id)}
-            className={st['root-node-icon']}
-            size="18"
-            strokeWidth={3}
-            strokeLinecap="butt"
-          />
-          <CopyLink
-            theme="outline"
-            className={st['root-node-icon']}
-            size="18"
-            strokeWidth={3}
-            strokeLinecap="butt"
-          />
-          <DeleteFive
-            theme="outline"
-            onClick={() => onRemove?.(id)}
-            className={st['root-node-icon']}
-            size="18"
-            strokeWidth={3}
-            strokeLinecap="butt"
-          />
-        </>
-      );
-    }
-    if (node._level == 1) {
-      return (
-        <Redo
-          theme="outline"
-          className={st['children-node-icon']}
-          size="18"
-          strokeWidth={3}
-          strokeLinecap="butt"
-        />
-      );
-    }
-    if (!node.isLeaf) {
-      return (
-        <>
-          <Redo
-            theme="outline"
-            className={st['children-node-icon']}
-            size="18"
-            strokeWidth={3}
-            strokeLinecap="butt"
-          />
-          <DeleteFive
-            theme="outline"
-            className={st['children-node-icon']}
-            size="18"
-            strokeWidth={3}
-            strokeLinecap="butt"
-          />
-        </>
-      );
-    }
-    return null;
-  }, []);
+    },
+    [onEdit, onRemove]
+  );
 
   const handSelect = (selectedKeys: string[]) => {
     console.log(selectedKeys);

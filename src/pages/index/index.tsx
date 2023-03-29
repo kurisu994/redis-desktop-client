@@ -23,7 +23,7 @@ export default function Index() {
       run();
       setVisible(false);
     },
-    onError: (e, _) => {
+    onError: (e) => {
       Message.error(e.message);
     },
   });
