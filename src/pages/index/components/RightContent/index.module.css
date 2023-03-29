@@ -27,6 +27,8 @@
   color: var(--color-text-2);
   font-weight: 400;
   font-size: 48px;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .footer {

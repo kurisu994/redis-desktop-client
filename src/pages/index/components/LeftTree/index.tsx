@@ -1,19 +1,13 @@
 import { useCallback, useState } from 'react';
 import { Tree } from '@arco-design/web-react';
 import {
-  IconFolder,
-  IconRefresh,
-  IconStorage,
-} from '@arco-design/web-react/icon';
-import {
   NodeInstance,
   NodeProps,
 } from '@arco-design/web-react/es/Tree/interface';
-import './index.css';
+import st from './index.module.css';
 import {
   CopyLink,
   DeleteFive,
-  KeyOne,
   Redo,
   SettingTwo,
   Unlink,
@@ -44,35 +38,35 @@ function LeftContent({ host, port, alias, onEdit }: Props) {
         <>
           <Redo
             theme="outline"
-            className="root-node-icon"
+            className={st['root-node-icon']}
             size="18"
             strokeWidth={3}
             strokeLinecap="butt"
           />
           <Unlink
             theme="outline"
-            className="root-node-icon"
+            className={st['root-node-icon']}
             size="18"
             strokeWidth={3}
             strokeLinecap="butt"
           />
           <SettingTwo
             theme="outline"
-            className="root-node-icon"
+            className={st['root-node-icon']}
             size="18"
             strokeWidth={3}
             strokeLinecap="butt"
           />
           <CopyLink
             theme="outline"
-            className="root-node-icon"
+            className={st['root-node-icon']}
             size="18"
             strokeWidth={3}
             strokeLinecap="butt"
           />
           <DeleteFive
             theme="outline"
-            className="root-node-icon"
+            className={st['root-node-icon']}
             size="18"
             strokeWidth={3}
             strokeLinecap="butt"

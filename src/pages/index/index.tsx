@@ -7,7 +7,7 @@ import EditModal from './components/EditModal';
 import { useRequest } from 'ahooks';
 import { getConList, saveCon, SaveParams } from './api';
 
-import './index.css';
+import './index.less';
 
 const Sider = Layout.Sider;
 
@@ -71,8 +71,13 @@ export default function Index() {
         breakpoint="xl"
         width="25%"
       >
-        <Button long icon={<IconPlus />} onClick={() => setVisible(true)}>
-          添加
+        <Button
+          className="add-btn"
+          long
+          icon={<IconPlus />}
+          onClick={() => setVisible(true)}
+        >
+          添加新连接
         </Button>
         {data?.map((con) => (
           <LeftTree

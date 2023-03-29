@@ -58,7 +58,7 @@ function AdvancedForm() {
         label="连接超时(秒)"
         wrapperCol={{ span: 18 }}
         labelCol={{ span: 5 }}
-        initialValue="10"
+        initialValue={10}
       >
         <InputNumber mode="button" min={0} />
       </FormItem>
@@ -67,7 +67,7 @@ function AdvancedForm() {
         label="执行超时(秒)"
         wrapperCol={{ span: 18 }}
         labelCol={{ span: 5 }}
-        initialValue="10"
+        initialValue={10}
       >
         <InputNumber mode="button" min={0} />
       </FormItem>
