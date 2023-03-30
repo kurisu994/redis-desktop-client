@@ -22,6 +22,7 @@ export default function Index() {
       Message.success('success');
       run();
       setVisible(false);
+      setConnection(undefined);
     },
     onError: (e) => {
       Message.error(e.message);

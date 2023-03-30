@@ -1,6 +1,8 @@
+use crate::common::request::SimpleServerInfo;
+use crate::common::response::Message;
 use crate::dao::{server, setting};
 use crate::dao::models::{NewServer, ServerInfo, Settings};
-use crate::response::Message;
+use crate::redis::redis_helper::test_server_info;
 
 #[tauri::command]
 pub fn all_con() -> Message<Vec<ServerInfo>> {
@@ -47,6 +49,17 @@ pub fn update_setting(settings: Option<Settings>) -> Message<bool> {
     match setting::update(settings.unwrap()) {
         Ok(data) => Message::ok(data),
         Err(err) => Message::err(&err),
+    }
+}
+
+#[tauri::command]
+pub fn test_con(info: Option<SimpleServerInfo>) -> Message<bool> {
+    if let None = info {
+        return Message::err("连接信息不能为空");
+    }
+    match test_server_info(info.unwrap().transform_server_info()) {
+        Ok(data) => Message::ok(data),
+        Err(err) => Message::err(&err.to_string()),
     }
 }
 

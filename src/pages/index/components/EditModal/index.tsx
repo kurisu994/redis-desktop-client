@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Button, Form, Grid, Modal, Spin, Tabs } from '@arco-design/web-react';
+import {
+  Button,
+  Form,
+  Grid,
+  Message,
+  Modal,
+  Spin,
+  Tabs,
+} from '@arco-design/web-react';
 import ConBaseForm from './ConBaseForm';
 import AdvancedForm from './AdvancedForm';
-import { SaveParams, Connection } from '../../api';
+import { SaveParams, Connection, testCon } from '../../api';
 
 import st from './index.module.css';
+import { useRequest } from 'ahooks';
 
 const Row = Grid.Row;
 const Col = Grid.Col;
@@ -19,6 +28,16 @@ interface Props {
 
 const TabPane = Tabs.TabPane;
 function EditModal({ visible, data, loading, onOk, onCancel }: Props) {
+  const { run, loading: testing } = useRequest(testCon, {
+    manual: true,
+    onSuccess: () => {
+      Message.success('Successful connection to redis-server');
+    },
+    onError: (e) => {
+      Message.error(e.message);
+    },
+  });
+
   const [activeTab, setActiveTab] = useState('1');
   const [form] = Form.useForm();
   useEffect(() => {
@@ -30,12 +49,32 @@ function EditModal({ visible, data, loading, onOk, onCancel }: Props) {
     }
   }, [data, form, visible]);
 
+  const handTestCon = () => {
+    const _data = form.getFieldsValue([
+      'host',
+      'port',
+      'password',
+      'username',
+      'conTimeout',
+    ]);
+    run({
+      ..._data,
+      username:
+        typeof _data.username == 'string' && _data.username.trim() == ''
+          ? undefined
+          : _data.username,
+      password:
+        typeof _data.password == 'string' && _data.password.trim() == ''
+          ? undefined
+          : _data.password,
+    } as never);
+  };
+
   const _onCancel = () => {
     onCancel?.();
   };
 
   const onSubmit = (v: { [key: string]: unknown }) => {
-    console.log(v);
     const params = {
       ...v,
       securityType: Number(v.securityType),
@@ -59,7 +98,7 @@ function EditModal({ visible, data, loading, onOk, onCancel }: Props) {
       footer={
         <Row>
           <Col flex={'100px'}>
-            <Button disabled={loading} onClick={() => onCancel?.()}>
+            <Button disabled={loading || testing} onClick={handTestCon}>
               测试连接
             </Button>
           </Col>

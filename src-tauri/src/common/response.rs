@@ -1,9 +1,9 @@
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct Message<T>
-where
-    T: Serialize,
+    where
+        T: Serialize,
 {
     data: Option<T>,
     code: i32,

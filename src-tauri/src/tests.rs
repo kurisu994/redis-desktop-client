@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use crate::dao::models::{NewServer};
+    use crate::common::cmd::test_con;
+    use crate::common::request::SimpleServerInfo;
+    use crate::common::response::Message;
+    use crate::dao::models::NewServer;
     use crate::dao::server::{delete_by_id, query_all, save_or_update};
     use crate::dao::setting::query;
 
@@ -65,12 +68,28 @@ mod tests {
         delete_by_id(2).unwrap();
     }
 
-
     #[test]
     fn test_query_setting() {
         match query() {
-            Ok(data) => { println!("data: {:?}", data); }
-            Err(e) => { println!("err: {:?}", e); }
+            Ok(data) => {
+                println!("data: {:?}", data);
+            }
+            Err(e) => {
+                println!("err: {:?}", e);
+            }
         }
+    }
+
+    #[test]
+    fn test_redis_uri() {
+        let res = test_con(Some(SimpleServerInfo {
+            host: "127.0.0.1".to_string(),
+            port: 6379,
+            username: None,
+            password: None,
+            con_timeout: 10,
+        }));
+        println!("res: {:?}", res);
+        assert_eq!(res, Message::ok(true));
     }
 }

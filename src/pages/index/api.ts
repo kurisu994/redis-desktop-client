@@ -50,6 +50,23 @@ export interface SaveParams extends Connection, CommArgs {
   privateKeyPath?: string;
 }
 
+export interface SimpleConnection {
+  /** 地址 */
+  host: string;
+  /** 端口 */
+  port: number;
+  /** 用户名 */
+  username?: string;
+  /** 密码 */
+  password?: string;
+  /** 连接超时时间 */
+  conTimeout: number;
+}
+
+export function testCon(params: SimpleConnection) {
+  return request<boolean>(cmd.TEST_CON, { info: params });
+}
+
 export function saveCon(params: SaveParams) {
   return request<boolean>(cmd.SAVE_CON, { server: params });
 }

@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use diesel::RunQueryDsl;
 
-use crate::core::redis_helper::set_refresh_interval;
+use crate::redis::redis_helper::set_refresh_interval;
 use crate::dao::db;
 use crate::dao::models::Settings;
 use crate::schema::setting::dsl::*;

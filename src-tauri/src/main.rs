@@ -8,13 +8,12 @@ use dao::setting;
 
 use crate::dao::db;
 
-mod cmd;
-mod core;
+mod redis;
 mod dao;
-mod response;
 mod schema;
 mod tests;
 mod ui;
+mod common;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
@@ -51,7 +50,7 @@ fn init() {
         .expect("Error migrating");
     match setting::query() {
         Ok(data) => {
-            core::redis_helper::set_refresh_interval(data.refresh_interval);
+            redis::redis_helper::set_refresh_interval(data.refresh_interval);
         }
         Err(_) => {}
     };
@@ -68,12 +67,13 @@ fn main() {
         .on_system_tray_event(ui::tray::Tray::on_system_tray_event)
         .on_window_event(handle_window_event)
         .invoke_handler(tauri::generate_handler![
-            cmd::all_con,
-            cmd::save_con,
-            cmd::delete_con,
-            cmd::query_setting,
-            cmd::update_setting,
-            cmd::read_redis
+            common::cmd::all_con,
+            common::cmd::save_con,
+            common::cmd::delete_con,
+            common::cmd::query_setting,
+            common::cmd::update_setting,
+            common::cmd::test_con,
+            common::cmd::read_redis
         ])
         .run(context)
         .expect("error while running tauri application");
