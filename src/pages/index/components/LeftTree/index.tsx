@@ -6,7 +6,7 @@ import {
   TreeDataType,
 } from '@arco-design/web-react/es/Tree/interface';
 import st from './index.module.css';
-import { Data, DeleteFive, Redo } from '@icon-park/react';
+import { Data, DeleteFive, KeyOne, Redo } from '@icon-park/react';
 import { Connection } from '../../api';
 import { IconDesktop } from '@arco-design/web-react/icon';
 import ServerBtnGroup from './ServerBtnGroup';
@@ -62,20 +62,9 @@ function LeftContent({ servers, onEdit, onRemove }: Props) {
           />
         );
       }
-      if (node._level == 1) {
-        return (
-          <Redo
-            theme="outline"
-            className={st['children-node-icon']}
-            size="18"
-            strokeWidth={3}
-            strokeLinecap="butt"
-          />
-        );
-      }
-      if (!node.isLeaf) {
-        return (
-          <>
+      if (node.selected) {
+        if (node._level == 1) {
+          return (
             <Redo
               theme="outline"
               className={st['children-node-icon']}
@@ -83,16 +72,30 @@ function LeftContent({ servers, onEdit, onRemove }: Props) {
               strokeWidth={3}
               strokeLinecap="butt"
             />
-            <DeleteFive
-              theme="outline"
-              className={st['children-node-icon']}
-              size="18"
-              strokeWidth={3}
-              strokeLinecap="butt"
-            />
-          </>
-        );
+          );
+        }
+        if (!node.isLeaf) {
+          return (
+            <>
+              <Redo
+                theme="outline"
+                className={st['children-node-icon']}
+                size="18"
+                strokeWidth={3}
+                strokeLinecap="butt"
+              />
+              <DeleteFive
+                theme="outline"
+                className={st['children-node-icon']}
+                size="18"
+                strokeWidth={3}
+                strokeLinecap="butt"
+              />
+            </>
+          );
+        }
       }
+
       return null;
     },
     [onEdit, onRemove]
@@ -115,15 +118,24 @@ function LeftContent({ servers, onEdit, onRemove }: Props) {
         treeNode.props.dataRef.children = dbs.map((t) => ({
           name: `db${t}`,
           id: `${treeNode.props._key}-${t}`,
-          isLeaf: false,
-          icon: (
-            <Data
-              theme="outline"
-              size="14"
-              strokeWidth={3}
-              strokeLinecap="butt"
-            />
-          ),
+          redisKey: `db${t}`,
+          isLeaf: treeNode.props._level == 1,
+          icon:
+            treeNode.props._level == 0 ? (
+              <Data
+                theme="outline"
+                size="14"
+                strokeWidth={3}
+                strokeLinecap="butt"
+              />
+            ) : (
+              <KeyOne
+                theme="outline"
+                size="14"
+                strokeWidth={3}
+                strokeLinecap="butt"
+              />
+            ),
         }));
         setTreeData([...(treeData || [])]);
         if (treeNode.props._key) {
