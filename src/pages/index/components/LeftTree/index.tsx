@@ -6,21 +6,23 @@ import {
   TreeDataType,
 } from '@arco-design/web-react/es/Tree/interface';
 import st from './index.module.css';
-import {
-  CopyLink,
-  Data,
-  DeleteFive,
-  Redo,
-  SettingTwo,
-  Unlink,
-} from '@icon-park/react';
+import { Data, DeleteFive, Redo } from '@icon-park/react';
 import { Connection } from '../../api';
 import { IconDesktop } from '@arco-design/web-react/icon';
+import ServerBtnGroup from './ServerBtnGroup';
 
 interface Props {
   servers: Connection[];
   onEdit?: (id?: number) => unknown;
   onRemove?: (id?: number) => unknown;
+}
+
+export enum Intent {
+  REFRESH,
+  UNCONNECT,
+  COPY,
+  EDIT,
+  REMOVE,
 }
 
 function LeftContent({ servers, onEdit, onRemove }: Props) {
@@ -38,45 +40,26 @@ function LeftContent({ servers, onEdit, onRemove }: Props) {
       if (!node.parentKey) {
         const { id } = node.dataRef || {};
         return (
-          <>
-            <Redo
-              theme="outline"
-              className={st['root-node-icon']}
-              size="18"
-              strokeWidth={3}
-              strokeLinecap="butt"
-            />
-            <Unlink
-              theme="outline"
-              className={st['root-node-icon']}
-              size="18"
-              strokeWidth={3}
-              strokeLinecap="butt"
-            />
-            <SettingTwo
-              theme="outline"
-              onClick={() => onEdit?.(id)}
-              className={st['root-node-icon']}
-              size="18"
-              strokeWidth={3}
-              strokeLinecap="butt"
-            />
-            <CopyLink
-              theme="outline"
-              className={st['root-node-icon']}
-              size="18"
-              strokeWidth={3}
-              strokeLinecap="butt"
-            />
-            <DeleteFive
-              theme="outline"
-              onClick={() => onRemove?.(id)}
-              className={st['root-node-icon']}
-              size="18"
-              strokeWidth={3}
-              strokeLinecap="butt"
-            />
-          </>
+          <ServerBtnGroup
+            onIntent={(int) => {
+              switch (int) {
+                case Intent.REFRESH:
+                  break;
+                case Intent.UNCONNECT:
+                  break;
+                case Intent.COPY:
+                  break;
+                case Intent.EDIT:
+                  onEdit?.(id);
+                  break;
+                case Intent.REMOVE:
+                  onRemove?.(id);
+                  break;
+                default:
+                  break;
+              }
+            }}
+          />
         );
       }
       if (node._level == 1) {
