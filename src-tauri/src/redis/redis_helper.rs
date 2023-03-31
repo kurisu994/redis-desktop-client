@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::Duration;
 
-use redis::{Client, RedisResult};
+use redis::{Client, ConnectionLike, RedisResult};
 
 use crate::dao::models::ServerInfo;
 
@@ -19,7 +19,7 @@ pub fn set_refresh_interval(interval: i32) {
 /// * `server`: redis连接信息
 ///
 /// returns: Result<bool, String>
-///
+/// todo -> 连接不成功的异常处理 3.31
 ///
 pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
     let mut con_timeout = server.con_timeout;
@@ -27,8 +27,9 @@ pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
         con_timeout = 60;
     }
     let client = open_redis(server)?;
-    client.get_connection_with_timeout(Duration::from_secs(con_timeout as u64))?;
-    Ok(true)
+    let mut con = client.get_connection_with_timeout(Duration::from_secs(con_timeout as u64))?;
+    let is_ok = con.check_connection();
+    Ok(is_ok)
 }
 
 ///
