@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use redis::{Client, RedisResult};
+
     use crate::common::cmd::test_con;
     use crate::common::request::SimpleServerInfo;
     use crate::common::response::Message;
@@ -43,6 +45,30 @@ mod tests {
     pub fn all_list() {
         let result = query_all("").unwrap();
         println!("{:?}", result);
+    }
+
+    fn get_db_key_count(uri: &str) -> RedisResult<Vec<i32>> {
+        let client = Client::open(uri)?;
+        let conn = &mut client.get_connection()?;
+
+        let response: String = redis::cmd("INFO").arg("keyspace").query(conn)?;
+        let db_info = response.split('\n')
+            .filter(|line| line.starts_with("db"))
+            .map(|line| {
+                let parts: Vec<&str> = line.split(',').collect();
+                let key_count = parts.iter()
+                    .find(|part| part.starts_with("db"))
+                    .map(|keys| {
+                        let keys_index = keys.find("keys=").unwrap();
+                        let keys_value = &keys[keys_index + "keys=".len()..];
+                        keys_value.parse::<i32>().unwrap_or(0)
+                    })
+                    .unwrap_or(0);
+                key_count
+            })
+            .collect();
+
+        Ok(db_info)
     }
 
     #[test]
@@ -91,5 +117,13 @@ mod tests {
         }));
         println!("res: {:?}", res);
         assert_eq!(res, Message::ok(true));
+    }
+
+    #[test]
+    fn test_db() {
+        let db_key_count = get_db_key_count("redis://:fw@test@redis@172.26.154.169:6378").unwrap();
+        for (i, count) in db_key_count.iter().enumerate() {
+            println!("Database {}: {} keys", i, count);
+        }
     }
 }
