@@ -32,7 +32,7 @@ diesel::table! {
         id -> Integer,
         language -> Text,
         font_size -> Integer,
-        theme -> Text,
+        theme -> Integer,
         refresh_interval -> Integer,
         editor_font_size -> Integer,
     }

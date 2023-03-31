@@ -18,8 +18,7 @@ pub fn set_refresh_interval(interval: i32) {
 ///
 /// * `server`: redis连接信息
 ///
-/// returns: Result<bool, String>
-/// todo -> 连接不成功的异常处理 3.31
+/// returns: RedisResult<bool>
 ///
 pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
     let mut con_timeout = server.con_timeout;
@@ -27,9 +26,8 @@ pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
         con_timeout = 60;
     }
     let client = open_redis(server)?;
-    let mut con = client.get_connection_with_timeout(Duration::from_secs(con_timeout as u64))?;
-    let is_ok = con.check_connection();
-    Ok(is_ok)
+    let con = &mut client.get_connection_with_timeout(Duration::from_secs(con_timeout as u64))?;
+    Ok(con.check_connection())
 }
 
 ///
@@ -40,7 +38,7 @@ pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
 ///
 /// returns: Result<Connection, RedisError>
 ///
-fn open_redis(server: ServerInfo) -> RedisResult<Client> {
+pub fn open_redis(server: ServerInfo) -> RedisResult<Client> {
     let host = server.host;
     let port = server.port;
     let password = server.password;

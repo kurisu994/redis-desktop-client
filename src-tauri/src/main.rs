@@ -73,7 +73,11 @@ fn main() {
             common::cmd::query_setting,
             common::cmd::update_setting,
             common::cmd::test_con,
-            common::cmd::read_redis
+            common::cmd::read_redis_dbs,
+            common::cmd::read_redis_key_tree,
+            common::cmd::read_redis_value,
+            common::cmd::update_redis_key_ttl,
+            common::cmd::delete_redis_key
         ])
         .run(context)
         .expect("error while running tauri application");

@@ -116,8 +116,8 @@ pub struct Settings {
     #[diesel(sql_type = Integer)]
     pub font_size: i32,
     // 主题
-    #[diesel(sql_type = Text)]
-    pub theme: String,
+    #[diesel(sql_type = Integer)]
+    pub theme: i32,
     // 实时刷新间隔 [秒]
     #[serde(rename = "refreshInterval")]
     #[diesel(sql_type = Integer)]

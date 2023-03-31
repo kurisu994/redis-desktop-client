@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS connections
     name              TEXT     NOT null,
     host              TEXT     NOT NULL,
     port              INTEGER  NOT null default 6379,
-    read_only         BOOLEAN  NOT NULL,
+    read_only         TINYINT  NOT NULL,
     username          TEXT     null,
     password          TEXT     null,
     cluster           INTEGER  NULL,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS setting
         constraint connections_pk primary key,
     language         TEXT    NOT null,
     font_size        INTEGER NOT null default 12,
-    theme            TEXT    NOT null,
+    theme            INTEGER NOT null default 1,
     refresh_interval INTEGER NOT null default 10,
     editor_font_size INTEGER NOT null default 12
 );

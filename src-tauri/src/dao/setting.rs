@@ -1,9 +1,10 @@
 use diesel::prelude::*;
 use diesel::RunQueryDsl;
 
-use crate::redis::redis_helper::set_refresh_interval;
+use crate::common::enums::{IEnum, Theme};
 use crate::dao::db;
 use crate::dao::models::Settings;
+use crate::redis::redis_helper::set_refresh_interval;
 use crate::schema::setting::dsl::*;
 
 ///
@@ -68,7 +69,7 @@ fn init_setting(con: &mut SqliteConnection) {
             id: 1,
             language: String::from("zhCN"),
             font_size: 12,
-            theme: String::from("auto"),
+            theme: Theme::AUTO.to_value(),
             refresh_interval: 10,
             editor_font_size: 12,
         };
