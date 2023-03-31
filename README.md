@@ -52,6 +52,7 @@ Redis-Manager was based on or inspired by these projects and so on:
 
 - [tauri-apps/tauri](https://github.com/tauri-apps/tauri): Build smaller, faster, and more secure desktop applications with a web frontend.
 - [arco-design](https://github.com/arco-design): A comprehensive React UI components library based on the Arco Design system.
+- [Monaco Editor](https://microsoft.github.io/monaco-editor/): A browser based code editor.
 - [vitejs/vite](https://github.com/vitejs/vite): Next generation frontend tooling. It's fast!
 
 ## License
