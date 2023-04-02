@@ -74,6 +74,7 @@ fn main() {
             common::cmd::update_setting,
             common::cmd::test_con,
             common::cmd::read_redis_dbs,
+            common::cmd::read_redis_status,
             common::cmd::read_redis_key_tree,
             common::cmd::read_redis_value,
             common::cmd::update_redis_key_ttl,

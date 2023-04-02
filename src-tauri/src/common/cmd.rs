@@ -131,6 +131,20 @@ pub fn read_redis_dbs(id: i32) -> () {
     println!("redis server info is {:?}", server_info);
 }
 
+///  读取redis服务器的状态
+///
+/// # Arguments
+///
+/// * `id`: redis server id
+///
+/// returns: ()
+///
+#[tauri::command]
+pub fn read_redis_status(id: i32) -> () {
+    let server_info = server::query_by_id(id);
+    println!("redis server info is {:?}", server_info);
+}
+
 /// 查询选中db的所有key树
 ///
 /// # Arguments
