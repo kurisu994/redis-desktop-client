@@ -1,16 +1,8 @@
-use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::Duration;
 
-use redis::{Client, ConnectionLike, RedisResult};
+use redis::{Client, Connection, ConnectionLike, RedisResult};
 
 use crate::dao::models::ServerInfo;
-
-pub static REFRESH_INTERVAL: AtomicI32 = AtomicI32::new(0);
-
-pub fn set_refresh_interval(interval: i32) {
-    REFRESH_INTERVAL.swap(interval, Ordering::SeqCst);
-}
-
 
 /// 测试连接信息是否正确
 ///
@@ -21,12 +13,7 @@ pub fn set_refresh_interval(interval: i32) {
 /// returns: RedisResult<bool>
 ///
 pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
-    let mut con_timeout = server.con_timeout;
-    if con_timeout <= 0 {
-        con_timeout = 60;
-    }
-    let client = open_redis(server)?;
-    let con = &mut client.get_connection_with_timeout(Duration::from_secs(con_timeout as u64))?;
+    let mut con = open_redis(server)?;
     Ok(con.check_connection())
 }
 
@@ -38,7 +25,24 @@ pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
 ///
 /// returns: Result<Connection, RedisError>
 ///
-pub fn open_redis(server: ServerInfo) -> RedisResult<Client> {
+pub fn open_redis(server: ServerInfo) -> RedisResult<Connection> {
+    let mut con_timeout = server.con_timeout;
+    if con_timeout <= 0 {
+        con_timeout = 60;
+    }
+    let client = gen_client(server)?;
+    client.get_connection_with_timeout(Duration::from_secs(con_timeout as u64))
+}
+
+/// 创建redis client
+///
+/// # Arguments
+///
+/// * `server`: redis服务器信息
+///
+/// returns: Result<Client, RedisError>
+///
+fn gen_client(server: ServerInfo) -> RedisResult<Client> {
     let host = server.host;
     let port = server.port;
     let password = server.password;
@@ -46,13 +50,13 @@ pub fn open_redis(server: ServerInfo) -> RedisResult<Client> {
     // The URL format is redis://[<username>][:<password>@]<hostname>[:port][/<db>]
     let mut uri = "redis://".to_string();
     match username {
-        Some(_username) => { uri.push_str(&_username); }
+        Some(account) => { uri.push_str(&account); }
         _ => {}
     }
     match password {
-        Some(_password) => {
+        Some(pwd) => {
             uri.push_str(":");
-            uri.push_str(&_password);
+            uri.push_str(&pwd);
             uri.push_str("@");
         }
         _ => {}

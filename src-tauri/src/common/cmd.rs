@@ -3,6 +3,9 @@ use crate::common::response::Message;
 use crate::dao::{server, setting};
 use crate::dao::models::{NewServer, ServerInfo, Settings};
 use crate::redis::redis_helper;
+use crate::ret_err;
+
+type CmdResult<T = ()> = Result<T, String>;
 
 /// 查询所有redis服务器信息
 ///
@@ -13,11 +16,8 @@ use crate::redis::redis_helper;
 /// returns: Message<Vec<ServerInfo>>
 ///
 #[tauri::command]
-pub fn all_con() -> Message<Vec<ServerInfo>> {
-    match server::query_all("") {
-        Ok(data) => Message::ok(data),
-        Err(err) => Message::err(&err),
-    }
+pub fn all_con() -> CmdResult<Vec<ServerInfo>> {
+    Ok(server::query_all("")?)
 }
 
 /// 保存和修改redis服务器信息
@@ -29,15 +29,12 @@ pub fn all_con() -> Message<Vec<ServerInfo>> {
 /// returns: Message<bool>
 ///
 #[tauri::command(rename_all = "snake_case")]
-pub fn save_con(server: Option<NewServer>) -> Message<bool> {
+pub fn save_con(server: Option<NewServer>) -> CmdResult<bool> {
     println!("{:?}", server);
     if let None = server {
-        return Message::err("连接信息不能为空");
+        ret_err!("连接信息不能为空")
     }
-    match server::save_or_update(server.unwrap()) {
-        Ok(data) => Message::ok(data),
-        Err(err) => Message::err(&err),
-    }
+    Ok(server::save_or_update(server.unwrap())?)
 }
 
 /// 删除连接信息
@@ -49,11 +46,8 @@ pub fn save_con(server: Option<NewServer>) -> Message<bool> {
 /// returns: Message<bool>
 ///
 #[tauri::command]
-pub fn delete_con(id: i32) -> Message<bool> {
-    match server::delete_by_id(id) {
-        Ok(data) => Message::ok(data),
-        Err(err) => Message::err(&err),
-    }
+pub fn delete_con(id: i32) -> CmdResult<bool> {
+    Ok(server::delete_by_id(id)?)
 }
 
 ///查询设置
@@ -65,11 +59,8 @@ pub fn delete_con(id: i32) -> Message<bool> {
 /// returns: Message<Settings>
 ///
 #[tauri::command]
-pub fn query_setting() -> Message<Settings> {
-    match setting::query() {
-        Ok(data) => Message::ok(data),
-        Err(err) => Message::err(&err),
-    }
+pub fn query_setting() -> CmdResult<Settings> {
+    Ok(setting::query()?)
 }
 
 /// 修改设置

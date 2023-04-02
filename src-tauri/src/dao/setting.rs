@@ -4,7 +4,7 @@ use diesel::RunQueryDsl;
 use crate::common::enums::{IEnum, Theme};
 use crate::dao::db;
 use crate::dao::models::Settings;
-use crate::redis::redis_helper::set_refresh_interval;
+use crate::redis::manager::set_refresh_interval;
 use crate::schema::setting::dsl::*;
 
 ///
@@ -19,7 +19,6 @@ use crate::schema::setting::dsl::*;
 /// ```
 pub fn query() -> Result<Settings, String> {
     let con = &mut db::establish_connection();
-    init_setting(con);
     let sql_query = diesel::sql_query(
         "select id,language,font_size,theme,refresh_interval,editor_font_size from setting limit 1",
     );
@@ -62,7 +61,7 @@ pub fn update(data: Settings) -> Result<bool, String> {
 ///
 /// 初始化设置
 ///
-fn init_setting(con: &mut SqliteConnection) {
+pub fn init_setting(con: &mut SqliteConnection) {
     let count = setting.count().get_result::<i64>(con);
     if count != Ok(1) {
         let default_setting = Settings {
