@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use redis::{Client, Connection, ConnectionLike, ErrorKind, RedisError, RedisResult};
+use redis::{Client, Connection, RedisResult};
 
 use crate::dao::models::ServerInfo;
 
@@ -34,10 +34,12 @@ fn gen_client(server: ServerInfo) -> RedisResult<Client> {
     let port = server.port;
     let password = server.password;
     let username = server.username;
-    // The URL format is core://[<username>][:<password>@]<hostname>[:port][/<db>]
-    let mut uri = "core://".to_string();
+    // The URL format is redis://[<username>][:<password>@]<hostname>[:port][/<db>]
+    let mut uri = "redis://".to_string();
     match username {
-        Some(account) => { uri.push_str(&account); }
+        Some(account) => {
+            uri.push_str(&account);
+        }
         _ => {}
     }
     match password {

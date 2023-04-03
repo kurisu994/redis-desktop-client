@@ -25,8 +25,8 @@ pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
     let execution_timeout = server.execution_timeout as u64;
     let mut con = redis_helper::open_redis(server)?;
 
-    con.set_read_timeout(Some(Duration::from_secs(execution_timeout)))?;
-    con.set_write_timeout(Some(Duration::from_secs(execution_timeout)))?;
+    // con.set_read_timeout(Some(Duration::from_secs(execution_timeout)))?;
+    // con.set_write_timeout(Some(Duration::from_secs(execution_timeout)))?;
 
     Ok(con.check_connection())
 }

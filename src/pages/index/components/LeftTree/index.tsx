@@ -153,7 +153,7 @@ function LeftContent({ servers, onEdit, onRemove }: Props) {
       actionOnClick={['select']}
       selectedKeys={selectedKeys}
       onSelect={handSelect}
-      virtualListProps={{ height: '100%' }}
+      virtualListProps={{ height: 'calc(100% - 42px)' }}
       // expandedKeys={expandedKeys}
       // onExpand={onDoubleClick}
       fieldNames={{
