@@ -13,6 +13,8 @@ use crate::dao::db;
 use crate::dao::setting::init_setting;
 use crate::utils::dirs;
 
+static DATE_BASE: &str = "core-manger.db";
+
 pub fn init_application(migrations_source: EmbeddedMigrations) -> Result<()> {
     #[cfg(feature = "redis-manager-dev")]
         let _ = init_log(LevelFilter::Debug);
@@ -26,13 +28,17 @@ pub fn init_application(migrations_source: EmbeddedMigrations) -> Result<()> {
     }));
 
     init_data_base(migrations_source)?;
-    
+
     Ok(())
 }
 
 /// initialize db
 fn init_data_base(migrations_source: EmbeddedMigrations) -> Result<()> {
-    let db_path = dirs::app_db_path()?;
+    let db_dir = dirs::app_db_dir()?;
+    if !db_dir.exists() {
+        let _ = fs::create_dir_all(&db_dir);
+    }
+    let db_path = db_dir.join(DATE_BASE);
     let database_url = db_path.to_str().unwrap();
     db::set_path(database_url);
     let mut sqlite_connection = db::establish_connection();
@@ -51,7 +57,7 @@ fn init_log(level: LevelFilter) -> Result<()> {
         let _ = fs::create_dir_all(&log_dir);
     }
 
-    let local_time = Local::now().format("%Y-%m-%d-%H%M").to_string();
+    let local_time = Local::now().format("%Y-%m-%d").to_string();
     let log_file = format!("{}.log", local_time);
     let log_file = log_dir.join(log_file);
 

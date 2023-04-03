@@ -3,12 +3,10 @@ use std::path::PathBuf;
 use anyhow::Result;
 use tauri::api::path::home_dir;
 
-#[cfg(not(feature = "verge-dev"))]
-static APP_DIR: &str = "redis-manger";
-#[cfg(feature = "verge-dev")]
-static APP_DIR: &str = "redis-manger-dev";
-
-static DATE_BASE: &str = "redis-manger.db";
+#[cfg(not(feature = "redis-manager-dev"))]
+static APP_DIR: &str = "core-manger";
+#[cfg(feature = "redis-manager-dev")]
+static APP_DIR: &str = "core-manger-dev";
 
 
 /// get the verge app home dir
@@ -41,18 +39,15 @@ pub fn app_home_dir() -> Result<PathBuf> {
 
 /// profiles dir
 #[cfg(feature = "redis-manager-dev")]
-pub fn app_db_path() -> Result<PathBuf> {
-    Ok(PathBuf::from(".")
-        .join(DATE_BASE)
-    )
+pub fn app_db_dir() -> Result<PathBuf> {
+    Ok(PathBuf::from("./.db"))
 }
 
 /// profiles dir
 #[cfg(not(feature = "redis-manager-dev"))]
-pub fn app_db_path() -> Result<PathBuf> {
+pub fn app_db_dir() -> Result<PathBuf> {
     Ok(app_home_dir()?
         .join("db")
-        .join(DATE_BASE)
     )
 }
 

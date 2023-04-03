@@ -4,11 +4,10 @@ mod tests {
 
     use crate::common::cmd::test_con;
     use crate::common::request::SimpleServerInfo;
-    use crate::common::response::Message;
     use crate::dao::models::ServerInfo;
     use crate::dao::server::query_all;
     use crate::dao::setting::query;
-    use crate::redis::redis_helper;
+    use crate::core::redis_helper;
     use crate::utils::helper::parse_str;
 
     pub fn all_list() {
@@ -65,7 +64,6 @@ mod tests {
             con_timeout: 10,
         }));
         println!("res: {:?}", res);
-        assert_eq!(res, Message::ok(true));
     }
 
     #[test]

@@ -1,7 +1,20 @@
 use std::str::FromStr;
 
 /// parse the string
-/// xxx=123123; => 123123
+///
+/// # Arguments
+///
+/// * `target`: string to parse
+/// * `key`:  parse key
+///
+/// returns: Option<T>
+///
+/// # Examples
+///
+/// ```
+/// let data = parse_str::<usize>("xxx=123123;","xxx=");
+///  assert_eq!(data.unwrap(), 123123);
+/// ```
 pub fn parse_str<T: FromStr>(target: &str, key: &str) -> Option<T> {
     target.find(key).and_then(|idx| {
         let idx = idx + key.len();

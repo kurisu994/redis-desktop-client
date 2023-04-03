@@ -44,6 +44,8 @@ pub enum TtlPolicy {
     PEXPIRE,
     // 过期时刻[UNIX时间戳 毫秒]
     PEXPIREAT,
+    // 永久的没有过期时间
+    PERSIST,
 }
 
 impl<'a> IEnum<'a, Self> for TtlPolicy {
@@ -53,6 +55,7 @@ impl<'a> IEnum<'a, Self> for TtlPolicy {
             2 => Ok(TtlPolicy::EXPIREAT),
             3 => Ok(TtlPolicy::PEXPIRE),
             4 => Ok(TtlPolicy::PEXPIREAT),
+            5 => Ok(TtlPolicy::PERSIST),
             _ => { Err("can't find this TtlType") }
         }
     }
@@ -67,11 +70,24 @@ impl<'a> IEnum<'a, Self> for TtlPolicy {
             TtlPolicy::EXPIREAT => { 2 }
             TtlPolicy::PEXPIRE => { 3 }
             TtlPolicy::PEXPIREAT => { 4 }
+            TtlPolicy::PERSIST => { 5 }
         }
     }
 }
 
-/// redis key 类型
+impl TtlPolicy {
+    fn to_redis_expiry(&self, ttl: usize) -> redis::Expiry {
+        match self {
+            TtlPolicy::EXPIRE => { redis::Expiry::EX(ttl) }
+            TtlPolicy::EXPIREAT => { redis::Expiry::EXAT(ttl) }
+            TtlPolicy::PEXPIRE => { redis::Expiry::PX(ttl) }
+            TtlPolicy::PEXPIREAT => { redis::Expiry::PXAT(ttl) }
+            TtlPolicy::PERSIST => { redis::Expiry::PERSIST }
+        }
+    }
+}
+
+/// core key 类型
 pub enum RedisKeyType {
     STRING,
     LIST,

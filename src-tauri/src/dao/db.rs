@@ -9,5 +9,5 @@ pub fn set_path(path: &str) {
 }
 
 pub fn establish_connection() -> SqliteConnection {
-    SqliteConnection::establish(DB_PATH.get().unwrap()).unwrap()
+    SqliteConnection::establish(&DB_PATH.get().unwrap()).unwrap()
 }

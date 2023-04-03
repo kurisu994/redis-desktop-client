@@ -1,21 +1,8 @@
 use std::time::Duration;
 
-use redis::{Client, Connection, ConnectionLike, RedisResult};
+use redis::{Client, Connection, ConnectionLike, ErrorKind, RedisError, RedisResult};
 
 use crate::dao::models::ServerInfo;
-
-/// 测试连接信息是否正确
-///
-/// # Arguments
-///
-/// * `server`: redis连接信息
-///
-/// returns: RedisResult<bool>
-///
-pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
-    let mut con = open_redis(server)?;
-    Ok(con.check_connection())
-}
 
 ///
 /// 打开redis连接
@@ -47,8 +34,8 @@ fn gen_client(server: ServerInfo) -> RedisResult<Client> {
     let port = server.port;
     let password = server.password;
     let username = server.username;
-    // The URL format is redis://[<username>][:<password>@]<hostname>[:port][/<db>]
-    let mut uri = "redis://".to_string();
+    // The URL format is core://[<username>][:<password>@]<hostname>[:port][/<db>]
+    let mut uri = "core://".to_string();
     match username {
         Some(account) => { uri.push_str(&account); }
         _ => {}

@@ -4,8 +4,8 @@ use diesel::RunQueryDsl;
 use crate::common::enums::{IEnum, Theme};
 use crate::dao::db;
 use crate::dao::models::Settings;
-use crate::redis::manager::set_refresh_interval;
-use crate::schema::setting::dsl::*;
+use crate::core::manager::set_refresh_interval;
+use crate::schema::setting::dsl as setting_dsl;
 
 ///
 /// 查询设置
@@ -14,18 +14,12 @@ use crate::schema::setting::dsl::*;
 ///
 /// # Examples
 ///
-/// ```
-/// query();
-/// ```
-pub fn query() -> Result<Settings, String> {
+pub fn query() -> QueryResult<Settings> {
     let con = &mut db::establish_connection();
     let sql_query = diesel::sql_query(
         "select id,language,font_size,theme,refresh_interval,editor_font_size from setting limit 1",
     );
-    match sql_query.get_result::<Settings>(con) {
-        Ok(data) => Ok(data),
-        Err(err) => Err(err.to_string()),
-    }
+    sql_query.get_result::<Settings>(con)
 }
 
 ///
@@ -38,14 +32,14 @@ pub fn query() -> Result<Settings, String> {
 ///
 pub fn update(data: Settings) -> Result<bool, String> {
     let con = &mut db::establish_connection();
-    let result = diesel::update(setting)
-        .filter(id.eq(data.id))
+    let result = diesel::update(setting_dsl::setting)
+        .filter(setting_dsl::id.eq(data.id))
         .set((
-            language.eq(data.language),
-            font_size.eq(data.font_size),
-            theme.eq(data.theme),
-            refresh_interval.eq(data.refresh_interval),
-            editor_font_size.eq(data.editor_font_size),
+            setting_dsl::language.eq(data.language),
+            setting_dsl::font_size.eq(data.font_size),
+            setting_dsl::theme.eq(data.theme),
+            setting_dsl::refresh_interval.eq(data.refresh_interval),
+            setting_dsl::editor_font_size.eq(data.editor_font_size),
         ))
         .execute(con);
 
@@ -58,11 +52,18 @@ pub fn update(data: Settings) -> Result<bool, String> {
     }
 }
 
+
+/// 初始化设置信息
 ///
-/// 初始化设置
+/// # Arguments
+///
+/// * `con`: 数据库连接
+///
+/// returns: ()
+///
 ///
 pub fn init_setting(con: &mut SqliteConnection) {
-    let count = setting.count().get_result::<i64>(con);
+    let count = setting_dsl::setting.count().get_result::<i64>(con);
     if count != Ok(1) {
         let default_setting = Settings {
             id: 1,
@@ -72,7 +73,7 @@ pub fn init_setting(con: &mut SqliteConnection) {
             refresh_interval: 10,
             editor_font_size: 12,
         };
-        diesel::insert_or_ignore_into(setting)
+        diesel::insert_or_ignore_into(setting_dsl::setting)
             .values(default_setting)
             .execute(con).unwrap();
     }

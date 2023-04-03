@@ -12,7 +12,8 @@
     "postinstall": "husky install",
     "pre-commit": "pretty-quick --staged && npm run eslint && npm run stylelint",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev --features=redis-manager-dev"
   },
   "dependencies": {
     "@arco-design/web-react": "^2.46.0",

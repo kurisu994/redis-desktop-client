@@ -4,7 +4,7 @@
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use tauri::{GlobalWindowEvent, Manager, Theme, WindowEvent, Wry};
 
-mod redis;
+mod core;
 mod dao;
 mod schema;
 mod tests;
