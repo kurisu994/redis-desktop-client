@@ -7,9 +7,10 @@ use redis::{Client, Connection, RedisResult};
 use tauri::async_runtime::Mutex;
 
 use crate::dao::models::ServerInfo;
+use crate::dao::server;
 
 lazy_static! {
-    static ref CON_INFO_MAP: Arc<Mutex<HashMap<i32,redis::Client>>> = Arc::new(Mutex::new(HashMap::new()));
+    static ref CON_INFO_MAP: Arc<Mutex<HashMap<i32,(redis::Client,usize)>>> = Arc::new(Mutex::new(HashMap::new()));
 }
 
 
@@ -21,22 +22,22 @@ lazy_static! {
 ///
 /// returns: Result<Connection, RedisError>
 ///
-pub async fn get_redis_con(server: ServerInfo) -> RedisResult<Connection> {
-    let server_id = server.id;
-    let mut con_timeout = server.con_timeout;
-    if con_timeout <= 0 {
-        con_timeout = 60;
-    }
+pub async fn get_redis_con(server_id: i32) -> RedisResult<Connection> {
     let mut map = CON_INFO_MAP.lock().await;
     match map.get(&server_id) {
         None => {
             println!("init redis connection");
+            let server = server::query_by_id(server_id).expect("查询失败");
+            let mut con_timeout = server.con_timeout;
+            if con_timeout <= 0 {
+                con_timeout = 60;
+            }
             let cl = gen_client(server)?;
-            map.insert(server_id, cl.clone());
+            map.insert(server_id, (cl.clone(), con_timeout as usize));
             cl.get_connection_with_timeout(Duration::from_secs(con_timeout as u64))
         }
         Some(cl) => {
-            cl.get_connection_with_timeout(Duration::from_secs(con_timeout as u64))
+            cl.0.get_connection_with_timeout(Duration::from_secs(cl.1 as u64))
         }
     }
 }

@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::common::request::SimpleServerInfo;
     use crate::core::manager;
+    use crate::dao::db;
     use crate::dao::server::query_all;
 
     #[test]
@@ -12,15 +12,8 @@ mod tests {
 
     #[test]
     fn test_db() {
-        let simple = SimpleServerInfo {
-            host: "127.0.0.1".to_string(),
-            port: 6379,
-            username: None,
-            password: None,
-            con_timeout: 10,
-            execution_timeout: 10,
-        };
-        let db_key_count = manager::get_db_key_count(simple.transform_server_info()).unwrap();
-        println!("db1 key count: {:?}", db_key_count);
+        db::set_path("./db/redis-manger.db");
+        let data = manager::all_keys(1, 1);
+        println!("{:?}", data);
     }
 }

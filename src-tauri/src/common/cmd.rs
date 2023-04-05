@@ -114,18 +114,17 @@ pub fn test_con(info: Option<SimpleServerInfo>) -> CmdResult<bool> {
 ///
 #[tauri::command]
 pub fn read_redis_dbs(id: i32) -> CmdResult<Vec<RedisDatabase>> {
-    let server_info = server::query_by_id(id)?;
-    let res = manager::get_db_key_count(server_info);
+    let res = manager::get_db_key_count(id);
     Ok(wrap_err!(res)?)
 }
 
 /// 关闭redis
-/// 
-/// # Arguments 
-/// 
+///
+/// # Arguments
+///
 /// * `id`: redis服务器id
-/// 
-/// returns: Result<(), String> 
+///
+/// returns: Result<(), String>
 #[tauri::command]
 pub fn close_redis(id: i32) -> CmdResult {
     let _ = manager::disconnect_redis(id);

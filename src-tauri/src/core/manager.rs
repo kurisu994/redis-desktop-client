@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::Duration;
 
-use redis::{ConnectionLike, RedisResult};
+use redis::{Commands, ConnectionLike, RedisResult};
 use tauri::async_runtime::block_on;
 
 use crate::core::models::RedisDatabase;
@@ -49,8 +49,8 @@ pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
 ///
 /// returns: Result<Vec<RedisDatabase, Global>, RedisError>
 ///
-pub fn get_db_key_count(server: ServerInfo) -> RedisResult<Vec<RedisDatabase>> {
-    let conn = &mut block_on(redis_helper::get_redis_con(server))?;
+pub fn get_db_key_count(server_id: i32) -> RedisResult<Vec<RedisDatabase>> {
+    let conn = &mut block_on(redis_helper::get_redis_con(server_id))?;
 
     let (_, db_size): (String, String) = redis::cmd("CONFIG")
         .arg("GET")
@@ -83,13 +83,32 @@ pub fn get_db_key_count(server: ServerInfo) -> RedisResult<Vec<RedisDatabase>> {
 
 
 /// 关闭一个redis连接
-/// 
-/// # Arguments 
-/// 
+///
+/// # Arguments
+///
 /// * `id`: redis服务器id
-/// 
+///
 /// returns: Result<(), RedisError>
 pub fn disconnect_redis(id: i32) -> RedisResult<()> {
-     block_on(redis_helper::disconnect_con(id));
+    block_on(redis_helper::disconnect_con(id));
     Ok(())
+}
+
+/// 查询指定数据库的所有key
+///
+/// # Arguments 
+///
+/// * `id`: redis服务器id
+/// * `db`: 数据库下标
+///
+/// returns: Result<Vec<String, Global>, RedisError>
+pub fn all_keys(id: i32, db: i64) -> RedisResult<Vec<String>> {
+    let conn = &mut block_on(redis_helper::get_redis_con(id))?;
+    let keys: Vec<String> = if conn.get_db().eq(&db) {
+        conn.keys("*")?
+    } else {
+        redis::cmd("SELECT").arg(db).query(conn)?;
+        conn.keys("*")?
+    };
+    Ok(keys)
 }
