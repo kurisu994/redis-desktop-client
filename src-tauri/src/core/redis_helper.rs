@@ -1,8 +1,17 @@
+use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
 
+use lazy_static::lazy_static;
 use redis::{Client, Connection, RedisResult};
+use tauri::async_runtime::Mutex;
 
 use crate::dao::models::ServerInfo;
+
+lazy_static! {
+    static ref CON_INFO_MAP: Arc<Mutex<HashMap<i32,redis::Client>>> = Arc::new(Mutex::new(HashMap::new()));
+}
+
 
 ///
 /// 打开redis连接
@@ -12,13 +21,37 @@ use crate::dao::models::ServerInfo;
 ///
 /// returns: Result<Connection, RedisError>
 ///
-pub fn get_redis_con(server: ServerInfo) -> RedisResult<Connection> {
+pub async fn get_redis_con(server: ServerInfo) -> RedisResult<Connection> {
+    let server_id = server.id;
     let mut con_timeout = server.con_timeout;
     if con_timeout <= 0 {
         con_timeout = 60;
     }
-    let client = gen_client(server)?;
-    client.get_connection_with_timeout(Duration::from_secs(con_timeout as u64))
+    let mut map = CON_INFO_MAP.lock().await;
+    match map.get(&server_id) {
+        None => {
+            println!("init redis connection");
+            let cl = gen_client(server)?;
+            map.insert(server_id, cl.clone());
+            cl.get_connection_with_timeout(Duration::from_secs(con_timeout as u64))
+        }
+        Some(cl) => {
+            cl.get_connection_with_timeout(Duration::from_secs(con_timeout as u64))
+        }
+    }
+}
+
+/// 断开一个redis服务的连接
+///
+/// # Arguments
+///
+/// * `server_id`: redis服务器id
+///
+/// returns: ()
+///
+pub async fn disconnect_con(server_id: i32) {
+    let mut map = CON_INFO_MAP.lock().await;
+    map.remove(&server_id);
 }
 
 /// 创建redis client
@@ -29,7 +62,7 @@ pub fn get_redis_con(server: ServerInfo) -> RedisResult<Connection> {
 ///
 /// returns: Result<Client, RedisError>
 ///
-fn gen_client(server: ServerInfo) -> RedisResult<Client> {
+pub fn gen_client(server: ServerInfo) -> RedisResult<Client> {
     let host = server.host;
     let port = server.port;
     let password = server.password;

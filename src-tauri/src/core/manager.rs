@@ -3,6 +3,7 @@ use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::Duration;
 
 use redis::{ConnectionLike, RedisResult};
+use tauri::async_runtime::block_on;
 
 use crate::core::models::RedisDatabase;
 use crate::core::redis_helper;
@@ -24,21 +25,32 @@ pub fn set_refresh_interval(interval: i32) {
 /// returns: RedisResult<bool>
 ///
 pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
-    let con_timeout = server.con_timeout as u64;
-    let execution_timeout = server.execution_timeout as u64;
-    let mut con = redis_helper::get_redis_con(server)?;
-    if con_timeout > 0 {
-        con.set_read_timeout(Some(Duration::from_secs(con_timeout)))?;
+    let mut con_timeout = server.con_timeout as u64;
+    if con_timeout <= 0 {
+        con_timeout = 60;
     }
+    let execution_timeout = server.execution_timeout as u64;
+    let mut con = redis_helper::gen_client(server)?
+        .get_connection_with_timeout(Duration::from_secs(con_timeout))?;
+
     if execution_timeout > 0 {
+        con.set_read_timeout(Some(Duration::from_secs(execution_timeout)))?;
         con.set_write_timeout(Some(Duration::from_secs(execution_timeout)))?;
     }
 
     Ok(con.check_connection())
 }
 
-pub fn get_db_key_count(info: ServerInfo) -> RedisResult<Vec<RedisDatabase>> {
-    let conn = &mut redis_helper::get_redis_con(info)?;
+/// 查询redis所有数据库及每个数据库的key的数量
+///
+/// # Arguments
+///
+/// * `info`: redis server信息
+///
+/// returns: Result<Vec<RedisDatabase, Global>, RedisError>
+///
+pub fn get_db_key_count(server: ServerInfo) -> RedisResult<Vec<RedisDatabase>> {
+    let conn = &mut block_on(redis_helper::get_redis_con(server))?;
 
     let (_, db_size): (String, String) = redis::cmd("CONFIG")
         .arg("GET")
@@ -67,4 +79,17 @@ pub fn get_db_key_count(info: ServerInfo) -> RedisResult<Vec<RedisDatabase>> {
     }
 
     Ok(db_list)
+}
+
+
+/// 关闭一个redis连接
+/// 
+/// # Arguments 
+/// 
+/// * `id`: redis服务器id
+/// 
+/// returns: Result<(), RedisError>
+pub fn disconnect_redis(id: i32) -> RedisResult<()> {
+     block_on(redis_helper::disconnect_con(id));
+    Ok(())
 }

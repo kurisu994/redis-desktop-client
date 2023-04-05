@@ -1,9 +1,9 @@
+use crate::{ret_err, wrap_err};
 use crate::common::request::SimpleServerInfo;
 use crate::core::manager;
 use crate::core::models::RedisDatabase;
-use crate::dao::models::{NewServer, ServerInfo, Settings};
 use crate::dao::{server, setting};
-use crate::{ret_err, wrap_err};
+use crate::dao::models::{NewServer, ServerInfo, Settings};
 
 type CmdResult<T = ()> = Result<T, String>;
 
@@ -117,6 +117,19 @@ pub fn read_redis_dbs(id: i32) -> CmdResult<Vec<RedisDatabase>> {
     let server_info = server::query_by_id(id)?;
     let res = manager::get_db_key_count(server_info);
     Ok(wrap_err!(res)?)
+}
+
+/// 关闭redis
+/// 
+/// # Arguments 
+/// 
+/// * `id`: redis服务器id
+/// 
+/// returns: Result<(), String> 
+#[tauri::command]
+pub fn close_redis(id: i32) -> CmdResult {
+    let _ = manager::disconnect_redis(id);
+    Ok(())
 }
 
 ///  读取redis服务器的状态

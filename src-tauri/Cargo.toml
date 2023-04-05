@@ -18,12 +18,12 @@ serde = { version = "^1.0.158", features = ["derive"] }
 tauri = { version = "1.2", features = ["devtools", "dialog-all", "shell-open", "system-tray"] }
 diesel = { version = "^2.0.3", features = ["sqlite", "uuid"] }
 diesel_migrations = { version = "^2.0.0", features = ["sqlite"] }
-tokio = { version = "^1.27.0", features = ["full"] }
-redis = { version = "^0.22.0", features = ["tokio-comp"] }
+redis = "^0.23.0"
 chrono = "^0.4.24"
 log4rs = "^1.2.0"
-log = "0.4.17"
-anyhow = "1.0.70"
+log = "^0.4.17"
+anyhow = "^1.0.70"
+lazy_static = "^1.4.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
