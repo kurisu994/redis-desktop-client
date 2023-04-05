@@ -27,7 +27,6 @@ pub fn parse_str<T: FromStr>(target: &str, key: &str, split: Option<&str>) -> Op
     })
 }
 
-
 #[macro_export]
 macro_rules! error {
     ($result: expr) => {

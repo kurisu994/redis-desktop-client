@@ -1,9 +1,9 @@
-use crate::{ret_err, wrap_err};
 use crate::common::request::SimpleServerInfo;
 use crate::core::manager;
 use crate::core::models::RedisDatabase;
-use crate::dao::{server, setting};
 use crate::dao::models::{NewServer, ServerInfo, Settings};
+use crate::dao::{server, setting};
+use crate::{ret_err, wrap_err};
 
 type CmdResult<T = ()> = Result<T, String>;
 

@@ -40,7 +40,10 @@ pub fn test_server_info(server: ServerInfo) -> RedisResult<bool> {
 pub fn get_db_key_count(info: ServerInfo) -> RedisResult<Vec<RedisDatabase>> {
     let conn = &mut redis_helper::get_redis_con(info)?;
 
-    let (_, db_size): (String, String) = redis::cmd("CONFIG").arg("GET").arg("databases").query(conn)?;
+    let (_, db_size): (String, String) = redis::cmd("CONFIG")
+        .arg("GET")
+        .arg("databases")
+        .query(conn)?;
     let db_size: usize = db_size.parse::<usize>().unwrap_or(0);
     let mut db_list: Vec<RedisDatabase> = Vec::with_capacity(db_size);
 
