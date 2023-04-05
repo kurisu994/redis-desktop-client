@@ -8,7 +8,6 @@ static APP_DIR: &str = "core-manger";
 #[cfg(feature = "redis-manager-dev")]
 static APP_DIR: &str = "core-manger-dev";
 
-
 /// get the verge app home dir
 pub fn app_home_dir() -> Result<PathBuf> {
     #[cfg(target_os = "windows")]
@@ -40,15 +39,13 @@ pub fn app_home_dir() -> Result<PathBuf> {
 /// profiles dir
 #[cfg(feature = "redis-manager-dev")]
 pub fn app_db_dir() -> Result<PathBuf> {
-    Ok(PathBuf::from("./.db"))
+    Ok(PathBuf::from("./db"))
 }
 
 /// profiles dir
 #[cfg(not(feature = "redis-manager-dev"))]
 pub fn app_db_dir() -> Result<PathBuf> {
-    Ok(app_home_dir()?
-        .join("db")
-    )
+    Ok(app_home_dir()?.join("db"))
 }
 
 /// logs dir

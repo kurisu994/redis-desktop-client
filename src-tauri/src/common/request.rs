@@ -15,6 +15,9 @@ pub struct SimpleServerInfo {
     // 连接超时
     #[serde(rename = "conTimeout")]
     pub con_timeout: i32,
+    // 执行超时
+    #[serde(rename = "executionTimeout")]
+    pub execution_timeout: i32,
 }
 
 impl SimpleServerInfo {
@@ -31,7 +34,7 @@ impl SimpleServerInfo {
             key_filter: "".to_string(),
             delimiter: "".to_string(),
             con_timeout: self.con_timeout,
-            execution_timeout: 0,
+            execution_timeout: self.execution_timeout,
         }
     }
 }

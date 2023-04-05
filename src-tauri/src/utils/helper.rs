@@ -12,21 +12,21 @@ use std::str::FromStr;
 /// # Examples
 ///
 /// ```
-/// let data = parse_str::<usize>("xxx=123123;","xxx=");
+/// let data = parse_str::<usize>("xxx=123123;","xxx=", None);
 ///  assert_eq!(data.unwrap(), 123123);
 /// ```
-pub fn parse_str<T: FromStr>(target: &str, key: &str) -> Option<T> {
+pub fn parse_str<T: FromStr>(target: &str, key: &str, split: Option<&str>) -> Option<T> {
     target.find(key).and_then(|idx| {
         let idx = idx + key.len();
         let value = &target[idx..];
-
-        match value.split(';').nth(0) {
+        match value.split(split.unwrap_or(";")).nth(0) {
             Some(value) => value.trim().parse(),
             None => value.trim().parse(),
         }
-            .ok()
+        .ok()
     })
 }
+
 
 #[macro_export]
 macro_rules! error {
@@ -74,20 +74,19 @@ macro_rules! ret_err {
 
 #[test]
 fn test_parse_value() {
-    let test_1 = "db0:upload=111; download=2222; total=3333; expire=444";
+    let test_1 = "db0:keys=7,expires=5,avg_ttl=10";
     let test_2 = "attachment; filename=config.yaml";
 
-    assert_eq!(parse_str::<usize>(test_1, "upload=").unwrap(), 111);
-    assert_eq!(parse_str::<usize>(test_1, "download=").unwrap(), 2222);
-    assert_eq!(parse_str::<usize>(test_1, "total=").unwrap(), 3333);
-    assert_eq!(parse_str::<usize>(test_1, "expire=").unwrap(), 444);
+    assert_eq!(parse_str::<usize>(test_1, "keys=", None).unwrap(), 7);
+    assert_eq!(parse_str::<usize>(test_1, "expires=", None).unwrap(), 5);
+    assert_eq!(parse_str::<usize>(test_1, "avg_ttl=", None).unwrap(), 10);
     assert_eq!(
-        parse_str::<String>(test_2, "filename=").unwrap(),
+        parse_str::<String>(test_2, "filename=", None).unwrap(),
         format!("config.yaml")
     );
 
-    assert_eq!(parse_str::<usize>(test_1, "aaa="), None);
-    assert_eq!(parse_str::<usize>(test_1, "upload1="), None);
-    assert_eq!(parse_str::<usize>(test_1, "expire1="), None);
-    assert_eq!(parse_str::<usize>(test_2, "attachment="), None);
+    assert_eq!(parse_str::<usize>(test_1, "aaa=", None), None);
+    assert_eq!(parse_str::<usize>(test_1, "upload1=", None), None);
+    assert_eq!(parse_str::<usize>(test_1, "expire1=", None), None);
+    assert_eq!(parse_str::<usize>(test_2, "attachment=", None), None);
 }

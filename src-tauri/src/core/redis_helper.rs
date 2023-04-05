@@ -12,7 +12,7 @@ use crate::dao::models::ServerInfo;
 ///
 /// returns: Result<Connection, RedisError>
 ///
-pub fn open_redis(server: ServerInfo) -> RedisResult<Connection> {
+pub fn get_redis_con(server: ServerInfo) -> RedisResult<Connection> {
     let mut con_timeout = server.con_timeout;
     if con_timeout <= 0 {
         con_timeout = 60;
@@ -54,6 +54,6 @@ fn gen_client(server: ServerInfo) -> RedisResult<Client> {
     uri.push_str(":");
     uri.push_str(&port.to_string());
 
-    println!("uri: {}", uri);
+    log::info!("uri: {}", uri);
     Client::open(uri)
 }

@@ -17,7 +17,7 @@ impl<'a> IEnum<'a, Self> for Theme {
             1 => Ok(Theme::AUTO),
             2 => Ok(Theme::LIGHT),
             3 => Ok(Theme::DARK),
-            _ => { Err("can't find this theme") }
+            _ => Err("can't find this theme"),
         }
     }
 
@@ -27,9 +27,9 @@ impl<'a> IEnum<'a, Self> for Theme {
 
     fn to_value(&self) -> i32 {
         match self {
-            Theme::AUTO => { 1 }
-            Theme::LIGHT => { 2 }
-            Theme::DARK => { 3 }
+            Theme::AUTO => 1,
+            Theme::LIGHT => 2,
+            Theme::DARK => 3,
         }
     }
 }
@@ -56,7 +56,7 @@ impl<'a> IEnum<'a, Self> for TtlPolicy {
             3 => Ok(TtlPolicy::PEXPIRE),
             4 => Ok(TtlPolicy::PEXPIREAT),
             5 => Ok(TtlPolicy::PERSIST),
-            _ => { Err("can't find this TtlType") }
+            _ => Err("can't find this TtlType"),
         }
     }
 
@@ -66,11 +66,11 @@ impl<'a> IEnum<'a, Self> for TtlPolicy {
 
     fn to_value(&self) -> i32 {
         match self {
-            TtlPolicy::EXPIRE => { 1 }
-            TtlPolicy::EXPIREAT => { 2 }
-            TtlPolicy::PEXPIRE => { 3 }
-            TtlPolicy::PEXPIREAT => { 4 }
-            TtlPolicy::PERSIST => { 5 }
+            TtlPolicy::EXPIRE => 1,
+            TtlPolicy::EXPIREAT => 2,
+            TtlPolicy::PEXPIRE => 3,
+            TtlPolicy::PEXPIREAT => 4,
+            TtlPolicy::PERSIST => 5,
         }
     }
 }
@@ -78,11 +78,11 @@ impl<'a> IEnum<'a, Self> for TtlPolicy {
 impl TtlPolicy {
     fn to_redis_expiry(&self, ttl: usize) -> redis::Expiry {
         match self {
-            TtlPolicy::EXPIRE => { redis::Expiry::EX(ttl) }
-            TtlPolicy::EXPIREAT => { redis::Expiry::EXAT(ttl) }
-            TtlPolicy::PEXPIRE => { redis::Expiry::PX(ttl) }
-            TtlPolicy::PEXPIREAT => { redis::Expiry::PXAT(ttl) }
-            TtlPolicy::PERSIST => { redis::Expiry::PERSIST }
+            TtlPolicy::EXPIRE => redis::Expiry::EX(ttl),
+            TtlPolicy::EXPIREAT => redis::Expiry::EXAT(ttl),
+            TtlPolicy::PEXPIRE => redis::Expiry::PX(ttl),
+            TtlPolicy::PEXPIREAT => redis::Expiry::PXAT(ttl),
+            TtlPolicy::PERSIST => redis::Expiry::PERSIST,
         }
     }
 }
@@ -112,7 +112,7 @@ impl<'a> IEnum<'a, Self> for RedisKeyType {
             7 => Ok(RedisKeyType::BITMAP),
             8 => Ok(RedisKeyType::HYPERLOGLOG),
             9 => Ok(RedisKeyType::STREAM),
-            _ => { Err("can't analyze this type") }
+            _ => Err("can't analyze this type"),
         }
     }
 
@@ -122,15 +122,15 @@ impl<'a> IEnum<'a, Self> for RedisKeyType {
 
     fn to_value(&self) -> i32 {
         match self {
-            RedisKeyType::STRING => { 1 }
-            RedisKeyType::LIST => { 2 }
-            RedisKeyType::SET => { 3 }
-            RedisKeyType::ZSET => { 4 }
-            RedisKeyType::HASH => { 5 }
-            RedisKeyType::GEO => { 6 }
-            RedisKeyType::BITMAP => { 7 }
-            RedisKeyType::HYPERLOGLOG => { 8 }
-            RedisKeyType::STREAM => { 9 }
+            RedisKeyType::STRING => 1,
+            RedisKeyType::LIST => 2,
+            RedisKeyType::SET => 3,
+            RedisKeyType::ZSET => 4,
+            RedisKeyType::HASH => 5,
+            RedisKeyType::GEO => 6,
+            RedisKeyType::BITMAP => 7,
+            RedisKeyType::HYPERLOGLOG => 8,
+            RedisKeyType::STREAM => 9,
         }
     }
 }

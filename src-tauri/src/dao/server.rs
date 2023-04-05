@@ -1,6 +1,6 @@
-use diesel::{RunQueryDsl, SqliteConnection};
 use diesel::prelude::*;
 use diesel::sql_types::{Integer, Text};
+use diesel::{RunQueryDsl, SqliteConnection};
 
 use crate::dao::db;
 use crate::dao::models::{NewServer, ServerInfo};
@@ -30,20 +30,20 @@ pub fn query_all(kw: &str) -> QueryResult<Vec<ServerInfo>> {
         key_filter,delimiter,con_timeout,execution_timeout \
         from connections where name like ? order by id asc",
     )
-        .bind::<Text, _>(key_word);
+    .bind::<Text, _>(key_word);
     let con = &mut db::establish_connection();
     sql_query.load::<ServerInfo>(con)
 }
 
 ///
 /// 根据id查询连接信息
-/// # Arguments 
+/// # Arguments
 ///
 /// * `server_id`: 主键id
 ///
-/// returns: Result<ServerInfo, String> 
+/// returns: Result<ServerInfo, String>
 ///
-/// # Examples 
+/// # Examples
 ///
 /// ```
 /// query_by_id(1)
@@ -54,7 +54,8 @@ pub fn query_by_id(server_id: i32) -> Result<ServerInfo, String> {
         id,name,host,port,username,password,read_only,security_type,\
         key_filter,delimiter,con_timeout,execution_timeout \
         from connections where id=?",
-    ).bind::<Integer, _>(server_id);
+    )
+    .bind::<Integer, _>(server_id);
 
     let con = &mut db::establish_connection();
     match sql_query.get_result::<ServerInfo>(con) {
@@ -97,7 +98,9 @@ pub fn delete_by_id(id_no: i32) -> QueryResult<usize> {
 
 /// 新增数据
 fn inert(data: NewServer, con: &mut SqliteConnection) -> QueryResult<usize> {
-    diesel::insert_into(con_dsl::connections).values(data).execute(con)
+    diesel::insert_into(con_dsl::connections)
+        .values(data)
+        .execute(con)
 }
 
 /// 修改数据

@@ -1,6 +1,7 @@
 use crate::{ret_err, wrap_err};
 use crate::common::request::SimpleServerInfo;
 use crate::core::manager;
+use crate::core::models::RedisDatabase;
 use crate::dao::{server, setting};
 use crate::dao::models::{NewServer, ServerInfo, Settings};
 
@@ -112,10 +113,10 @@ pub fn test_con(info: Option<SimpleServerInfo>) -> CmdResult<bool> {
 /// returns: ()
 ///
 #[tauri::command]
-pub fn read_redis_dbs(id: i32) -> CmdResult {
-    let server_info = server::query_by_id(id);
-    println!("core server info is {:?}", server_info);
-    Ok(())
+pub fn read_redis_dbs(id: i32) -> CmdResult<Vec<RedisDatabase>> {
+    let server_info = server::query_by_id(id)?;
+    let res = manager::get_db_key_count(server_info);
+    Ok(wrap_err!(res)?)
 }
 
 ///  读取redis服务器的状态
@@ -146,8 +147,16 @@ pub fn read_redis_status(id: i32) -> CmdResult {
 ///
 ///
 #[tauri::command(rename_all = "snake_case")]
-pub fn read_redis_key_tree(id: i32, db: i32, delimiter: String, execution_timeout: i32) -> CmdResult {
-    println!("query id {} db is {}, delimiter is {}, execution_timeout is {}", id, db, delimiter, execution_timeout);
+pub fn read_redis_key_tree(
+    id: i32,
+    db: i32,
+    delimiter: String,
+    execution_timeout: i32,
+) -> CmdResult {
+    println!(
+        "query id {} db is {}, delimiter is {}, execution_timeout is {}",
+        id, db, delimiter, execution_timeout
+    );
     Ok(())
 }
 
@@ -180,7 +189,10 @@ pub fn read_redis_value(id: i32, key: String) -> CmdResult {
 ///
 #[tauri::command]
 pub fn update_redis_key_ttl(id: i32, key: String, policy: u8, ttl: u32) -> CmdResult {
-    println!("core({}) key is {} ttl_type {} ttl {}", id, key, policy, ttl);
+    println!(
+        "core({}) key is {} ttl_type {} ttl {}",
+        id, key, policy, ttl
+    );
     Ok(())
 }
 

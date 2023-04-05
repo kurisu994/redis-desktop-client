@@ -1,5 +1,5 @@
-use diesel::{Insertable, Queryable, QueryableByName};
 use diesel::sql_types::*;
+use diesel::{Insertable, Queryable, QueryableByName};
 use serde::{Deserialize, Serialize};
 
 use crate::schema::{connections, setting};

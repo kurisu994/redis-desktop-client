@@ -3,23 +3,23 @@ use std::fs;
 use anyhow::Result;
 use chrono::Local;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
+use log::LevelFilter;
 use log4rs::append::console::ConsoleAppender;
 use log4rs::append::file::FileAppender;
 use log4rs::config::{Appender, Config, Logger, Root};
 use log4rs::encode::pattern::PatternEncoder;
-use log::LevelFilter;
 
 use crate::dao::db;
 use crate::dao::setting::init_setting;
 use crate::utils::dirs;
 
-static DATE_BASE: &str = "core-manger.db";
+static DATE_BASE: &str = "redis-manger.db";
 
 pub fn init_application(migrations_source: EmbeddedMigrations) -> Result<()> {
     #[cfg(feature = "redis-manager-dev")]
-        let _ = init_log(LevelFilter::Debug);
+    let _ = init_log(LevelFilter::Debug);
     #[cfg(not(feature = "redis-manager-dev"))]
-        let _ = init_log(LevelFilter::Info);
+    let _ = init_log(LevelFilter::Info);
 
     crate::log_err!(dirs::app_home_dir().map(|app_dir| {
         if !app_dir.exists() {
@@ -49,7 +49,6 @@ fn init_data_base(migrations_source: EmbeddedMigrations) -> Result<()> {
     Ok(())
 }
 
-
 /// initialize this instance's log file
 fn init_log(level: LevelFilter) -> Result<()> {
     let log_dir = dirs::app_logs_dir()?;
@@ -62,14 +61,13 @@ fn init_log(level: LevelFilter) -> Result<()> {
     let log_file = log_dir.join(log_file);
 
     #[cfg(feature = "redis-manager-dev")]
-        let time_format = "{d(%Y-%m-%d %H:%M:%S)} {l} - {M} {m}{n}";
+    let time_format = "{d(%Y-%m-%d %H:%M:%S)} {l} - {M} {m}{n}";
     #[cfg(not(feature = "redis-manager-dev"))]
-        let time_format = "{d(%Y-%m-%d %H:%M:%S)} {l} - {m}{n}";
+    let time_format = "{d(%Y-%m-%d %H:%M:%S)} {l} - {m}{n}";
 
     let encode = Box::new(PatternEncoder::new(time_format));
     let stdout = ConsoleAppender::builder().encoder(encode.clone()).build();
     let tofile = FileAppender::builder().encoder(encode).build(log_file)?;
-
 
     let config = Config::builder()
         .appender(Appender::builder().build("stdout", Box::new(stdout)))

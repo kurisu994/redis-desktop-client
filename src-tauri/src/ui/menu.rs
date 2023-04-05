@@ -14,7 +14,10 @@ impl AppMenu {
                 .add_native_item(MenuItem::Hide)
                 .add_native_item(MenuItem::HideOthers)
                 .add_native_item(MenuItem::Separator)
-                .add_item(CustomMenuItem::new("quit".to_string(), "Quit Redis Manager").accelerator("CmdOrControl+Q")),
+                .add_item(
+                    CustomMenuItem::new("quit".to_string(), "Quit Redis Manager")
+                        .accelerator("CmdOrControl+Q"),
+                ),
         );
 
         let file_menu = Submenu::new(

@@ -1,69 +1,17 @@
 #[cfg(test)]
 mod tests {
-    use redis::RedisResult;
-
-    use crate::common::cmd::test_con;
     use crate::common::request::SimpleServerInfo;
-    use crate::dao::models::ServerInfo;
+    use crate::core::manager;
     use crate::dao::server::query_all;
-    use crate::dao::setting::query;
-    use crate::core::redis_helper;
-    use crate::utils::helper::parse_str;
 
     pub fn all_list() {
         let result = query_all("").unwrap();
         println!("{:?}", result);
     }
 
-    fn get_db_key_count(info: ServerInfo) -> RedisResult<Vec<i32>> {
-        let conn = &mut redis_helper::open_redis(info)?;
-
-        let response: String = redis::cmd("INFO").arg("keyspace").query(conn)?;
-        let db_info = response.split('\n')
-            .filter(|line| line.starts_with("db"))
-            .map(|line| {
-                let parts: Vec<&str> = line.split(',').collect();
-                let key_count = parts.iter()
-                    .find(|part| part.starts_with("db"))
-                    .map(|keys| {
-                        parse_str::<i32>(keys, "keys=").unwrap_or(0)
-                    })
-                    .unwrap_or(0);
-                key_count
-            })
-            .collect();
-
-        Ok(db_info)
-    }
-
     #[test]
     fn test_get_all() {
         all_list();
-    }
-
-
-    #[test]
-    fn test_query_setting() {
-        match query() {
-            Ok(data) => {
-                println!("data: {:?}", data);
-            }
-            Err(e) => {
-                println!("err: {:?}", e);
-            }
-        }
-    }
-
-    #[test]
-    fn test_redis_uri() {
-        let res = test_con(Some(SimpleServerInfo {
-            host: "127.0.0.1".to_string(),
-            port: 6379,
-            username: None,
-            password: None,
-            con_timeout: 10,
-        }));
-        println!("res: {:?}", res);
     }
 
     #[test]
@@ -74,11 +22,10 @@ mod tests {
             username: None,
             password: None,
             con_timeout: 10,
+            execution_timeout: 10,
         };
-        let db_key_count = get_db_key_count(simple.transform_server_info()).unwrap();
-        for (i, count) in db_key_count.iter().enumerate() {
-            println!("Database {}: {} keys", i, count);
-        }
+        let db_key_count = manager::get_db_key_count(simple.transform_server_info()).unwrap();
+        println!("db key count: {:?}", db_key_count);
     }
 
     #[test]

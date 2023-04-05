@@ -4,12 +4,12 @@
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use tauri::{GlobalWindowEvent, Manager, Theme, WindowEvent, Wry};
 
+mod common;
 mod core;
 mod dao;
 mod schema;
 mod tests;
 mod ui;
-mod common;
 mod utils;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");

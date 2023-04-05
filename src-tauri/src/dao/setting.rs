@@ -2,9 +2,9 @@ use diesel::prelude::*;
 use diesel::RunQueryDsl;
 
 use crate::common::enums::{IEnum, Theme};
+use crate::core::manager::set_refresh_interval;
 use crate::dao::db;
 use crate::dao::models::Settings;
-use crate::core::manager::set_refresh_interval;
 use crate::schema::setting::dsl as setting_dsl;
 
 ///
@@ -52,7 +52,6 @@ pub fn update(data: Settings) -> Result<bool, String> {
     }
 }
 
-
 /// 初始化设置信息
 ///
 /// # Arguments
@@ -75,6 +74,7 @@ pub fn init_setting(con: &mut SqliteConnection) {
         };
         diesel::insert_or_ignore_into(setting_dsl::setting)
             .values(default_setting)
-            .execute(con).unwrap();
+            .execute(con)
+            .unwrap();
     }
 }
