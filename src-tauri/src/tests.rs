@@ -13,7 +13,14 @@ mod tests {
     #[test]
     fn test_db() {
         db::set_path("./db/redis-manger.db");
-        let data = manager::all_keys(1, 1);
+        let data = manager::all_keys_by_pattern(1, 0, "*:shop*");
+        println!("{:?}", data);
+    }
+
+    #[test]
+    fn test_key_value() {
+        db::set_path("./db/redis-manger.db");
+        let data = manager::get_value_by_key(1, 0, "erp:group:lat");
         println!("{:?}", data);
     }
 }

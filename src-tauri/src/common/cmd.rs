@@ -1,9 +1,9 @@
-use crate::{ret_err, wrap_err};
 use crate::common::request::SimpleServerInfo;
 use crate::core::manager;
 use crate::core::models::RedisDatabase;
-use crate::dao::{server, setting};
 use crate::dao::models::{NewServer, ServerInfo, Settings};
+use crate::dao::{server, setting};
+use crate::{ret_err, wrap_err};
 
 type CmdResult<T = ()> = Result<T, String>;
 
@@ -143,6 +143,27 @@ pub fn read_redis_status(id: i32) -> CmdResult {
     let server_info = server::query_by_id(id);
     println!("core server info is {:?}", server_info);
     Ok(())
+}
+
+/// 查询选中db的所有key
+///
+/// # Arguments
+///
+/// * `id`: core server id
+/// * `db`: db编号
+/// * `kw`: 搜索条件
+///
+/// returns: ()
+///
+///
+#[tauri::command(rename_all = "snake_case")]
+pub fn read_redis_key_list(id: i32, db: i32, kw: Option<String>) -> CmdResult<Vec<String>> {
+    let key_list = wrap_err!(manager::all_keys_by_pattern(
+        id,
+        db as i64,
+        &kw.unwrap_or(String::from("*"))
+    ))?;
+    Ok(key_list)
 }
 
 /// 查询选中db的所有key树

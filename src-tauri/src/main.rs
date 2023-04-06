@@ -58,6 +58,7 @@ fn main() {
             common::cmd::test_con,
             common::cmd::read_redis_dbs,
             common::cmd::read_redis_status,
+            common::cmd::read_redis_key_list,
             common::cmd::read_redis_key_tree,
             common::cmd::close_redis,
             common::cmd::read_redis_value,

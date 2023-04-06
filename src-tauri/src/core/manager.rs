@@ -5,10 +5,12 @@ use std::time::Duration;
 use redis::{Commands, ConnectionLike, RedisResult};
 use tauri::async_runtime::block_on;
 
-use crate::core::models::RedisDatabase;
+use crate::common::enums::{IEnum, RedisKeyType, TtlPolicy};
+use crate::core::models::{KeyValue, RedisDatabase, RedisValue, RedisValueTrait};
 use crate::core::redis_helper;
 use crate::dao::models::ServerInfo;
 use crate::utils::helper::parse_str;
+use crate::wrap_err;
 
 pub static REFRESH_INTERVAL: AtomicI32 = AtomicI32::new(0);
 
@@ -81,7 +83,6 @@ pub fn get_db_key_count(server_id: i32) -> RedisResult<Vec<RedisDatabase>> {
     Ok(db_list)
 }
 
-
 /// 关闭一个redis连接
 ///
 /// # Arguments
@@ -96,19 +97,56 @@ pub fn disconnect_redis(id: i32) -> RedisResult<()> {
 
 /// 查询指定数据库的所有key
 ///
-/// # Arguments 
+/// # Arguments
 ///
 /// * `id`: redis服务器id
 /// * `db`: 数据库下标
 ///
 /// returns: Result<Vec<String, Global>, RedisError>
-pub fn all_keys(id: i32, db: i64) -> RedisResult<Vec<String>> {
+pub fn all_keys_by_pattern(id: i32, db: i64, pattern: &str) -> RedisResult<Vec<String>> {
     let conn = &mut block_on(redis_helper::get_redis_con(id))?;
     let keys: Vec<String> = if conn.get_db().eq(&db) {
-        conn.keys("*")?
+        conn.scan_match(pattern)?.collect()
     } else {
         redis::cmd("SELECT").arg(db).query(conn)?;
-        conn.keys("*")?
+        conn.scan_match(pattern)?.collect()
     };
     Ok(keys)
+}
+
+pub fn get_value_by_key(id: i32, db: i64, key: &str) -> Result<RedisValue, String> {
+    let conn = &mut wrap_err!(block_on(redis_helper::get_redis_con(id)))?;
+    if conn.get_db().ne(&db) {
+        wrap_err!(redis::cmd("SELECT").arg(db).query(conn))?;
+    };
+    let exist: bool = wrap_err!(conn.exists(key))?;
+    if !exist {
+        return Ok(RedisValue::default(key));
+    }
+    let key_type: String = wrap_err!(redis::cmd("TYPE").arg(key).query(conn))?;
+    let key_type = RedisKeyType::from_str(&key_type)?;
+    let ttl = conn.ttl(key).unwrap_or(-2);
+
+    if ttl < -1 {
+        return Ok(RedisValue::default(key));
+    }
+//todo
+    match key_type {
+        RedisKeyType::STRING => {
+            let str_data: RedisResult<String> = conn.get(key);
+            match str_data {
+                Ok(str) => {}
+                Err(_) => {}
+            }
+        }
+        RedisKeyType::LIST => {}
+        RedisKeyType::SET => {}
+        RedisKeyType::ZSET => {}
+        RedisKeyType::HASH => {}
+        RedisKeyType::GEO => {}
+        RedisKeyType::BITMAP => {}
+        RedisKeyType::HYPERLOGLOG => {}
+        RedisKeyType::STREAM => {}
+    }
+    Ok(RedisValue::default(key))
 }

@@ -10,9 +10,9 @@ use crate::dao::models::ServerInfo;
 use crate::dao::server;
 
 lazy_static! {
-    static ref CON_INFO_MAP: Arc<Mutex<HashMap<i32,(redis::Client,usize)>>> = Arc::new(Mutex::new(HashMap::new()));
+    static ref CON_INFO_MAP: Arc<Mutex<HashMap<i32, (redis::Client, usize)>>> =
+        Arc::new(Mutex::new(HashMap::new()));
 }
-
 
 ///
 /// 打开redis连接
