@@ -56,6 +56,7 @@ function EditModal({ visible, data, loading, onOk, onCancel }: Props) {
       'password',
       'username',
       'conTimeout',
+      'executionTimeout',
     ]);
     run({
       ..._data,

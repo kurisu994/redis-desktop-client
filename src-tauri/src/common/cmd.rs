@@ -30,7 +30,6 @@ pub fn all_con() -> CmdResult<Vec<ServerInfo>> {
 ///
 #[tauri::command(rename_all = "snake_case")]
 pub fn save_con(server: Option<NewServer>) -> CmdResult<usize> {
-    println!("{:?}", server);
     if let None = server {
         ret_err!("连接信息不能为空")
     }
@@ -79,7 +78,7 @@ pub fn query_setting() -> CmdResult<Settings> {
 ///
 #[tauri::command]
 pub fn update_setting(settings: Option<Settings>) -> CmdResult<bool> {
-    println!("{:?}", settings);
+    println!("settings data: {:?}", settings);
     if let None = settings {
         ret_err!("设置信息不能为空")
     }
