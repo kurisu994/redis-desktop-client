@@ -2,15 +2,17 @@
 
 A cross-platform redis gui client started developing with Tauri, React and Typescript in Vite.
 
+## 🚧 now is in construction
+
 ## Get Started
 
-#### Prerequisites
+### Prerequisites
 
 - Install Node.js. I recommend you to use Node 16+.
 - Install Rust. You can find way in [here](https://www.rust-lang.org/tools/install)
 - Follow the [Tauri setup guide](https://tauri.app/v1/guides/getting-started/prerequisites)
 
-#### Dependency
+### Dependency
 
 ```bash
 yarn
@@ -18,7 +20,7 @@ or
 npm install
 ```
 
-#### Develop Interface
+### Develop Interface
 
 ```bash
 yarn dev
@@ -26,7 +28,7 @@ or
 npm run dev
 ```
 
-#### Develop Client
+### Develop Client
 
 ```bash
 yarn tauri dev
@@ -34,7 +36,7 @@ or
 npm run tauri dev
 ```
 
-#### Build Client
+### Build Client
 
 ```bash
 yarn tauri build
