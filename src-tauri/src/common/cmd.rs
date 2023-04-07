@@ -1,6 +1,6 @@
 use crate::common::request::SimpleServerInfo;
 use crate::core::manager;
-use crate::core::models::RedisDatabase;
+use crate::core::models::{RedisDatabase, RedisValue};
 use crate::dao::models::{NewServer, ServerInfo, Settings};
 use crate::dao::{server, setting};
 use crate::{ret_err, wrap_err};
@@ -157,10 +157,10 @@ pub fn read_redis_status(id: i32) -> CmdResult {
 ///
 ///
 #[tauri::command(rename_all = "snake_case")]
-pub fn read_redis_key_list(id: i32, db: i32, kw: Option<String>) -> CmdResult<Vec<String>> {
+pub fn read_redis_key_list(id: i32, db: i64, kw: Option<String>) -> CmdResult<Vec<String>> {
     let key_list = wrap_err!(manager::all_keys_by_pattern(
         id,
-        db as i64,
+        db,
         &kw.unwrap_or(String::from("*"))
     ))?;
     Ok(key_list)
@@ -181,7 +181,7 @@ pub fn read_redis_key_list(id: i32, db: i32, kw: Option<String>) -> CmdResult<Ve
 #[tauri::command(rename_all = "snake_case")]
 pub fn read_redis_key_tree(
     id: i32,
-    db: i32,
+    db: i64,
     delimiter: String,
     execution_timeout: i32,
 ) -> CmdResult {
@@ -197,14 +197,15 @@ pub fn read_redis_key_tree(
 /// # Arguments
 ///
 /// * `id`: core server id
+/// * `db`: db下标
 /// * `key`: core key
 ///
 /// returns: ()
 ///
 #[tauri::command]
-pub fn read_redis_value(id: i32, key: String) -> CmdResult {
-    println!("core({}) key is {}", id, key);
-    Ok(())
+pub fn read_redis_value(id: i32, db: i64, key: String) -> CmdResult<RedisValue> {
+    log::info!("redis id and db is  ({}-{}) key is {}", id, db, key);
+    Ok(manager::get_value_by_key(id, db, &key)?)
 }
 
 ///

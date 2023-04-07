@@ -1,7 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
-use serde::{Deserialize, Serialize, Serializer};
 use serde::ser::SerializeStruct;
+use serde::{Deserialize, Serialize, Serializer};
+
 use crate::common::enums::{IEnum, RedisKeyType};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -20,7 +21,7 @@ pub enum KeyValue {
     STRING(String),
     LIST(Vec<String>),
     SET(HashSet<String>),
-    ZSET(HashSet<String, isize>),
+    ZSET(HashMap<String, isize>),
     HASH(HashMap<String, String>),
 }
 
@@ -34,8 +35,6 @@ pub struct RedisValue {
     pub value: KeyValue,
     /// 过期时间
     pub ttl: isize,
-    /// 所占空间
-    pub size: usize,
 }
 
 impl RedisValue {
@@ -45,14 +44,16 @@ impl RedisValue {
             key_type: RedisKeyType::STRING,
             value: KeyValue::Nil,
             ttl: -1,
-            size: 0,
         }
     }
 }
 
 impl Serialize for RedisValue {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-        let mut state = serializer.serialize_struct("RedisValue", 5)?;
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("RedisValue", 4)?;
         state.serialize_field("key", &self.key)?;
         state.serialize_field("keyType", &self.key_type.to_value())?;
         match &self.value {
@@ -74,8 +75,6 @@ impl Serialize for RedisValue {
             _ => {}
         }
         state.serialize_field("ttl", &self.ttl)?;
-        state.serialize_field("size", &self.size)?;
         state.end()
     }
 }
-

@@ -1,12 +1,12 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::Duration;
 
-use redis::{Commands, ConnectionLike, RedisResult};
+use redis::{Commands, Connection, ConnectionLike, RedisResult};
 use tauri::async_runtime::block_on;
 
-use crate::common::enums::{IEnum, RedisKeyType, TtlPolicy};
-use crate::core::models::{KeyValue, RedisDatabase, RedisValue, RedisValueTrait};
+use crate::common::enums::RedisKeyType;
+use crate::core::models::{KeyValue, RedisDatabase, RedisValue};
 use crate::core::redis_helper;
 use crate::dao::models::ServerInfo;
 use crate::utils::helper::parse_str;
@@ -105,15 +105,23 @@ pub fn disconnect_redis(id: i32) -> RedisResult<()> {
 /// returns: Result<Vec<String, Global>, RedisError>
 pub fn all_keys_by_pattern(id: i32, db: i64, pattern: &str) -> RedisResult<Vec<String>> {
     let conn = &mut block_on(redis_helper::get_redis_con(id))?;
-    let keys: Vec<String> = if conn.get_db().eq(&db) {
-        conn.scan_match(pattern)?.collect()
-    } else {
+    if conn.get_db().ne(&db) {
         redis::cmd("SELECT").arg(db).query(conn)?;
-        conn.scan_match(pattern)?.collect()
     };
+    let keys: Vec<String> = conn.scan_match(pattern)?.collect();
     Ok(keys)
 }
 
+/// 根据key查询value
+///
+/// # Arguments
+///
+/// * `id`: redis server id
+/// * `db`: db下标
+/// * `key`: redis key
+///
+/// returns: Result<RedisValue, String>
+///
 pub fn get_value_by_key(id: i32, db: i64, key: &str) -> Result<RedisValue, String> {
     let conn = &mut wrap_err!(block_on(redis_helper::get_redis_con(id)))?;
     if conn.get_db().ne(&db) {
@@ -130,23 +138,43 @@ pub fn get_value_by_key(id: i32, db: i64, key: &str) -> Result<RedisValue, Strin
     if ttl < -1 {
         return Ok(RedisValue::default(key));
     }
-//todo
+    let redis_value = get_value(&key_type, key, conn)?;
+
+    Ok(RedisValue {
+        key: key.to_string(),
+        key_type,
+        value: redis_value,
+        ttl,
+    })
+}
+
+fn get_value(
+    key_type: &RedisKeyType,
+    key: &str,
+    conn: &mut Connection,
+) -> Result<KeyValue, String> {
     match key_type {
         RedisKeyType::STRING => {
-            let str_data: RedisResult<String> = conn.get(key);
-            match str_data {
-                Ok(str) => {}
-                Err(_) => {}
-            }
+            let str_data: String = wrap_err!(conn.get(key))?;
+            Ok(KeyValue::STRING(str_data))
         }
-        RedisKeyType::LIST => {}
-        RedisKeyType::SET => {}
-        RedisKeyType::ZSET => {}
-        RedisKeyType::HASH => {}
-        RedisKeyType::GEO => {}
-        RedisKeyType::BITMAP => {}
-        RedisKeyType::HYPERLOGLOG => {}
-        RedisKeyType::STREAM => {}
+        RedisKeyType::LIST => {
+            let list_data: Vec<String> = wrap_err!(conn.lrange(key, 0, -1))?;
+            Ok(KeyValue::LIST(list_data))
+        }
+        RedisKeyType::SET => {
+            let set_data: HashSet<String> = wrap_err!(conn.sscan(key))?.collect();
+            Ok(KeyValue::SET(set_data))
+        }
+        RedisKeyType::ZSET => {
+            let zset_data: HashMap<String, isize> = wrap_err!(conn.zscan(key))?.collect();
+            Ok(KeyValue::ZSET(zset_data))
+        }
+        RedisKeyType::HASH => {
+            let hash_data: HashMap<String, String> =
+                wrap_err!(conn.hscan(key))?.collect::<HashMap<String, String>>();
+            Ok(KeyValue::HASH(hash_data))
+        }
+        _ => Err(format!("暂不支持这读取种类型数据")),
     }
-    Ok(RedisValue::default(key))
 }

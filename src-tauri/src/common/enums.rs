@@ -1,4 +1,3 @@
-
 pub trait IEnum<'a, T> {
     fn from_i32(i: i32) -> Result<T, &'a str>;
     fn from_u8(i: u8) -> Result<T, &'a str>;
@@ -77,7 +76,7 @@ impl<'a> IEnum<'a, Self> for TtlPolicy {
 }
 
 impl TtlPolicy {
-   pub fn to_redis_expiry(&self, ttl: usize) -> redis::Expiry {
+    pub fn to_redis_expiry(&self, ttl: usize) -> redis::Expiry {
         match self {
             TtlPolicy::EXPIRE => redis::Expiry::EX(ttl),
             TtlPolicy::EXPIREAT => redis::Expiry::EXAT(ttl),
@@ -138,17 +137,25 @@ impl<'a> IEnum<'a, Self> for RedisKeyType {
 }
 
 impl RedisKeyType {
-   pub fn from_str(type_str: &str) -> Result<Self, String> {
+    pub fn from_str(type_str: &str) -> Result<Self, String> {
         match type_str {
             "string" => Ok(RedisKeyType::STRING),
             "list" => Ok(RedisKeyType::LIST),
             "set" => Ok(RedisKeyType::SET),
             "zset" => Ok(RedisKeyType::ZSET),
             "hash" => Ok(RedisKeyType::HASH),
-            "geo" => Err(String::from("reading values of this type is temporarily not supported")),
-            "bitmap" => Err(String::from("reading values of this type is temporarily not supported")),
-            "hyperloglog" => Err(String::from("reading values of this type is temporarily not supported")),
-            "stream" => Err(String::from("reading values of this type is temporarily not supported")),
+            "geo" => Err(String::from(
+                "reading values of this type is temporarily not supported",
+            )),
+            "bitmap" => Err(String::from(
+                "reading values of this type is temporarily not supported",
+            )),
+            "hyperloglog" => Err(String::from(
+                "reading values of this type is temporarily not supported",
+            )),
+            "stream" => Err(String::from(
+                "reading values of this type is temporarily not supported",
+            )),
             _ => Err(String::from("can't analyze this type")),
         }
     }

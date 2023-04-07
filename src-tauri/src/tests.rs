@@ -20,7 +20,13 @@ mod tests {
     #[test]
     fn test_key_value() {
         db::set_path("./db/redis-manger.db");
-        let data = manager::get_value_by_key(1, 0, "erp:group:lat");
-        println!("{:?}", data);
+        match manager::get_value_by_key(1, 0, "erp:group:lat") {
+            Ok(data) => {
+                println!("{}", serde_json::to_string(&data).unwrap())
+            }
+            Err(err) => {
+                println!("{}", err.to_string())
+            }
+        }
     }
 }
