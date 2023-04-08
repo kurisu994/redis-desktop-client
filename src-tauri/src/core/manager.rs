@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::Duration;
 
-use redis::{Commands, Connection, ConnectionLike, RedisResult};
+use redis::{Commands, Connection, ConnectionLike, Expiry, RedisResult};
 use tauri::async_runtime::block_on;
 
 use crate::common::enums::RedisKeyType;
@@ -134,7 +134,6 @@ pub fn get_value_by_key(id: i32, db: i64, key: &str) -> Result<RedisValue, Strin
     let key_type: String = wrap_err!(redis::cmd("TYPE").arg(key).query(conn))?;
     let key_type = RedisKeyType::from_str(&key_type)?;
     let ttl = conn.ttl(key).unwrap_or(-2);
-
     if ttl < -1 {
         return Ok(RedisValue::default(key));
     }
@@ -146,6 +145,36 @@ pub fn get_value_by_key(id: i32, db: i64, key: &str) -> Result<RedisValue, Strin
         value: redis_value,
         ttl,
     })
+}
+
+/// 修改key的过期时间
+///
+/// # Arguments 
+///
+/// * `id`: 
+/// * `db`: 
+/// * `key`: 
+/// * `ttl`: 
+///
+/// returns: Result<bool, String> 
+///
+pub fn update_key_ttl(id: i32, db: i64, key: &str, ttl: Expiry) -> Result<bool, String> {
+    let conn = &mut wrap_err!(block_on(redis_helper::get_redis_con(id)))?;
+    if conn.get_db().ne(&db) {
+        wrap_err!(redis::cmd("SELECT").arg(db).query(conn))?;
+    };
+    let exist: bool = wrap_err!(conn.exists(key))?;
+    if !exist {
+        return Err(String::from("redis key is not exist"));
+    }
+    let res: RedisResult<bool> = match ttl {
+        Expiry::EX(ex) => { conn.expire(key, ex) }
+        Expiry::PX(px) => { conn.pexpire(key, px) }
+        Expiry::EXAT(exat) => { conn.expire_at(key, exat) }
+        Expiry::PXAT(pxat) => { conn.pexpire_at(key, pxat) }
+        Expiry::PERSIST => { conn.persist(key) }
+    };
+    Ok(wrap_err!(res)?)
 }
 
 fn get_value(

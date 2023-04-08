@@ -1,9 +1,10 @@
+use crate::{ret_err, wrap_err};
+use crate::common::enums::{IEnum, TtlPolicy};
 use crate::common::request::SimpleServerInfo;
 use crate::core::manager;
 use crate::core::models::{RedisDatabase, RedisValue};
-use crate::dao::models::{NewServer, ServerInfo, Settings};
 use crate::dao::{server, setting};
-use crate::{ret_err, wrap_err};
+use crate::dao::models::{NewServer, ServerInfo, Settings};
 
 type CmdResult<T = ()> = Result<T, String>;
 
@@ -214,6 +215,7 @@ pub fn read_redis_value(id: i32, db: i64, key: String) -> CmdResult<RedisValue> 
 ///
 /// * `id`: core server id
 /// * `key`: core 的key
+/// * `db`: db下标
 /// * `policy`: 过期类型 **[过期时间/过期时刻]**
 /// * `ttl`: 有效时长/到期时间
 ///
@@ -221,12 +223,13 @@ pub fn read_redis_value(id: i32, db: i64, key: String) -> CmdResult<RedisValue> 
 ///
 ///
 #[tauri::command]
-pub fn update_redis_key_ttl(id: i32, key: String, policy: u8, ttl: u32) -> CmdResult {
-    println!(
-        "core({}) key is {} ttl_type {} ttl {}",
-        id, key, policy, ttl
+pub fn update_redis_key_ttl(id: i32, db: i64, key: String, policy: u8, ttl: usize) -> CmdResult<bool> {
+    log::info!(
+        "redis({}) key is {} db is {} ttl_type {} ttl {}",
+        id, key, db,policy, ttl
     );
-    Ok(())
+    let policy = TtlPolicy::from_u8(policy)?;
+    Ok(manager::update_key_ttl(id, db, &key, policy.to_redis_expiry(ttl))?)
 }
 
 ///
