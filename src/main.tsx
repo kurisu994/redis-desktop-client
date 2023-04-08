@@ -7,7 +7,7 @@ import App from './pages/index';
 import Setting from './pages/setting';
 import zhCN from '@arco-design/web-react/es/locale/zh-CN';
 import enUS from '@arco-design/web-react/es/locale/en-US';
-import { Theme } from './utils/changeTheme';
+import changeTheme, { Theme } from './utils/changeTheme';
 import { LangType } from './utils/useLocale';
 import '@icon-park/react/styles/index.css';
 import './styles.css';
@@ -18,11 +18,7 @@ function Index() {
   const darkThemeMq = window.matchMedia('(prefers-color-scheme: dark)');
 
   const listener = (e: MediaQueryListEvent) => {
-    if (e.matches) {
-      document.body.setAttribute('arco-theme', 'dark');
-    } else {
-      document.body.removeAttribute('arco-theme');
-    }
+    changeTheme(e.matches ? 'dark' : 'light');
   };
   const contextValue = {
     lang,
@@ -34,15 +30,9 @@ function Index() {
   useEffect(() => {
     if (theme === 'auto') {
       darkThemeMq.addEventListener('change', listener);
-      if (darkThemeMq.matches) {
-        document.body.setAttribute('arco-theme', 'dark');
-      } else {
-        document.body.removeAttribute('arco-theme');
-      }
-    } else if (theme === 'dark') {
-      document.body.setAttribute('arco-theme', 'dark');
+      changeTheme(darkThemeMq.matches ? 'dark' : 'light');
     } else {
-      document.body.removeAttribute('arco-theme');
+      changeTheme(theme);
     }
   }, [darkThemeMq, theme]);
 
