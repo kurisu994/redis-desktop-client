@@ -1,8 +1,9 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::dao::models::ServerInfo;
-
-#[derive(Debug, Deserialize, Serialize)]
+/// ### 简单`redis`服务器信息
+/// #### 用于测试连接用
+#[derive(Debug, Deserialize)]
 pub struct SimpleServerInfo {
     // 服务器ip/域名
     pub host: String,
@@ -37,4 +38,15 @@ impl SimpleServerInfo {
             execution_timeout: self.execution_timeout,
         }
     }
+}
+
+/// redis 操作所需必要条件
+#[derive(Debug, Deserialize)]
+pub struct RedisOptions {
+    /// redis server id
+    pub id: i32,
+    /// redis db index
+    pub db: i64,
+    /// redis key
+    pub key: String,
 }

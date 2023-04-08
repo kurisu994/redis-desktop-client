@@ -149,14 +149,14 @@ pub fn get_value_by_key(id: i32, db: i64, key: &str) -> Result<RedisValue, Strin
 
 /// 修改key的过期时间
 ///
-/// # Arguments 
+/// # Arguments
 ///
-/// * `id`: 
-/// * `db`: 
-/// * `key`: 
-/// * `ttl`: 
+/// * `id`: redis server id
+/// * `db`: db下标
+/// * `key`: redis key
+/// * `ttl`: ttl info
 ///
-/// returns: Result<bool, String> 
+/// returns: Result<bool, String>
 ///
 pub fn update_key_ttl(id: i32, db: i64, key: &str, ttl: Expiry) -> Result<bool, String> {
     let conn = &mut wrap_err!(block_on(redis_helper::get_redis_con(id)))?;
@@ -168,13 +168,32 @@ pub fn update_key_ttl(id: i32, db: i64, key: &str, ttl: Expiry) -> Result<bool, 
         return Err(String::from("redis key is not exist"));
     }
     let res: RedisResult<bool> = match ttl {
-        Expiry::EX(ex) => { conn.expire(key, ex) }
-        Expiry::PX(px) => { conn.pexpire(key, px) }
-        Expiry::EXAT(exat) => { conn.expire_at(key, exat) }
-        Expiry::PXAT(pxat) => { conn.pexpire_at(key, pxat) }
-        Expiry::PERSIST => { conn.persist(key) }
+        Expiry::EX(ex) => conn.expire(key, ex),
+        Expiry::PX(px) => conn.pexpire(key, px),
+        Expiry::EXAT(exat) => conn.expire_at(key, exat),
+        Expiry::PXAT(pxat) => conn.pexpire_at(key, pxat),
+        Expiry::PERSIST => conn.persist(key),
     };
     Ok(wrap_err!(res)?)
+}
+
+/// sh删除redis key
+///
+/// # Arguments
+///
+/// * `id`: redis server id
+/// * `db`: db下标
+/// * `key`: redis key
+///
+/// returns: Result<(), RedisError>
+///
+pub fn delete_key(id: i32, db: i64, key: &str) -> RedisResult<()> {
+    let conn = &mut block_on(redis_helper::get_redis_con(id))?;
+    if conn.get_db().ne(&db) {
+        redis::cmd("SELECT").arg(db).query(conn)?;
+    };
+    conn.del(key)?;
+    Ok(())
 }
 
 fn get_value(

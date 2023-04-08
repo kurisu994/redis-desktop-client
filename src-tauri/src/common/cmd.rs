@@ -1,10 +1,10 @@
-use crate::{ret_err, wrap_err};
 use crate::common::enums::{IEnum, TtlPolicy};
-use crate::common::request::SimpleServerInfo;
+use crate::common::request::{RedisOptions, SimpleServerInfo};
 use crate::core::manager;
 use crate::core::models::{RedisDatabase, RedisValue};
-use crate::dao::{server, setting};
 use crate::dao::models::{NewServer, ServerInfo, Settings};
+use crate::dao::{server, setting};
+use crate::{ret_err, wrap_err};
 
 type CmdResult<T = ()> = Result<T, String>;
 
@@ -197,53 +197,64 @@ pub fn read_redis_key_tree(
 ///
 /// # Arguments
 ///
-/// * `id`: core server id
-/// * `db`: db下标
-/// * `key`: core key
+/// * `redis_option`: 操作redis必要条件
 ///
 /// returns: ()
 ///
-#[tauri::command]
-pub fn read_redis_value(id: i32, db: i64, key: String) -> CmdResult<RedisValue> {
-    log::info!("redis id and db is  ({}-{}) key is {}", id, db, key);
-    Ok(manager::get_value_by_key(id, db, &key)?)
+#[tauri::command(rename_all = "snake_case")]
+pub fn read_redis_value(redis_option: RedisOptions) -> CmdResult<RedisValue> {
+    log::info!("option info ({:?})", redis_option);
+    Ok(manager::get_value_by_key(
+        redis_option.id,
+        redis_option.db,
+        &redis_option.key,
+    )?)
 }
 
 ///
 /// 修改key的过期时间
 /// # Arguments
 ///
-/// * `id`: core server id
-/// * `key`: core 的key
-/// * `db`: db下标
+/// * `redis_option`: 操作redis必要条件
 /// * `policy`: 过期类型 **[过期时间/过期时刻]**
 /// * `ttl`: 有效时长/到期时间
 ///
 /// returns: ()
 ///
 ///
-#[tauri::command]
-pub fn update_redis_key_ttl(id: i32, db: i64, key: String, policy: u8, ttl: usize) -> CmdResult<bool> {
+#[tauri::command(rename_all = "snake_case")]
+pub fn update_redis_key_ttl(redis_option: RedisOptions, policy: u8, ttl: usize) -> CmdResult<bool> {
     log::info!(
-        "redis({}) key is {} db is {} ttl_type {} ttl {}",
-        id, key, db,policy, ttl
+        "option ({:?}) and ttl_type {} ttl {}",
+        redis_option,
+        policy,
+        ttl
     );
     let policy = TtlPolicy::from_u8(policy)?;
-    Ok(manager::update_key_ttl(id, db, &key, policy.to_redis_expiry(ttl))?)
+    Ok(manager::update_key_ttl(
+        redis_option.id,
+        redis_option.db,
+        &redis_option.key,
+        policy.to_redis_expiry(ttl),
+    )?)
 }
 
 ///
 ///
 /// # Arguments
 ///
-/// * `id`: core server id
-/// * `key`: core 的key
+/// * `redis_option`: 操作redis必要条件
 ///
 /// returns: ()
 ///
 ///
-#[tauri::command]
-pub fn delete_redis_key(id: i32, key: String) -> CmdResult {
-    println!("core({}) key is {}", id, key);
+#[tauri::command(rename_all = "snake_case")]
+pub fn delete_redis_key(redis_option: RedisOptions) -> CmdResult {
+    log::info!("option info ({:?})", redis_option);
+    wrap_err!(manager::delete_key(
+        redis_option.id,
+        redis_option.db,
+        &redis_option.key
+    ))?;
     Ok(())
 }
