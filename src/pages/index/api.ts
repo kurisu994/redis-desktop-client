@@ -1,4 +1,4 @@
-import * as cmd from '@/utils/cmd';
+import * as CMD from '@/utils/cmd';
 import request, { CommArgs } from '@/utils/request';
 
 export interface Connection {
@@ -29,7 +29,7 @@ export interface Connection {
 }
 
 export function getConList() {
-  return request<Connection[]>(cmd.GET_CONS);
+  return request<Connection[]>(CMD.GET_SERVERS);
 }
 export interface SaveParams extends Connection, CommArgs {
   /** 集群 */
@@ -64,16 +64,16 @@ export interface SimpleConnection {
 }
 
 export function testCon(params: SimpleConnection) {
-  return request<boolean>(cmd.TEST_CON, { info: params });
+  return request<boolean>(CMD.TEST_SERVER, { info: params });
 }
 
 export function saveCon(params: SaveParams) {
-  return request<boolean>(cmd.SAVE_CON, { server: params });
+  return request<boolean>(CMD.SAVE_SERVER, { server: params });
 }
 
 export function removeCon(id?: number) {
   if (!id) {
     return Promise.resolve(true);
   }
-  return request<boolean>(cmd.REMOVE_CON, { id });
+  return request<boolean>(CMD.REMOVE_SERVER, { id });
 }

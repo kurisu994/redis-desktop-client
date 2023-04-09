@@ -111,7 +111,7 @@ pub fn update_setting(settings: Option<Settings>) -> CmdResult<bool> {
 ///
 ///
 #[tauri::command]
-pub fn test_con(info: Option<SimpleServerInfo>) -> CmdResult<bool> {
+pub fn test_server(info: Option<SimpleServerInfo>) -> CmdResult<bool> {
     log::info!("test server info is: {:?}", info);
     if let None = info {
         ret_err!("设置信息不能为空")
