@@ -5,6 +5,7 @@ use diesel::{RunQueryDsl, SqliteConnection};
 use crate::dao::db;
 use crate::dao::models::{NewServer, ServerInfo};
 use crate::schema::connections::dsl as con_dsl;
+use crate::wrap_err;
 
 ///
 /// 查询连接列表
@@ -79,6 +80,42 @@ pub fn save_or_update(data: NewServer) -> QueryResult<usize> {
     } else {
         update(data.id.unwrap(), data, con)
     }
+}
+
+/// 复制一个redis连接
+///
+/// # Arguments
+///
+/// * `id`: redis server id
+///
+/// returns: Result<bool, String>
+pub fn copy_server(id: i32) -> Result<bool, String> {
+    let con = &mut db::establish_connection();
+    let server = query_by_id(id)?;
+    let new_server = NewServer {
+        id: None,
+        name: server.name,
+        host: server.host,
+        port: server.port,
+        read_only: server.read_only,
+        username: server.username,
+        password: server.password,
+        cluster: None,
+        nodes: None,
+        security_type: server.security_type,
+        use_private_key: None,
+        ssh_username: None,
+        ssh_host: None,
+        ssh_port: None,
+        ssh_password: None,
+        private_key_path: None,
+        key_filter: server.key_filter,
+        delimiter: server.delimiter,
+        con_timeout: server.con_timeout,
+        execution_timeout: server.execution_timeout,
+    };
+    let i = wrap_err!(inert(new_server, con))?;
+    Ok(i > 0)
 }
 
 ///

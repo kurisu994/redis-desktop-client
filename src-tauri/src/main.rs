@@ -50,9 +50,10 @@ fn main() {
         .on_system_tray_event(ui::tray::Tray::on_system_tray_event)
         .on_window_event(handle_window_event)
         .invoke_handler(tauri::generate_handler![
-            common::cmd::all_con,
-            common::cmd::save_con,
-            common::cmd::delete_con,
+            common::cmd::all_server,
+            common::cmd::save_server,
+            common::cmd::copy_server,
+            common::cmd::delete_server,
             common::cmd::query_setting,
             common::cmd::update_setting,
             common::cmd::test_con,

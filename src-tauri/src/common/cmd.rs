@@ -17,7 +17,7 @@ type CmdResult<T = ()> = Result<T, String>;
 /// returns: Message<Vec<ServerInfo>>
 ///
 #[tauri::command]
-pub fn all_con() -> CmdResult<Vec<ServerInfo>> {
+pub fn all_server() -> CmdResult<Vec<ServerInfo>> {
     Ok(wrap_err!(server::query_all(""))?)
 }
 
@@ -30,7 +30,7 @@ pub fn all_con() -> CmdResult<Vec<ServerInfo>> {
 /// returns: Message<bool>
 ///
 #[tauri::command(rename_all = "snake_case")]
-pub fn save_con(server: Option<NewServer>) -> CmdResult<usize> {
+pub fn save_server(server: Option<NewServer>) -> CmdResult<usize> {
     if let None = server {
         ret_err!("连接信息不能为空")
     }
@@ -43,6 +43,20 @@ pub fn save_con(server: Option<NewServer>) -> CmdResult<usize> {
     Ok(result)
 }
 
+/// 复制一个redis服务
+///
+/// # Arguments
+///
+/// * `id`: server origin id
+///
+/// returns: Result<bool, String>
+///
+#[tauri::command]
+pub fn copy_server(id: i32) -> CmdResult<bool> {
+    log::info!("copy server origin id: {}", id);
+    Ok(server::copy_server(id)?)
+}
+
 /// 删除连接信息
 ///
 /// # Arguments
@@ -52,7 +66,8 @@ pub fn save_con(server: Option<NewServer>) -> CmdResult<usize> {
 /// returns: Message<bool>
 ///
 #[tauri::command]
-pub fn delete_con(id: i32) -> CmdResult<usize> {
+pub fn delete_server(id: i32) -> CmdResult<usize> {
+    log::info!("delete server id: {}", id);
     Ok(wrap_err!(server::delete_by_id(id))?)
 }
 
@@ -79,7 +94,7 @@ pub fn query_setting() -> CmdResult<Settings> {
 ///
 #[tauri::command]
 pub fn update_setting(settings: Option<Settings>) -> CmdResult<bool> {
-    println!("settings data: {:?}", settings);
+    log::info!("settings data: {:?}", settings);
     if let None = settings {
         ret_err!("设置信息不能为空")
     }
@@ -97,6 +112,7 @@ pub fn update_setting(settings: Option<Settings>) -> CmdResult<bool> {
 ///
 #[tauri::command]
 pub fn test_con(info: Option<SimpleServerInfo>) -> CmdResult<bool> {
+    log::info!("test server info is: {:?}", info);
     if let None = info {
         ret_err!("设置信息不能为空")
     }
@@ -114,6 +130,7 @@ pub fn test_con(info: Option<SimpleServerInfo>) -> CmdResult<bool> {
 ///
 #[tauri::command]
 pub fn read_redis_dbs(id: i32) -> CmdResult<Vec<RedisDatabase>> {
+    log::info!("read redis keys db id: {}", id);
     let res = manager::get_db_key_count(id);
     Ok(wrap_err!(res)?)
 }
@@ -127,6 +144,7 @@ pub fn read_redis_dbs(id: i32) -> CmdResult<Vec<RedisDatabase>> {
 /// returns: Result<(), String>
 #[tauri::command]
 pub fn close_redis(id: i32) -> CmdResult {
+    log::info!("close redis:{}", id);
     let _ = manager::disconnect_redis(id);
     Ok(())
 }
@@ -142,7 +160,8 @@ pub fn close_redis(id: i32) -> CmdResult {
 #[tauri::command]
 pub fn read_redis_status(id: i32) -> CmdResult {
     let server_info = server::query_by_id(id);
-    println!("core server info is {:?}", server_info);
+    log::info!("core server info is {:?}", server_info);
+    // todo need check
     Ok(())
 }
 
