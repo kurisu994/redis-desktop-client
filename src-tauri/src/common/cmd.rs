@@ -258,3 +258,19 @@ pub fn delete_redis_key(redis_option: RedisOptions) -> CmdResult {
     ))?;
     Ok(())
 }
+
+/// 重命名某个key
+///
+/// # Arguments
+///
+/// * `id`: redis server id
+/// * `db`: db下标
+/// * `old_key`: redis key
+/// * `new_key`: 修改后的key
+///
+/// returns: Result<(), String>
+#[tauri::command(rename_all = "snake_case")]
+pub fn rename_key(id: i32, db: i64, old_key: String, new_key: String) -> CmdResult {
+    wrap_err!(manager::rename_key(id, db, &old_key, &new_key))?;
+    Ok(())
+}

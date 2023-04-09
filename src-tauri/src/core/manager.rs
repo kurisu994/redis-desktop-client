@@ -196,6 +196,26 @@ pub fn delete_key(id: i32, db: i64, key: &str) -> RedisResult<()> {
     Ok(())
 }
 
+/// 重命名某个key
+///
+/// # Arguments
+///
+/// * `id`: redis server id
+/// * `db`: db下标
+/// * `old_key`: redis key
+/// * `new_key`: 修改后的key
+///
+/// returns: Result<(), RedisError>
+///
+pub fn rename_key(id: i32, db: i64, old_key: &str, new_key: &str) -> RedisResult<()> {
+    let conn = &mut block_on(redis_helper::get_redis_con(id))?;
+    if conn.get_db().ne(&db) {
+        redis::cmd("SELECT").arg(db).query(conn)?;
+    };
+    conn.rename_nx(old_key, new_key)?;
+    Ok(())
+}
+
 fn get_value(
     key_type: &RedisKeyType,
     key: &str,
