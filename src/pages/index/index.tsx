@@ -5,7 +5,14 @@ import LeftTree from './components/LeftTree';
 import RightContent from './components/RightContent';
 import EditModal from './components/EditModal';
 import { useRequest } from 'ahooks';
-import { getConList, saveCon, SaveParams, Connection, removeCon } from './api';
+import {
+  getConList,
+  saveCon,
+  SaveParams,
+  Connection,
+  removeCon,
+  copyCon,
+} from './api';
 
 import './index.less';
 
@@ -63,6 +70,14 @@ export default function Index() {
       },
     });
   };
+  const onCopy = (id?: number) => {
+    if (!id) {
+      return;
+    }
+    copyCon?.(id)
+      .then(() => run())
+      .catch((e) => Message.error(e.message));
+  };
 
   return (
     <Layout className="layout-collapse-mangguo">
@@ -87,11 +102,15 @@ export default function Index() {
         >
           添加新连接
         </Button>
-        <LeftTree
-          servers={data || []}
-          onEdit={(id) => onEditCon(id)}
-          onRemove={(id) => handRemove(id)}
-        />
+        {data?.map((server) => (
+          <LeftTree
+            key={server.id}
+            server={server}
+            onEdit={(id) => onEditCon(id)}
+            onRemove={(id) => handRemove(id)}
+            onCopy={(id) => onCopy(id)}
+          />
+        ))}
       </Sider>
       <RightContent
         siderCollapsed={collapsed}

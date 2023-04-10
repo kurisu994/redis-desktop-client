@@ -18,20 +18,20 @@ export const UPDATE_SETTING = 'update_setting';
 
 /// redis 操作相关
 /** 查询db列表 */
-const GET_DBS = 'read_redis_dbs';
+export const GET_DBS = 'read_redis_dbs';
 /** 查询redis状态 */
-const REDIS_STATUS = 'read_redis_status';
+export const REDIS_STATUS = 'read_redis_status';
 /** 查询redis key列表 */
-const KEY_LIST = 'read_redis_key_list';
+export const KEY_LIST = 'read_redis_key_list';
 /** 查询redis key树 */
-const KEY_TREE = 'read_redis_key_tree';
+export const KEY_TREE = 'read_redis_key_tree';
 /** 关闭redis连接 */
-const CLOSE_REDIS = 'close_redis';
+export const CLOSE_REDIS = 'close_redis';
 /** 查询redis key的值 */
-const READ_VALUE = 'read_redis_value';
+export const READ_VALUE = 'read_redis_value';
 /** 修改key的过期时间 */
-const UPDATE_TTL = 'update_redis_key_ttl';
+export const UPDATE_TTL = 'update_redis_key_ttl';
 /** 删除某个key  */
-const DELETE_KEY = 'delete_redis_key';
+export const DELETE_KEY = 'delete_redis_key';
 /** 重命名某个key */
-const RENAME_KEY = 'rename_key';
+export const RENAME_KEY = 'rename_key';

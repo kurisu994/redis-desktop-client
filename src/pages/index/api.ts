@@ -77,3 +77,7 @@ export function removeCon(id?: number) {
   }
   return request<boolean>(CMD.REMOVE_SERVER, { id });
 }
+
+export function copyCon(id?: number) {
+  return request<boolean>(CMD.COPY_SERVER, { id });
+}

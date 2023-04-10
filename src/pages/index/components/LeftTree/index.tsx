@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Tree } from '@arco-design/web-react';
+import { Message, Tree } from '@arco-design/web-react';
 import {
   NodeInstance,
   NodeProps,
@@ -8,13 +8,15 @@ import {
 import st from './index.module.css';
 import { Data, DeleteFive, KeyOne, Redo } from '@icon-park/react';
 import { Connection } from '../../api';
+import { queryDbs, queryRedisKeys } from './api';
 import { IconDesktop } from '@arco-design/web-react/icon';
 import ServerBtnGroup from './ServerBtnGroup';
 
 interface Props {
-  servers: Connection[];
+  server: Connection;
   onEdit?: (id?: number) => unknown;
   onRemove?: (id?: number) => unknown;
+  onCopy?: (id?: number) => unknown;
 }
 
 export enum Intent {
@@ -25,20 +27,26 @@ export enum Intent {
   REMOVE,
 }
 
-function LeftContent({ servers, onEdit, onRemove }: Props) {
+function LeftContent({ server, onEdit, onRemove, onCopy }: Props) {
   const [treeData, setTreeData] = useState<TreeDataType[]>();
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   useEffect(() => {
-    setTreeData(servers.map((item) => ({ ...item, icon: <IconDesktop /> })));
-  }, [servers]);
+    setTreeData([
+      {
+        ...server,
+        isServer: true,
+        icon: <IconDesktop />,
+      },
+    ]);
+  }, [server]);
+
   const extraRender = useCallback(
     (node: NodeProps) => {
       if (!node?.selected) {
         return null;
       }
       if (!node.parentKey) {
-        const { id } = node.dataRef || {};
         return (
           <ServerBtnGroup
             onIntent={(int) => {
@@ -48,12 +56,13 @@ function LeftContent({ servers, onEdit, onRemove }: Props) {
                 case Intent.UNCONNECT:
                   break;
                 case Intent.COPY:
+                  onCopy?.(server.id);
                   break;
                 case Intent.EDIT:
-                  onEdit?.(id);
+                  onEdit?.(server.id);
                   break;
                 case Intent.REMOVE:
-                  onRemove?.(id);
+                  onRemove?.(server.id);
                   break;
                 default:
                   break;
@@ -98,7 +107,7 @@ function LeftContent({ servers, onEdit, onRemove }: Props) {
 
       return null;
     },
-    [onEdit, onRemove]
+    [server, onCopy, onEdit, onRemove]
   );
 
   const handSelect = (selectedKeys: string[]) => {
@@ -106,44 +115,71 @@ function LeftContent({ servers, onEdit, onRemove }: Props) {
     setSelectedKeys(selectedKeys);
   };
 
-  const loadMore = (treeNode: NodeInstance): Promise<void> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (!treeNode.props.dataRef) {
-          return resolve();
+  const loadMore = useCallback(
+    async (treeNode: NodeInstance): Promise<void> => {
+      if (!treeNode?.props?.dataRef) {
+        return;
+      }
+      const { isServer, isDb, redisKey } = treeNode.props.dataRef || {};
+      try {
+        if (isServer) {
+          const dbs = await query_db_list(server.id, treeNode.props._key);
+          treeNode.props.dataRef.children = dbs;
         }
-        const dbs = [
-          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-        ];
-        treeNode.props.dataRef.children = dbs.map((t) => ({
-          name: `db${t}`,
-          id: `${treeNode.props._key}-${t}`,
-          redisKey: `db${t}`,
-          isLeaf: treeNode.props._level == 1,
-          icon:
-            treeNode.props._level == 0 ? (
-              <Data
-                theme="outline"
-                size="14"
-                strokeWidth={3}
-                strokeLinecap="butt"
-              />
-            ) : (
-              <KeyOne
-                theme="outline"
-                size="14"
-                strokeWidth={3}
-                strokeLinecap="butt"
-              />
-            ),
-        }));
+        if (isDb) {
+          const keyArr = await query_db_key_list(
+            server.id,
+            redisKey,
+            treeNode.props._key
+          );
+          treeNode.props.dataRef.children = keyArr;
+        }
         setTreeData([...(treeData || [])]);
         if (treeNode.props._key) {
           setExpandedKeys([...expandedKeys, treeNode.props._key]);
         }
-        resolve();
-      }, 1000);
-    });
+      } catch (e: any) {
+        Message.error(e.message);
+      }
+    },
+    [expandedKeys, server, treeData]
+  );
+
+  const query_db_key_list = async (
+    id: number,
+    db_index: number,
+    cur_key?: string
+  ) => {
+    const res = await queryRedisKeys(id, db_index);
+    return (res || []).map((t) => ({
+      name: t,
+      id: `${cur_key}-${t}`,
+      redisKey: t,
+      isDb: false,
+      isLeaf: true,
+      icon: (
+        <KeyOne
+          theme="outline"
+          size="14"
+          strokeWidth={3}
+          strokeLinecap="butt"
+        />
+      ),
+    }));
+  };
+
+  const query_db_list = async (id: number, cur_key?: string) => {
+    const res = await queryDbs(id);
+    return (res || []).map((t) => ({
+      name: `${t.name}(${t.count})`,
+      id: `${cur_key}-${t.id}`,
+      redisKey: t.id,
+      isDb: true,
+      isLeaf: false,
+      icon: (
+        <Data theme="outline" size="14" strokeWidth={3} strokeLinecap="butt" />
+      ),
+    }));
   };
 
   return (
@@ -153,7 +189,6 @@ function LeftContent({ servers, onEdit, onRemove }: Props) {
       actionOnClick={['select']}
       selectedKeys={selectedKeys}
       onSelect={handSelect}
-      virtualListProps={{ height: 'calc(100% - 42px)' }}
       // expandedKeys={expandedKeys}
       // onExpand={onDoubleClick}
       fieldNames={{
@@ -161,7 +196,7 @@ function LeftContent({ servers, onEdit, onRemove }: Props) {
         title: 'name',
         children: 'children',
       }}
-      loadMore={loadMore}
+      loadMore={(node) => loadMore(node)}
       treeData={treeData}
       renderExtra={extraRender}
     />
