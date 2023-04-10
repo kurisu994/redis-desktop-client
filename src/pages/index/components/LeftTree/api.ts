@@ -1,5 +1,5 @@
 import * as CMD from '@/utils/cmd';
-import request, { CommArgs } from '@/utils/request';
+import request from '@/utils/request';
 
 interface DbInfo {
   /** db下标 */
