@@ -4,11 +4,11 @@ use anyhow::Result;
 use tauri::api::path::home_dir;
 
 #[cfg(not(feature = "redis-manager-dev"))]
-static APP_DIR: &str = "core-manger";
+static APP_DIR: &str = "redis-manger";
 #[cfg(feature = "redis-manager-dev")]
-static APP_DIR: &str = "core-manger-dev";
+static APP_DIR: &str = "redis-manger-dev";
 
-/// get the verge app home dir
+/// get the app home dir
 pub fn app_home_dir() -> Result<PathBuf> {
     #[cfg(target_os = "windows")]
     unsafe {
