@@ -1,4 +1,4 @@
-name: Alpha CI
+name: Preview CI
 
 on:
   workflow_dispatch:
