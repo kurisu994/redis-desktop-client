@@ -31,6 +31,13 @@
   user-select: none;
 }
 
+.wrapper {
+  height: 200px;
+  font-size: 14px;
+  line-height: 24px;
+  letter-spacing: -0.14px;
+}
+
 .footer {
   text-align: center;
   font-stretch: condensed;

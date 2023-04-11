@@ -81,3 +81,18 @@ export function removeCon(id?: number) {
 export function copyCon(id?: number) {
   return request<boolean>(CMD.COPY_SERVER, { id });
 }
+
+export interface RedisValue {
+  key: string;
+  keyType: number;
+  ttl: number;
+  value: string;
+}
+
+export function readValue(redisOption: {
+  id: number;
+  db: number;
+  key: string;
+}) {
+  return request<RedisValue>(CMD.READ_VALUE, { redis_option: redisOption });
+}

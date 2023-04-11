@@ -12,6 +12,8 @@ import {
   Connection,
   removeCon,
   copyCon,
+  readValue,
+  RedisValue,
 } from './api';
 
 import './index.less';
@@ -22,6 +24,7 @@ export default function Index() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [connection, setConnection] = useState<Connection>();
+  const [redisValue, setRedisValue] = useState<RedisValue>();
   const { data, run, mutate } = useRequest(getConList);
   const { loading: saveLoading, run: save } = useRequest(saveCon, {
     manual: true,
@@ -79,6 +82,12 @@ export default function Index() {
       .catch((e) => Message.error(e.message));
   };
 
+  const handQueryValue = (server: number, db: number, key: string) => {
+    readValue({ id: server, db, key })
+      .then((v) => setRedisValue(v))
+      .catch((e) => Message.error(e.message));
+  };
+
   return (
     <Layout className="layout-collapse-mangguo">
       <Sider
@@ -109,12 +118,14 @@ export default function Index() {
             onEdit={(id) => onEditCon(id)}
             onRemove={(id) => handRemove(id)}
             onCopy={(id) => onCopy(id)}
+            onSelectKey={(db, key) => handQueryValue(server.id, db, key)}
           />
         ))}
       </Sider>
       <RightContent
         siderCollapsed={collapsed}
         handlerSiderCollapse={handleCollapsed}
+        redisValue={redisValue}
       />
       <EditModal
         visible={visible}

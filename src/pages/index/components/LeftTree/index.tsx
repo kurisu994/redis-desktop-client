@@ -17,6 +17,7 @@ interface Props {
   onEdit?: (id?: number) => unknown;
   onRemove?: (id?: number) => unknown;
   onCopy?: (id?: number) => unknown;
+  onSelectKey?: (dbIndex: number, key: string) => unknown;
 }
 
 export enum Intent {
@@ -27,7 +28,7 @@ export enum Intent {
   REMOVE,
 }
 
-function LeftContent({ server, onEdit, onRemove, onCopy }: Props) {
+function LeftContent({ server, onEdit, onRemove, onCopy, onSelectKey }: Props) {
   const [treeData, setTreeData] = useState<TreeDataType[]>();
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -110,9 +111,21 @@ function LeftContent({ server, onEdit, onRemove, onCopy }: Props) {
     [server, onCopy, onEdit, onRemove]
   );
 
-  const handSelect = (selectedKeys: string[]) => {
-    console.log(selectedKeys);
+  const handSelect = (
+    selectedKeys: string[],
+    extra: {
+      selected: boolean;
+      selectedNodes: NodeInstance[];
+      node: NodeInstance;
+      e: Event;
+    }
+  ) => {
+    console.debug(extra);
     setSelectedKeys(selectedKeys);
+    if (extra.node.props.isLeaf && extra.selected) {
+      // @ts-ignore  自定义的属性
+      onSelectKey?.(extra.node.props.dbIndex, extra.node.props.redisKey);
+    }
   };
 
   const loadMore = useCallback(
@@ -157,6 +170,7 @@ function LeftContent({ server, onEdit, onRemove, onCopy }: Props) {
       redisKey: t,
       isDb: false,
       isLeaf: true,
+      dbIndex: db_index,
       icon: (
         <KeyOne
           theme="outline"
