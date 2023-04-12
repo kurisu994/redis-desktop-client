@@ -22,20 +22,15 @@
   font-stretch: condensed;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   background: var(--color-bg-3);
   color: var(--color-text-2);
-  font-weight: 400;
-  font-size: 48px;
   -webkit-user-select: none;
   user-select: none;
 }
 
-.wrapper {
-  height: 200px;
-  font-size: 14px;
-  line-height: 24px;
-  letter-spacing: -0.14px;
+.content-title {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .footer {

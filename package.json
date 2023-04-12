@@ -16,7 +16,7 @@
     "tauri:dev": "tauri dev --features=redis-manager-dev"
   },
   "dependencies": {
-    "@arco-design/web-react": "^2.46.1",
+    "@arco-design/web-react": "^2.46.3",
     "@icon-park/react": "^1.4.2",
     "@monaco-editor/react": "^4.5.0",
     "@tauri-apps/api": "^1.2.0",

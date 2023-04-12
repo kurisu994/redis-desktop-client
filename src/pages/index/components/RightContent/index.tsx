@@ -1,10 +1,12 @@
-import { useRef } from 'react';
+import { useContext } from 'react';
 import { Layout, Button, Typography } from '@arco-design/web-react';
 import { IconMenuUnfold, IconMenuFold } from '@arco-design/web-react/icon';
-import MonacoEditor from '@monaco-editor/react';
-import { Monaco, MonacoDiffEditor } from '@monaco-editor/react';
 import st from './index.module.css';
 import { RedisValue } from '@/pages/index/api';
+import MonacoPanel from '@/components/MonacoPanel';
+import { GlobalContext } from '@/context';
+import { RedisKeyType } from '@/typing/global';
+import RedisKeyBar from '@/components/RedisKeyBar';
 
 const Header = Layout.Header;
 const Content = Layout.Content;
@@ -14,52 +16,14 @@ interface Props {
   handlerSiderCollapse?: () => unknown;
   redisValue?: RedisValue;
 }
-const options = {
-  wordWrap: 'on',
-  // automaticLayout: true,
-  formatOnPaste: false,
-  padding: { top: 10 },
-  suggest: {
-    preview: false,
-    showStatusBar: false,
-    showIcons: false,
-    showProperties: false,
-  },
-  quickSuggestions: false,
-  minimap: {
-    enabled: false,
-  },
-  overviewRulerLanes: 0,
-  hideCursorInOverviewRuler: true,
-  overviewRulerBorder: false,
-  lineNumbersMinChars: 4,
-  autoIndent: true,
-};
 
 function RightContent({
   siderCollapsed,
   handlerSiderCollapse,
   redisValue,
 }: Props) {
+  const { monacoTheme } = useContext(GlobalContext);
   console.debug(redisValue);
-  const monacoRef = useRef(null);
-  function handleEditorDidMount(editor: MonacoDiffEditor, monaco: Monaco) {
-    monacoRef.current = monaco;
-    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-      validate: true,
-      schemaValidation: 'error',
-      schemaRequest: 'error',
-      trailingCommas: 'error',
-    });
-    // monaco.languages.json.jsonDefaults.setModeConfiguration({
-    //   documentRangeFormattingEdits: true,
-    //   documentFormattingEdits: true,
-    //   foldingRanges: true,
-    //   colors: true,
-    //   completionItems: true,
-    //   selectionRanges: true,
-    // });
-  }
 
   return (
     <Layout>
@@ -79,18 +43,20 @@ function RightContent({
       </Header>
       <Layout className={st['content-wrapper ']}>
         <Content className={st.content}>
-          <Typography.Title>GUI for Redis</Typography.Title>
-          <div className={st.wrapper}>
-            {redisValue && (
-              <MonacoEditor
-                theme="vs-dark"
-                language="json"
-                options={options}
-                value={redisValue?.value}
-                onMount={handleEditorDidMount}
-              />
-            )}
-          </div>
+          <Typography.Title className={st['content-title']}>
+            GUI for Redis
+          </Typography.Title>
+          <RedisKeyBar
+            ttl={redisValue?.ttl}
+            keyType={redisValue?.keyType}
+            redisKey={redisValue?.key}
+          />
+          {redisValue && RedisKeyType.STRING == redisValue?.keyType && (
+            <MonacoPanel
+              value={redisValue.value}
+              theme={monacoTheme ?? 'light'}
+            />
+          )}
         </Content>
       </Layout>
     </Layout>

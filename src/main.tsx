@@ -1,38 +1,34 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ConfigProvider } from '@arco-design/web-react';
-import { GlobalContext } from './context';
+import { GlobalContext, GlobalContextProvider } from './context';
 import App from './pages/index';
 import Setting from './pages/setting';
+import { Theme } from '@/typing/global';
 import zhCN from '@arco-design/web-react/es/locale/zh-CN';
 import enUS from '@arco-design/web-react/es/locale/en-US';
-import changeTheme, { Theme } from './utils/changeTheme';
-import { LangType } from './utils/useLocale';
+import changeTheme from './utils/changeTheme';
 import '@icon-park/react/styles/index.css';
 import './styles.css';
 
 function Index() {
-  const [lang, setLang] = useState<LangType>('zh-CN');
-  const [theme, setTheme] = useState<Theme>('auto');
   const darkThemeMq = window.matchMedia('(prefers-color-scheme: dark)');
+  const { theme, lang, setMonacoTheme } = useContext(GlobalContext);
 
   const listener = (e: MediaQueryListEvent) => {
-    changeTheme(e.matches ? 'dark' : 'light');
-  };
-  const contextValue = {
-    lang,
-    setLang,
-    theme,
-    setTheme,
+    changeTheme(e.matches ? Theme.DARK : Theme.LIGHT);
+    setMonacoTheme?.(e.matches ? 'vs-dark' : 'light');
   };
 
   useEffect(() => {
-    if (theme === 'auto') {
+    if (theme === Theme.AUTO) {
       darkThemeMq.addEventListener('change', listener);
-      changeTheme(darkThemeMq.matches ? 'dark' : 'light');
+      changeTheme(darkThemeMq.matches ? Theme.DARK : Theme.LIGHT);
+      setMonacoTheme?.(darkThemeMq.matches ? 'vs-dark' : 'light');
     } else {
       changeTheme(theme);
+      setMonacoTheme?.(theme == Theme.DARK ? 'vs-dark' : 'light');
     }
   }, [darkThemeMq, theme]);
 
@@ -62,14 +58,14 @@ function Index() {
         },
       }}
     >
-      <GlobalContext.Provider value={contextValue}>
+      <GlobalContextProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<App />} />
             <Route path="/setting" element={<Setting />} />
           </Routes>
         </BrowserRouter>
-      </GlobalContext.Provider>
+      </GlobalContextProvider>
     </ConfigProvider>
   );
 }

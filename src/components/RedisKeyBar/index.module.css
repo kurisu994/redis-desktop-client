@@ -1,0 +1,21 @@
+.space-wrapper {
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.type-text {
+  margin: 0 30px 0 0;
+  font-size: 24px;
+  font-weight: 500;
+}
+.input {
+  flex: 1;
+  margin: 0 15px 0 0;
+}
+.statistic {
+  margin: 0 15px 0 0;
+}
+.btn {
+  margin: 0 15px 0 0;
+}
