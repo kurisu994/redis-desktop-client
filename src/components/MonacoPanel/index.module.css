@@ -1,10 +1,10 @@
 .wrapper {
   height: 100%;
   font-size: 14px;
-  font-size: 14px;
   line-height: 24px;
   letter-spacing: -0.14px;
 }
+
 .option {
   display: flex;
   flex-direction: row;
