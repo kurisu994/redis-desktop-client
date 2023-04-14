@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Typography, Input, Statistic } from '@arco-design/web-react';
+import { Button, Typography, Input } from '@arco-design/web-react';
 import st from './index.module.css';
 import { RedisKeyType } from '@/typing/global';
 import useCountdown from '@/hooks/useCountdown';
