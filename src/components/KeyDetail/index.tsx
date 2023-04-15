@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { RedisKeyType, UnresolvedKeyTypes } from '@/typing/global';
 import ZSetDetails from './Details/ZSetDetails';
 import SetDetails from './Details/SetDetails';
@@ -6,6 +6,7 @@ import StringDetails from './Details/StringDetails';
 import HashDetails from './Details/HashDetails';
 import ListDetails from './Details/ListDetails';
 import UnsupportedTypeDetails from './Details/UnsupportedTypeDetails';
+import st from './index.module.css';
 
 export interface Props {
   keyType?: RedisKeyType;
@@ -14,7 +15,7 @@ export interface Props {
 }
 
 const KeyDetail = (props: Props) => {
-  const { keyType, value, theme } = props;
+  const { keyType, value } = props;
 
   const TypeDetails: any = {
     [RedisKeyType.ZSET]: <ZSetDetails />,
@@ -25,7 +26,7 @@ const KeyDetail = (props: Props) => {
   };
 
   return (
-    <div className="flex-column" style={{ flex: '1', height: '100%' }}>
+    <div className={st['detail-wrapper']}>
       {keyType && keyType in TypeDetails && TypeDetails[keyType]}
 
       {(!keyType || UnresolvedKeyTypes.includes(keyType)) && (

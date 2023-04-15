@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import MonacoPanel from '@/components/MonacoPanel';
 import { Button, Select } from '@arco-design/web-react';
 import st from './index.module.css';
