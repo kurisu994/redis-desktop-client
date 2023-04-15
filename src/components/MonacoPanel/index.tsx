@@ -53,20 +53,6 @@ function MonacoPanel({ value, theme }: Props) {
     (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
       monacoRef.current = monaco;
       editorRef.current = editor;
-      // monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-      //   validate: true,
-      //   schemaValidation: 'error',
-      //   schemaRequest: 'error',
-      //   trailingCommas: 'error',
-      // });
-      // monaco.languages.json.jsonDefaults.setModeConfiguration({
-      //   documentRangeFormattingEdits: true,
-      //   documentFormattingEdits: true,
-      //   foldingRanges: true,
-      //   colors: true,
-      //   completionItems: true,
-      //   selectionRanges: true,
-      // });
     },
     []
   );
