@@ -29,7 +29,7 @@ function useStorage(
     if (storageValue) {
       setStoredValue(storageValue);
     }
-  }, []);
+  }, [key]);
 
   return [storedValue, setStorageValue, removeStorage];
 }

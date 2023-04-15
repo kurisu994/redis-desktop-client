@@ -22,7 +22,6 @@ function Index() {
   };
 
   useEffect(() => {
-    console.log('theme', theme);
     if (theme === Theme.AUTO) {
       darkThemeMq.addEventListener('change', listener);
       changeTheme(darkThemeMq.matches ? Theme.DARK : Theme.LIGHT);
@@ -31,6 +30,7 @@ function Index() {
       changeTheme(theme);
       setMonacoTheme?.(theme == Theme.DARK ? 'vs-dark' : 'light');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [darkThemeMq, theme]);
 
   const locale = useMemo(() => {
