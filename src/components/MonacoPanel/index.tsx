@@ -1,20 +1,25 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Button, Select } from '@arco-design/web-react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
+import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import { Monaco } from '@monaco-editor/react';
-import st from './index.module.css';
-import { MutableRefObject } from 'react';
+import st from './index.module.less';
+import { Nullable } from '@/typing/global';
 
 interface Props {
   value?: string;
   theme: 'vs-dark' | 'light';
+  language?: string;
 }
 
-function MonacoPanel({ value, theme }: Props) {
-  const monacoRef: MutableRefObject<Monaco | undefined> = useRef<Monaco>();
-  const editorRef: MutableRefObject<editor.IStandaloneCodeEditor | undefined> =
-    useRef<editor.IStandaloneCodeEditor>();
+type IEditorMount = {
+  editor: monacoEditor.editor.IStandaloneCodeEditor;
+  monaco: typeof monacoEditor;
+};
+
+function MonacoPanel({ value, theme, language = 'plaintext' }: Props) {
+  const monacoObjects = useRef<Nullable<IEditorMount>>(null);
+
   const monacoOptions: editor.IStandaloneEditorConstructionOptions = useMemo(
     () => ({
       wordWrap: 'on',
@@ -39,46 +44,46 @@ function MonacoPanel({ value, theme }: Props) {
       autoIndent: 'none',
       roundedSelection: false,
       scrollBeyondLastLine: false,
+      scrollbar: {
+        vertical: 'visible',
+        horizontal: 'visible',
+        verticalScrollbarSize: 5,
+        horizontalScrollbarSize: 5,
+      },
     }),
     []
   );
 
-  useEffect(() => {
-    console.debug(value);
-  }, [value]);
+  const handleEditorDidMount = (
+    editor: editor.IStandaloneCodeEditor,
+    monaco: Monaco
+  ) => {
+    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+      validate: true,
+      schemaValidation: 'error',
+      schemaRequest: 'error',
+      trailingCommas: 'error',
+    });
+    editor.onDidChangeModelLanguage((e) => formatDocument(e.newLanguage));
+    monacoObjects.current = { editor, monaco };
+    formatDocument(language);
+  };
 
-  const options = useMemo(() => ['plaintext', 'json', 'markdown'], []);
-
-  const handleEditorDidMount = useCallback(
-    (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
-      monacoRef.current = monaco;
-      editorRef.current = editor;
-    },
-    []
-  );
-
-  const onLanguageChange = (language: string) => {
-    const model = editorRef.current?.getModel?.();
-    if (model) {
-      monacoRef?.current?.editor?.setModelLanguage?.(model, language);
+  const formatDocument = (lan: string) => {
+    if (lan == 'json') {
+      monacoObjects.current?.editor.trigger(
+        'editor',
+        'editor.action.formatDocument',
+        {}
+      );
     }
-    editorRef.current?.trigger?.('editor', 'editor.action.formatDocument', '');
   };
 
   return (
     <div className={st.wrapper}>
-      <div className={st.option}>
-        <Select
-          style={{ width: 160 }}
-          defaultValue="plaintext"
-          onChange={onLanguageChange}
-          options={options}
-        />
-        <Button className={st.btn}>save</Button>
-      </div>
       <MonacoEditor
         theme={theme}
-        defaultLanguage="plaintext"
+        language={language}
         options={monacoOptions}
         value={value}
         onMount={handleEditorDidMount}
@@ -87,4 +92,4 @@ function MonacoPanel({ value, theme }: Props) {
   );
 }
 
-export default MonacoPanel;
+export default React.memo(MonacoPanel);

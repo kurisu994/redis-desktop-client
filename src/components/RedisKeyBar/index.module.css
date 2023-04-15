@@ -1,8 +1,7 @@
 .space-wrapper {
-  padding: 0 15px;
+  padding: 15px;
   display: inline-flex;
   align-items: center;
-  margin-bottom: 15px;
 }
 
 .type-text {

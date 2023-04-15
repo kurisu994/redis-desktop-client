@@ -22,6 +22,7 @@ function Index() {
   };
 
   useEffect(() => {
+    console.log('theme', theme);
     if (theme === Theme.AUTO) {
       darkThemeMq.addEventListener('change', listener);
       changeTheme(darkThemeMq.matches ? Theme.DARK : Theme.LIGHT);
@@ -58,18 +59,18 @@ function Index() {
         },
       }}
     >
-      <GlobalContextProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<App />} />
-            <Route path="/setting" element={<Setting />} />
-          </Routes>
-        </BrowserRouter>
-      </GlobalContextProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/setting" element={<Setting />} />
+        </Routes>
+      </BrowserRouter>
     </ConfigProvider>
   );
 }
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <Index />
+  <GlobalContextProvider>
+    <Index />
+  </GlobalContextProvider>
 );

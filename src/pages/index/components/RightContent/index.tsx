@@ -3,10 +3,9 @@ import { Layout, Button, Typography } from '@arco-design/web-react';
 import { IconMenuUnfold, IconMenuFold } from '@arco-design/web-react/icon';
 import st from './index.module.css';
 import { RedisValue } from '@/pages/index/api';
-import MonacoPanel from '@/components/MonacoPanel';
 import { GlobalContext } from '@/context';
-import { RedisKeyType } from '@/typing/global';
 import RedisKeyBar from '@/components/RedisKeyBar';
+import KeyDetail from '@/components/KeyDetail';
 
 const Header = Layout.Header;
 const Content = Layout.Content;
@@ -43,19 +42,23 @@ function RightContent({
       </Header>
       <Layout className={st['content-wrapper ']}>
         <Content className={st.content}>
-          <Typography.Title className={st['content-title']}>
-            GUI for Redis
-          </Typography.Title>
-          <RedisKeyBar
-            ttl={redisValue?.ttl}
-            keyType={redisValue?.keyType}
-            redisKey={redisValue?.key}
-          />
-          {redisValue && RedisKeyType.STRING == redisValue?.keyType && (
-            <MonacoPanel
-              value={redisValue.value}
-              theme={monacoTheme ?? 'light'}
-            />
+          {redisValue ? (
+            <>
+              <RedisKeyBar
+                ttl={redisValue?.ttl}
+                keyType={redisValue?.keyType}
+                redisKey={redisValue?.key}
+              />
+              <KeyDetail
+                keyType={redisValue?.keyType}
+                value={redisValue?.value}
+                theme={monacoTheme ?? 'light'}
+              />
+            </>
+          ) : (
+            <Typography.Title className={st['content-title']}>
+              GUI for Redis
+            </Typography.Title>
           )}
         </Content>
       </Layout>

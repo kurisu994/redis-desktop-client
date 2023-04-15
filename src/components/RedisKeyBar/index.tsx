@@ -41,6 +41,7 @@ function RedisKeyBar({ ttl = -1, keyType, redisKey }: Props) {
       <Button className={st.btn}>Rename</Button>
       <Button className={st.statistic}>{`TTL:${second}`}</Button>
       <Button className={st.btn}>Delete</Button>
+      <Button>Reload Value</Button>
     </div>
   );
 }

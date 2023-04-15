@@ -22,3 +22,20 @@ export enum RedisKeyType {
   HYPERLOGLOG,
   STREAM,
 }
+
+export const UnresolvedKeyTypes = [
+  RedisKeyType.GEO,
+  RedisKeyType.BITMAP,
+  RedisKeyType.HYPERLOGLOG,
+  RedisKeyType.STREAM,
+];
+
+/**
+ * The value MUST exist, but can be undefined
+ */
+export type Maybe<T> = T | undefined;
+
+/**
+ * The value can have NULL value
+ */
+export type Nullable<T> = T | null;
