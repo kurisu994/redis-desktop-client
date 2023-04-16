@@ -1,0 +1,37 @@
+.wrapper {
+  display: flex;
+  height: 285px;
+  .table {
+    flex: 1;
+    padding: 0 5px;
+  }
+
+  .options {
+    width: 150px;
+
+    .btn {
+      margin: 0 0 15px 0;
+      width: 100%;
+    }
+  }
+}
+
+.editor {
+  display: initial;
+  .option {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: center;
+    padding: 15px;
+    height: 30px;
+
+    .btn {
+      margin-left: 15px;
+    }
+  }
+
+  .monaco-panel {
+    height: calc(100% - 60px - 285px);
+  }
+}

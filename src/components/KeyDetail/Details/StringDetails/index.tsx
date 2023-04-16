@@ -5,11 +5,17 @@ import st from './index.module.css';
 
 export interface Props {
   value?: string;
+  onSave?: (value: string) => unknown;
 }
 
-function StringDetails({ value }: Props) {
+function StringDetails({ value, onSave }: Props) {
   const [language, setLanguage] = useState<string>('plaintext');
+  const [data, setData] = useState<string>(value || '');
   const languages = useMemo(() => ['plaintext', 'json', 'markdown'], []);
+
+  const handleChange = (val = '') => {
+    setData(val);
+  };
   return (
     <>
       <div className={st.option}>
@@ -20,9 +26,17 @@ function StringDetails({ value }: Props) {
           onChange={(v) => setLanguage(v)}
           options={languages}
         />
-        <Button className={st.btn}>save</Button>
+        <Button className={st.btn} onClick={() => onSave?.(data)}>
+          save
+        </Button>
       </div>
-      <MonacoPanel value={value} language={language} theme="vs-dark" />
+      <MonacoPanel
+        value={data}
+        className={st['monaco-panel']}
+        language={language}
+        theme="vs-dark"
+        onChange={handleChange}
+      />
     </>
   );
 }

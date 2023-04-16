@@ -5,11 +5,14 @@ import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import { Monaco } from '@monaco-editor/react';
 import st from './index.module.less';
 import { Nullable } from '@/typing/global';
+import clsx from 'clsx';
 
 interface Props {
   value?: string;
   theme: 'vs-dark' | 'light';
   language?: string;
+  onChange?: (value?: string) => unknown;
+  className?: string;
 }
 
 type IEditorMount = {
@@ -17,7 +20,13 @@ type IEditorMount = {
   monaco: typeof monacoEditor;
 };
 
-function MonacoPanel({ value, theme, language = 'plaintext' }: Props) {
+function MonacoPanel({
+  value,
+  theme,
+  language = 'plaintext',
+  onChange,
+  className,
+}: Props) {
   const monacoObjects = useRef<Nullable<IEditorMount>>(null);
 
   const monacoOptions: editor.IStandaloneEditorConstructionOptions = useMemo(
@@ -79,13 +88,20 @@ function MonacoPanel({ value, theme, language = 'plaintext' }: Props) {
     }
   };
 
+  const _onChange = (value: string | undefined) => {
+    onChange?.(
+      value?.replaceAll('\t', '').replaceAll('\n', '').replaceAll(' ', '')
+    );
+  };
+
   return (
-    <div className={st.wrapper}>
+    <div className={clsx(st.wrapper, className)}>
       <MonacoEditor
         theme={theme}
         language={language}
         options={monacoOptions}
         value={value}
+        onChange={_onChange}
         onMount={handleEditorDidMount}
       />
     </div>

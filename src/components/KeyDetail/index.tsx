@@ -20,9 +20,9 @@ const KeyDetail = (props: Props) => {
   const TypeDetails: any = {
     [RedisKeyType.ZSET]: <ZSetDetails />,
     [RedisKeyType.SET]: <SetDetails />,
-    [RedisKeyType.STRING]: <StringDetails value={value} />,
+    [RedisKeyType.STRING]: <StringDetails value={value} onSave={console.log} />,
     [RedisKeyType.HASH]: <HashDetails />,
-    [RedisKeyType.LIST]: <ListDetails />,
+    [RedisKeyType.LIST]: <ListDetails value={[...value, ...value, ...value]} />,
   };
 
   return (
