@@ -1,19 +1,25 @@
 import { useMemo, useState } from 'react';
 import MonacoDetail from '../MonacoDetail';
 import st from './index.module.less';
-import { Button, Input, Select } from '@arco-design/web-react';
-import styles from './index.module.less';
 import EditorOption from '@/components/EditorOption';
 
 interface Props {
   value?: string;
   theme: 'vs-dark' | 'light';
-  onChange?: (value?: string) => unknown;
-  className?: string;
+  onSave?: (value: string) => unknown;
 }
-function MonacoPanel({ value, theme, onChange }: Props) {
+function MonacoPanel({ value, theme, onSave }: Props) {
+  const [data, setData] = useState<string>(value || '');
   const [language, setLanguage] = useState<string>('plaintext');
   const languages = useMemo(() => ['plaintext', 'json', 'markdown'], []);
+
+  const handleChange = (val = '') => {
+    setData(val);
+  };
+
+  const handSave = () => {
+    onSave?.(data);
+  };
 
   return (
     <div className={st.editor}>
@@ -22,12 +28,13 @@ function MonacoPanel({ value, theme, onChange }: Props) {
         language={language}
         languages={languages}
         changeLanguage={(v) => setLanguage(v)}
+        handSave={handSave}
       />
       <MonacoDetail
-        value={value}
+        value={data}
         language={language}
         theme={theme}
-        onChange={onChange}
+        onChange={handleChange}
       />
     </div>
   );

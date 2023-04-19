@@ -6,6 +6,7 @@ interface Props {
   language: string;
   changeLanguage: (language: string) => unknown;
   languages: string[];
+  handSave?: () => unknown;
 }
 
 function EditorOption({
@@ -13,6 +14,7 @@ function EditorOption({
   languages,
   language,
   changeLanguage,
+  handSave,
 }: Props) {
   return (
     <div className={st['option-wrapper']}>
@@ -29,7 +31,9 @@ function EditorOption({
           onChange={(v) => changeLanguage(v)}
           options={languages}
         />
-        <Button className={st.btn}>save</Button>
+        <Button className={st.btn} onClick={handSave}>
+          save
+        </Button>
       </div>
     </div>
   );
