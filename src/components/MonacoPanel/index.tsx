@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import MonacoDetail from '../MonacoDetail';
 import st from './index.module.less';
 import EditorOption from '@/components/EditorOption';
@@ -12,6 +12,10 @@ function MonacoPanel({ value, theme, onSave }: Props) {
   const [data, setData] = useState<string>(value || '');
   const [language, setLanguage] = useState<string>('plaintext');
   const languages = useMemo(() => ['plaintext', 'json', 'markdown'], []);
+
+  useEffect(() => {
+    setData(value || '');
+  }, [value]);
 
   const handleChange = (val = '') => {
     setData(val);
