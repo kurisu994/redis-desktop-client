@@ -15,14 +15,16 @@ export interface Props {
 }
 
 const KeyDetail = (props: Props) => {
-  const { keyType, value } = props;
+  const { keyType, value, theme } = props;
 
   const TypeDetails: any = {
-    [RedisKeyType.ZSET]: <ZSetDetails />,
-    [RedisKeyType.SET]: <SetDetails />,
-    [RedisKeyType.STRING]: <StringDetails value={value} onSave={console.log} />,
-    [RedisKeyType.HASH]: <HashDetails />,
-    [RedisKeyType.LIST]: <ListDetails value={[...value, ...value, ...value]} />,
+    [RedisKeyType.ZSET]: <ZSetDetails value={[]} theme={theme} />,
+    [RedisKeyType.SET]: <SetDetails theme={theme} />,
+    [RedisKeyType.STRING]: (
+      <StringDetails value={value} onSave={console.log} theme={theme} />
+    ),
+    [RedisKeyType.HASH]: <HashDetails value={[]} theme={theme} />,
+    [RedisKeyType.LIST]: <ListDetails value={value} theme={theme} />,
   };
 
   return (

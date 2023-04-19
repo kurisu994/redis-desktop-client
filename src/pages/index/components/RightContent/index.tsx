@@ -6,6 +6,7 @@ import { RedisValue } from '@/pages/index/api';
 import { GlobalContext } from '@/context';
 import RedisKeyBar from '@/components/RedisKeyBar';
 import KeyDetail from '@/components/KeyDetail';
+import Footer from '@/components/Footer';
 
 const Header = Layout.Header;
 const Content = Layout.Content;
@@ -62,6 +63,7 @@ function RightContent({
           )}
         </Content>
       </Layout>
+      <Footer />
     </Layout>
   );
 }

@@ -1,23 +1,17 @@
 import { useMemo } from 'react';
-import {
-  Button,
-  Select,
-  Table,
-  TableColumnProps,
-} from '@arco-design/web-react';
+import { Button, Table, TableColumnProps } from '@arco-design/web-react';
 import { useSafeState } from 'ahooks';
 import st from './index.module.less';
 import MonacoPanel from '@/components/MonacoPanel';
-
 interface Props {
   value: string[];
+  onSave?: (value: string) => unknown;
+  theme: 'vs-dark' | 'light';
 }
-function ListDetails({ value = [] }: Props) {
+
+function ListDetails({ value = [], theme }: Props) {
   const [index, setIndex] = useSafeState<number>();
   const [rowValue, setRowValue] = useSafeState<string>('');
-
-  const [language, setLanguage] = useSafeState<string>('plaintext');
-  const languages = useMemo(() => ['plaintext', 'json', 'markdown'], []);
 
   const columns: TableColumnProps[] = useMemo(
     () => [
@@ -47,7 +41,7 @@ function ListDetails({ value = [] }: Props) {
   };
 
   return (
-    <div style={{ height: '100%' }}>
+    <div className={st['detail-wrapper']}>
       <div className={st.wrapper}>
         <div className={st.table}>
           <Table
@@ -74,25 +68,7 @@ function ListDetails({ value = [] }: Props) {
         </div>
       </div>
 
-      <div className={st.editor}>
-        <div className={st.option}>
-          <div>View as</div>
-          <Select
-            style={{ width: 160 }}
-            value={language}
-            onChange={(v) => setLanguage(v)}
-            options={languages}
-          />
-          <Button className={st.btn}>save</Button>
-        </div>
-        <MonacoPanel
-          className={st['monaco-panel']}
-          value={rowValue}
-          language={language}
-          theme="vs-dark"
-          onChange={handleChange}
-        />
-      </div>
+      <MonacoPanel value={rowValue} theme={theme} onChange={handleChange} />
     </div>
   );
 }
