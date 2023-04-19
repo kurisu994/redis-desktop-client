@@ -9,7 +9,7 @@ interface Props {
   theme: 'vs-dark' | 'light';
 }
 
-function ListDetails({ value = [], theme }: Props) {
+function ListDetails({ value = [], theme, onSave }: Props) {
   const [index, setIndex] = useSafeState<number>();
   const [rowValue, setRowValue] = useSafeState<string>('');
 
@@ -36,10 +36,6 @@ function ListDetails({ value = [], theme }: Props) {
     [value]
   );
 
-  const handleChange = (val = '') => {
-    console.log(val);
-  };
-
   return (
     <div className={st['detail-wrapper']}>
       <div className={st.wrapper}>
@@ -53,7 +49,7 @@ function ListDetails({ value = [], theme }: Props) {
             stripe
             onRow={(record, index) => {
               return {
-                onClick: (_) => {
+                onClick: () => {
                   setIndex(index);
                   setRowValue(record.value);
                 },
@@ -68,7 +64,7 @@ function ListDetails({ value = [], theme }: Props) {
         </div>
       </div>
 
-      <MonacoPanel value={rowValue} theme={theme} onChange={handleChange} />
+      <MonacoPanel value={rowValue} theme={theme} onSave={onSave} />
     </div>
   );
 }
