@@ -1,5 +1,6 @@
 .header {
-  line-height: 64px;
+  height: 65px;
+  line-height: 65px;
   background: var(--color-bg-3);
   border-bottom: 1px solid var(--color-border-2);
 }
@@ -13,14 +14,11 @@
   color: var(--color-text-1);
 }
 
-.content-wrapper {
-  padding: 0 24px;
-}
-
 .content {
   text-align: center;
   font-stretch: condensed;
   display: flex;
+  flex: 1;
   flex-direction: column;
   background: var(--color-bg-3);
   color: var(--color-text-2);

@@ -41,28 +41,26 @@ function RightContent({
           )}
         </Button>
       </Header>
-      <Layout className={st['content-wrapper ']}>
-        <Content className={st.content}>
-          {redisValue ? (
-            <>
-              <RedisKeyBar
-                ttl={redisValue?.ttl}
-                keyType={redisValue?.keyType}
-                redisKey={redisValue?.key}
-              />
-              <KeyDetail
-                keyType={redisValue?.keyType}
-                value={redisValue?.value}
-                theme={monacoTheme ?? 'light'}
-              />
-            </>
-          ) : (
-            <Typography.Title className={st['content-title']}>
-              GUI for Redis
-            </Typography.Title>
-          )}
-        </Content>
-      </Layout>
+      <Content className={st.content}>
+        {redisValue ? (
+          <>
+            <RedisKeyBar
+              ttl={redisValue?.ttl}
+              keyType={redisValue?.keyType}
+              redisKey={redisValue?.key}
+            />
+            <KeyDetail
+              keyType={redisValue?.keyType}
+              value={redisValue?.value}
+              theme={monacoTheme ?? 'light'}
+            />
+          </>
+        ) : (
+          <Typography.Title className={st['content-title']}>
+            GUI for Redis
+          </Typography.Title>
+        )}
+      </Content>
       <Footer />
     </Layout>
   );

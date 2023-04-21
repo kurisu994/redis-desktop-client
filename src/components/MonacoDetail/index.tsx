@@ -1,10 +1,11 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import { Monaco } from '@monaco-editor/react';
 import st from './index.module.less';
 import { Nullable } from '@/typing/global';
+import helper from '@/utils/helper';
 
 interface Props {
   value?: string;
@@ -26,10 +27,19 @@ function MonacoPanel({
 }: Props) {
   const monacoObjects = useRef<Nullable<IEditorMount>>(null);
 
+  useEffect(() => {
+    window.onresize = helper.debounce(() =>
+      monacoObjects.current?.editor?.layout()
+    );
+    return () => {
+      window.onresize = null;
+    };
+  }, []);
+
   const monacoOptions: editor.IStandaloneEditorConstructionOptions = useMemo(
     () => ({
       wordWrap: 'on',
-      automaticLayout: true,
+      automaticLayout: false,
       formatOnPaste: true,
       formatOnType: true,
       padding: { top: 10 },
@@ -72,6 +82,7 @@ function MonacoPanel({
     });
     editor.onDidChangeModelLanguage((e) => formatDocument(e.newLanguage));
     monacoObjects.current = { editor, monaco };
+    editor?.layout();
     formatDocument(language);
   };
 
