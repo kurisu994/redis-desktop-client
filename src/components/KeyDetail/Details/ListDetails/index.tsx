@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Button, Table, TableColumnProps } from '@arco-design/web-react';
 import { useSafeState } from 'ahooks';
 import st from './index.module.less';
@@ -10,7 +10,7 @@ interface Props {
 }
 
 function ListDetails({ value = [], theme, onSave }: Props) {
-  const [index, setIndex] = useSafeState<number>();
+  const [_, setIndex] = useSafeState<number>();
   const [rowValue, setRowValue] = useSafeState<string>('');
 
   const columns: TableColumnProps[] = useMemo(
@@ -69,4 +69,4 @@ function ListDetails({ value = [], theme, onSave }: Props) {
   );
 }
 
-export default ListDetails;
+export default React.memo(ListDetails);

@@ -22,6 +22,14 @@ function MonacoPanel({ value, theme, onSave }: Props) {
   };
 
   const handSave = () => {
+    if (language == 'json') {
+      const _data = data
+        ?.replaceAll('\t', '')
+        .replaceAll('\n', '')
+        .replaceAll(' ', '');
+      onSave?.(_data);
+      return;
+    }
     onSave?.(data);
   };
 

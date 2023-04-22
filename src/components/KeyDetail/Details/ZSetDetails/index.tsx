@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface Props {
   value: string[];
   onSave?: (value: string) => unknown;
@@ -8,4 +10,4 @@ function ZSetDetails({}: Props) {
   return <div>ZSetDetails</div>;
 }
 
-export default ZSetDetails;
+export default React.memo(ZSetDetails);

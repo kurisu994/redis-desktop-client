@@ -1,4 +1,3 @@
-import React from 'react';
 import { RedisKeyType, UnresolvedKeyTypes } from '@/typing/global';
 import ZSetDetails from './Details/ZSetDetails';
 import SetDetails from './Details/SetDetails';
@@ -19,7 +18,9 @@ const KeyDetail = (props: Props) => {
 
   const TypeDetails: any = {
     [RedisKeyType.ZSET]: <ZSetDetails value={[]} theme={theme} />,
-    [RedisKeyType.SET]: <SetDetails theme={theme} />,
+    [RedisKeyType.SET]: (
+      <SetDetails value={value} onSave={console.log} theme={theme} />
+    ),
     [RedisKeyType.STRING]: (
       <StringDetails value={value} onSave={console.log} theme={theme} />
     ),
@@ -38,4 +39,4 @@ const KeyDetail = (props: Props) => {
   );
 };
 
-export default React.memo(KeyDetail);
+export default KeyDetail;

@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface Props {
   value: string[];
   onSave?: (value: string) => unknown;
@@ -8,4 +10,4 @@ function HashDetails({}: Props) {
   return <div>HashDetails</div>;
 }
 
-export default HashDetails;
+export default React.memo(HashDetails);

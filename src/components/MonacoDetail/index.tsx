@@ -6,6 +6,9 @@ import { Monaco } from '@monaco-editor/react';
 import st from './index.module.less';
 import { Nullable } from '@/typing/global';
 import helper from '@/utils/helper';
+import { Format } from '@icon-park/react';
+import { Button, Message } from '@arco-design/web-react';
+import { IconCopy } from '@arco-design/web-react/icon';
 
 interface Props {
   value?: string;
@@ -66,6 +69,7 @@ function MonacoPanel({
         verticalScrollbarSize: 5,
         horizontalScrollbarSize: 5,
       },
+      contextmenu: false,
     }),
     []
   );
@@ -80,14 +84,16 @@ function MonacoPanel({
       schemaRequest: 'error',
       trailingCommas: 'error',
     });
-    editor.onDidChangeModelLanguage((e) => formatDocument(e.newLanguage));
     monacoObjects.current = { editor, monaco };
     editor?.layout();
-    formatDocument(language);
+  };
+  const _onChange = (value: string | undefined) => {
+    onChange?.(value);
   };
 
-  const formatDocument = (lan: string) => {
-    if (lan == 'json') {
+  const handleFormat = () => {
+    monacoObjects.current?.editor?.layout();
+    if (language == 'json') {
       monacoObjects.current?.editor.trigger(
         'editor',
         'editor.action.formatDocument',
@@ -96,14 +102,25 @@ function MonacoPanel({
     }
   };
 
-  const _onChange = (value: string | undefined) => {
-    onChange?.(
-      value?.replaceAll('\t', '').replaceAll('\n', '').replaceAll(' ', '')
-    );
+  const handleCopy = () => {
+    const { editor } = monacoObjects.current || {};
+    const value = editor?.getValue();
+    if (value) {
+      helper
+        .clipboard(value)
+        .then(() => Message.success('复制成功'))
+        .catch((e) => Message.error(e.message));
+    }
   };
 
   return (
     <div className={st.wrapper}>
+      <div className={st.format}>
+        <Button.Group>
+          <Button icon={<Format />} onClick={handleFormat} />
+          <Button icon={<IconCopy />} onClick={handleCopy} />
+        </Button.Group>
+      </div>
       <MonacoEditor
         theme={theme}
         language={language}
