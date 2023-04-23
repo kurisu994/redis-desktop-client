@@ -45,7 +45,7 @@ pub fn save_server(server: Option<NewServer>) -> CmdResult<usize> {
 
     match server_id {
         Some(id) => {
-            manager::disconnect_redis(id);
+            manager::disconnect_redis(id).expect_err("disconnect redis error");
         }
         None => {}
     };
