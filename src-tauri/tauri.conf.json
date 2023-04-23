@@ -7,7 +7,7 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "Redis-Manager",
+    "productName": "redis-desktop-client",
     "version": "0.0.1"
   },
   "tauri": {
@@ -49,7 +49,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "Redis-Manager",
+        "title": "redis-desktop-client",
         "width": 1024,
         "height": 768
       }

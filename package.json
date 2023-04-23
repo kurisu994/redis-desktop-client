@@ -1,5 +1,5 @@
 {
-  "name": "redis-manager",
+  "name": "redis-desktop-client",
   "private": true,
   "version": "0.0.1",
   "description": "A cross-platform redis gui client",

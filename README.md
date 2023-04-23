@@ -1,4 +1,4 @@
-# Redis-Manager
+# redis-desktop-client
 
 A cross-platform redis gui client started developing with Tauri, React and Typescript in Vite.
 

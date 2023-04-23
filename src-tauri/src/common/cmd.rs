@@ -36,10 +36,19 @@ pub fn save_server(server: Option<NewServer>) -> CmdResult<usize> {
     }
     let server_info = server.unwrap();
     let _port = server_info.port;
+    let server_id: Option<i32> = server_info.id;
+
     if _port > 65536 || _port <= 0 {
         ret_err!(String::from("端口号必须在1-65536之间"))
     }
     let result = wrap_err!(server::save_or_update(server_info))?;
+
+    match server_id {
+        Some(id) => {
+            manager::disconnect_redis(id);
+        }
+        None => {}
+    };
     Ok(result)
 }
 

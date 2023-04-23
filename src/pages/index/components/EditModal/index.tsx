@@ -30,8 +30,13 @@ const TabPane = Tabs.TabPane;
 function EditModal({ visible, data, loading, onOk, onCancel }: Props) {
   const { run, loading: testing } = useRequest(testCon, {
     manual: true,
-    onSuccess: () => {
-      Message.success('Successful connection to redis-server');
+    onSuccess: (res) => {
+      console.log(res);
+      if (res) {
+        Message.success('Successful connect to redis-server');
+      } else {
+        Message.error("Can't connect to redis-server");
+      }
     },
     onError: (e) => {
       Message.error(e.message);

@@ -1,10 +1,10 @@
 [package]
-name = "redis_manager"
+name = "redis_desktop_client"
 version = "0.0.1"
 description = "A cross-platform redis gui client"
 authors = ["Makise_kurisuu@outlook.jp"]
 license = "MIT"
-repository = "https://github.com/kurisu994/Redis-Manager.git"
+repository = "https://github.com/kurisu994/redis-desktop-client.git"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
