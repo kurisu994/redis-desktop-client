@@ -13,7 +13,7 @@
     "pre-commit": "pretty-quick --staged && npm run eslint && npm run stylelint",
     "preview": "vite preview",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev --features=redis-manager-dev"
+    "tauri:dev": "tauri dev --features=redis-client-dev"
   },
   "dependencies": {
     "@arco-design/web-react": "^2.47.1",

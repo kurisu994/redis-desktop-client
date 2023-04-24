@@ -30,4 +30,4 @@ lazy_static = "^1.4.0"
 # DO NOT REMOVE!!
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
-redis-manager-dev = []
+redis-client-dev = []

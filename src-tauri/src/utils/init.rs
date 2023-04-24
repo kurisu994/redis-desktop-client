@@ -13,12 +13,12 @@ use crate::dao::db;
 use crate::dao::setting::init_setting;
 use crate::utils::dirs;
 
-static DATE_BASE: &str = "redis-manger.db";
+static DATE_BASE: &str = "rdc.db";
 
 pub fn init_application(migrations_source: EmbeddedMigrations) -> Result<()> {
-    #[cfg(feature = "redis-manager-dev")]
+    #[cfg(feature = "redis-client-dev")]
     let _ = init_log(LevelFilter::Debug);
-    #[cfg(not(feature = "redis-manager-dev"))]
+    #[cfg(not(feature = "redis-client-dev"))]
     let _ = init_log(LevelFilter::Info);
 
     crate::log_err!(dirs::app_home_dir().map(|app_dir| {
@@ -60,9 +60,9 @@ fn init_log(level: LevelFilter) -> Result<()> {
     let log_file = format!("{}.log", local_time);
     let log_file = log_dir.join(log_file);
 
-    #[cfg(feature = "redis-manager-dev")]
+    #[cfg(feature = "redis-client-dev")]
     let time_format = "{d(%Y-%m-%d %H:%M:%S)} {l} - {M} {m}{n}";
-    #[cfg(not(feature = "redis-manager-dev"))]
+    #[cfg(not(feature = "redis-client-dev"))]
     let time_format = "{d(%Y-%m-%d %H:%M:%S)} {l} - {m}{n}";
 
     let encode = Box::new(PatternEncoder::new(time_format));

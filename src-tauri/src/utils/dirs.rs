@@ -3,10 +3,10 @@ use std::path::PathBuf;
 use anyhow::Result;
 use tauri::api::path::home_dir;
 
-#[cfg(not(feature = "redis-manager-dev"))]
-static APP_DIR: &str = "redis-manger";
-#[cfg(feature = "redis-manager-dev")]
-static APP_DIR: &str = "redis-manger-dev";
+#[cfg(not(feature = "redis-client-dev"))]
+static APP_DIR: &str = "redis-desktop-client";
+#[cfg(feature = "redis-client-dev")]
+static APP_DIR: &str = "./debug";
 
 /// get the app home dir
 pub fn app_home_dir() -> Result<PathBuf> {
@@ -37,25 +37,25 @@ pub fn app_home_dir() -> Result<PathBuf> {
 }
 
 /// profiles dir
-#[cfg(feature = "redis-manager-dev")]
+#[cfg(feature = "redis-client-dev")]
 pub fn app_db_dir() -> Result<PathBuf> {
-    Ok(PathBuf::from("./db"))
+    Ok(PathBuf::from(APP_DIR).join("db"))
 }
 
 /// profiles dir
-#[cfg(not(feature = "redis-manager-dev"))]
+#[cfg(not(feature = "redis-client-dev"))]
 pub fn app_db_dir() -> Result<PathBuf> {
     Ok(app_home_dir()?.join("db"))
 }
 
 /// logs dir
-#[cfg(feature = "redis-manager-dev")]
+#[cfg(feature = "redis-client-dev")]
 pub fn app_logs_dir() -> Result<PathBuf> {
-    Ok(PathBuf::from(".").join("logs"))
+    Ok(PathBuf::from(APP_DIR).join("logs"))
 }
 
 /// logs dir
-#[cfg(not(feature = "redis-manager-dev"))]
+#[cfg(not(feature = "redis-client-dev"))]
 pub fn app_logs_dir() -> Result<PathBuf> {
     Ok(app_home_dir()?.join("logs"))
 }

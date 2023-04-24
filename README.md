@@ -50,7 +50,7 @@ Issue and PR welcome!
 
 ## Acknowledgement
 
-Redis-Manager was based on or inspired by these projects and so on:
+Redis-Desktop-Client was based on or inspired by these projects and so on:
 
 - [tauri-apps/tauri](https://github.com/tauri-apps/tauri): Build smaller, faster, and more secure desktop applications with a web frontend.
 - [arco-design](https://github.com/arco-design): A comprehensive React UI components library based on the Arco Design system.
@@ -59,4 +59,4 @@ Redis-Manager was based on or inspired by these projects and so on:
 
 ## License
 
-MIT License. See [License](https://github.com/kurisu994/Redis-Manager/blob/main/LICENSE) here for details.
+MIT License. See [License](https://github.com/kurisu994/redis-desktop-client/blob/main/LICENSE) here for details.
