@@ -3,6 +3,7 @@ import { Button, Table, TableColumnProps } from '@arco-design/web-react';
 import { useSafeState } from 'ahooks';
 import MonacoPanel from '@/components/MonacoPanel';
 import st from './index.module.less';
+import { isArray } from '@/utils/is';
 
 interface Props {
   value?: string[];
@@ -30,10 +31,12 @@ function SetDetails({ value = [], theme, onSave }: Props) {
     ],
     []
   );
-  const dataSource = useMemo(
-    () => value.map((t, i) => ({ id: i + 1, value: t })),
-    [value]
-  );
+  const dataSource = useMemo(() => {
+    if (isArray(value)) {
+      return [];
+    }
+    return value.map((t, i) => ({ id: i + 1, value: t }));
+  }, [value]);
 
   return (
     <div className={st['detail-wrapper']}>

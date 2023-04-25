@@ -7,7 +7,13 @@ interface Props {
 }
 
 function StringDetails({ value, onSave, theme }: Props) {
-  return <MonacoPanel value={value} theme={theme} onSave={onSave} />;
+  return (
+    <MonacoPanel
+      value={typeof value === 'string' ? value : ''}
+      theme={theme}
+      onSave={onSave}
+    />
+  );
 }
 
 export default React.memo(StringDetails);

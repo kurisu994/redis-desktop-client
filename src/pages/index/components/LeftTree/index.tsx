@@ -203,8 +203,6 @@ function LeftContent({ server, onEdit, onRemove, onCopy, onSelectKey }: Props) {
       actionOnClick={['select']}
       selectedKeys={selectedKeys}
       onSelect={handSelect}
-      // expandedKeys={expandedKeys}
-      // onExpand={onDoubleClick}
       fieldNames={{
         key: 'id',
         title: 'name',

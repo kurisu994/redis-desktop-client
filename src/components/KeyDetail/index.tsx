@@ -17,15 +17,21 @@ const KeyDetail = (props: Props) => {
   const { keyType, value, theme } = props;
 
   const TypeDetails: any = {
-    [RedisKeyType.ZSET]: <ZSetDetails value={[]} theme={theme} />,
+    [RedisKeyType.ZSET]: (
+      <ZSetDetails value={value} onSave={console.log} theme={theme} />
+    ),
     [RedisKeyType.SET]: (
       <SetDetails value={value} onSave={console.log} theme={theme} />
     ),
     [RedisKeyType.STRING]: (
       <StringDetails value={value} onSave={console.log} theme={theme} />
     ),
-    [RedisKeyType.HASH]: <HashDetails value={[]} theme={theme} />,
-    [RedisKeyType.LIST]: <ListDetails value={value} theme={theme} />,
+    [RedisKeyType.HASH]: (
+      <HashDetails value={value} onSave={console.log} theme={theme} />
+    ),
+    [RedisKeyType.LIST]: (
+      <ListDetails value={value} onSave={console.log} theme={theme} />
+    ),
   };
 
   return (
