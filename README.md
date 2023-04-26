@@ -9,7 +9,7 @@ A cross-platform redis gui client started developing with Tauri, React and Types
 ### Prerequisites
 
 - Install Node.js. I recommend you to use Node 16+.
-- Install Rust. You can find way in [here](https://www.rust-lang.org/tools/install)
+- 🦀 Install Rust. You can find way in [here](https://www.rust-lang.org/tools/install)
 - Follow the [Tauri setup guide](https://tauri.app/v1/guides/getting-started/prerequisites)
 
 ### Dependency
