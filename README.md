@@ -31,9 +31,9 @@ npm run dev
 ### Develop Client
 
 ```bash
-yarn tauri dev
+yarn tauri:dev
 or
-npm run tauri dev
+npm run tauri:dev
 ```
 
 ### Build Client
