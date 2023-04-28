@@ -33,7 +33,7 @@ function ListDetails({ value = [], theme, onSave }: Props) {
   );
 
   const dataSource = useMemo(() => {
-    if (isArray(value)) {
+    if (!isArray(value)) {
       return [];
     }
     return value.map((t, i) => ({ id: i + 1, value: t }));
@@ -48,7 +48,12 @@ function ListDetails({ value = [], theme, onSave }: Props) {
             data={dataSource}
             borderCell
             rowKey="id"
-            pagination={{ pageSize: 5, simple: true, size: 'mini' }}
+            pagination={{
+              pageSize: 5,
+              simple: true,
+              size: 'mini',
+              hideOnSinglePage: true,
+            }}
             stripe
             onRow={(record, index) => {
               return {

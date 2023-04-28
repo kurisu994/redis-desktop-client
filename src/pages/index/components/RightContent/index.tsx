@@ -14,6 +14,7 @@ const Content = Layout.Content;
 interface Props {
   siderCollapsed?: boolean;
   handlerSiderCollapse?: () => unknown;
+  refresh?: () => unknown;
   redisValue?: RedisValue;
 }
 
@@ -21,6 +22,7 @@ function RightContent({
   siderCollapsed,
   handlerSiderCollapse,
   redisValue,
+  refresh,
 }: Props) {
   const { monacoTheme } = useContext(GlobalContext);
   console.debug(redisValue);
@@ -48,6 +50,7 @@ function RightContent({
               ttl={redisValue?.ttl}
               keyType={redisValue?.keyType}
               redisKey={redisValue?.key}
+              onReload={refresh}
             />
             <KeyDetail
               keyType={redisValue?.keyType}

@@ -35,7 +35,11 @@ function SetDetails({ value = [], theme, onSave }: Props) {
     if (isArray(value)) {
       return [];
     }
-    return value.map((t, i) => ({ id: i + 1, value: t }));
+    return value.map((t, i) => ({
+      id: i + 1,
+      value: t,
+      hideOnSinglePage: true,
+    }));
   }, [value]);
 
   return (

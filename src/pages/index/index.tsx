@@ -24,7 +24,6 @@ export default function Index() {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [connection, setConnection] = useState<Connection>();
-  const [redisValue, setRedisValue] = useState<RedisValue>();
   const { data, run, mutate } = useRequest(getConList);
   const { loading: saveLoading, run: save } = useRequest(saveCon, {
     manual: true,
@@ -38,6 +37,22 @@ export default function Index() {
       Message.error(e.message);
     },
   });
+
+  const {
+    data: redisValue,
+    run: reload,
+    refresh,
+  } = useRequest(readValue, {
+    manual: true,
+    defaultParams: [undefined],
+    onError: (e) => {
+      Message.error(e.message);
+    },
+  });
+
+  const handQueryValue = (server: number, db: number, key: string) => {
+    reload({ id: server, db, key });
+  };
 
   const handleCollapsed = () => {
     setCollapsed(!collapsed);
@@ -82,12 +97,6 @@ export default function Index() {
       .catch((e) => Message.error(e.message));
   };
 
-  const handQueryValue = (server: number, db: number, key: string) => {
-    readValue({ id: server, db, key })
-      .then((v) => setRedisValue(v))
-      .catch((e) => Message.error(e.message));
-  };
-
   return (
     <Layout className="layout-collapse-mangguo">
       <Sider
@@ -126,6 +135,7 @@ export default function Index() {
         siderCollapsed={collapsed}
         handlerSiderCollapse={handleCollapsed}
         redisValue={redisValue}
+        refresh={refresh}
       />
       <EditModal
         visible={visible}

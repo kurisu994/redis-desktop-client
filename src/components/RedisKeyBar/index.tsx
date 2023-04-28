@@ -8,9 +8,10 @@ interface Props {
   ttl?: number;
   keyType?: number;
   redisKey?: string;
+  onReload?: () => unknown;
 }
 
-function RedisKeyBar({ ttl = -1, keyType, redisKey }: Props) {
+function RedisKeyBar({ ttl = -1, keyType, redisKey, onReload }: Props) {
   const [isRunning, checkRunning] = useState(false);
   const [second, setSecond] = useState<number>(-1);
 
@@ -41,7 +42,7 @@ function RedisKeyBar({ ttl = -1, keyType, redisKey }: Props) {
       <Button className={st.btn}>Rename</Button>
       <Button className={st.statistic}>{`TTL:${second}`}</Button>
       <Button className={st.btn}>Delete</Button>
-      <Button>Reload Value</Button>
+      <Button onClick={onReload}>Reload Value</Button>
     </div>
   );
 }

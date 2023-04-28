@@ -89,7 +89,7 @@ export interface RedisValue {
   value: string;
 }
 
-export function readValue(redisOption: {
+export function readValue(redisOption?: {
   id: number;
   db: number;
   key: string;
