@@ -120,7 +120,6 @@ function LeftContent({ server, onEdit, onRemove, onCopy, onSelectKey }: Props) {
       e: Event;
     }
   ) => {
-    console.debug(extra);
     setSelectedKeys(selectedKeys);
     if (extra.node.props.isLeaf && extra.selected) {
       // @ts-ignore  自定义的属性

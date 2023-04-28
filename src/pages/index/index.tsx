@@ -13,7 +13,6 @@ import {
   removeCon,
   copyCon,
   readValue,
-  RedisValue,
 } from './api';
 
 import './index.less';

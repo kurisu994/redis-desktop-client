@@ -25,7 +25,6 @@ function RightContent({
   refresh,
 }: Props) {
   const { monacoTheme } = useContext(GlobalContext);
-  console.debug(redisValue);
 
   return (
     <Layout>

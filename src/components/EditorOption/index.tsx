@@ -7,6 +7,7 @@ interface Props {
   changeLanguage: (language: string) => unknown;
   languages: string[];
   handSave?: () => unknown;
+  disabled?: boolean;
 }
 
 function EditorOption({
@@ -15,6 +16,7 @@ function EditorOption({
   language,
   changeLanguage,
   handSave,
+  disabled,
 }: Props) {
   return (
     <div className={st['option-wrapper']}>
@@ -28,10 +30,11 @@ function EditorOption({
         <Select
           className={st.selector}
           value={language}
+          disabled={disabled}
           onChange={(v) => changeLanguage(v)}
           options={languages}
         />
-        <Button className={st.btn} onClick={handSave}>
+        <Button className={st.btn} onClick={handSave} disabled={disabled}>
           save
         </Button>
       </div>

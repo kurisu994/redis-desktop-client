@@ -7,8 +7,9 @@ interface Props {
   value?: string;
   theme: 'vs-dark' | 'light';
   onSave?: (value: string) => unknown;
+  disabled?: boolean;
 }
-function MonacoPanel({ value, theme, onSave }: Props) {
+function MonacoPanel({ value, theme, onSave, disabled }: Props) {
   const [data, setData] = useState<string>(value || '');
   const [language, setLanguage] = useState<string>('plaintext');
   const languages = useMemo(() => ['plaintext', 'json', 'markdown'], []);
@@ -41,11 +42,13 @@ function MonacoPanel({ value, theme, onSave }: Props) {
         languages={languages}
         changeLanguage={(v) => setLanguage(v)}
         handSave={handSave}
+        disabled={disabled}
       />
       <MonacoDetail
         value={data}
         language={language}
         theme={theme}
+        disabled={disabled}
         onChange={handleChange}
       />
     </div>

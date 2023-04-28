@@ -7,14 +7,20 @@ import { isObject } from '@/utils/is';
 
 interface Props {
   value?: { [key: string]: any };
-  onSave?: (value: string) => unknown;
+  onSave?: (value: string, row_key: string) => unknown;
   theme: 'vs-dark' | 'light';
 }
+
+type IRowValue = {
+  value?: string;
+  row_key: string;
+  id?: number;
+};
 
 function HashDetails({ value = {}, theme, onSave }: Props) {
   console.log(value);
   const [_, setIndex] = useSafeState<number>();
-  const [rowValue, setRowValue] = useSafeState<string>('');
+  const [rowValue, setRowValue] = useSafeState<IRowValue>();
   const columns: TableColumnProps[] = useMemo(
     () => [
       {
@@ -38,7 +44,7 @@ function HashDetails({ value = {}, theme, onSave }: Props) {
     ],
     []
   );
-  const dataSource = useMemo(() => {
+  const dataSource: IRowValue[] = useMemo(() => {
     if (!isObject(value)) {
       return [];
     }
@@ -48,6 +54,10 @@ function HashDetails({ value = {}, theme, onSave }: Props) {
       value: value?.[key] ?? '',
     }));
   }, [value]);
+
+  const handSave = (value: string) => {
+    onSave?.(value, rowValue?.row_key ?? '');
+  };
 
   return (
     <div className={st['detail-wrapper']}>
@@ -69,7 +79,7 @@ function HashDetails({ value = {}, theme, onSave }: Props) {
               return {
                 onClick: () => {
                   setIndex(index);
-                  setRowValue(record.value);
+                  setRowValue(record);
                 },
               };
             }}
@@ -82,7 +92,12 @@ function HashDetails({ value = {}, theme, onSave }: Props) {
         </div>
       </div>
 
-      <MonacoPanel value={rowValue} theme={theme} onSave={onSave} />
+      <MonacoPanel
+        value={rowValue?.value}
+        theme={theme}
+        onSave={handSave}
+        disabled={!rowValue}
+      />
     </div>
   );
 }

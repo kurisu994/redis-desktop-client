@@ -12,7 +12,7 @@ interface Props {
 
 function ListDetails({ value = [], theme, onSave }: Props) {
   const [_, setIndex] = useSafeState<number>();
-  const [rowValue, setRowValue] = useSafeState<string>('');
+  const [rowValue, setRowValue] = useSafeState<string>();
 
   const columns: TableColumnProps[] = useMemo(
     () => [
@@ -72,7 +72,12 @@ function ListDetails({ value = [], theme, onSave }: Props) {
         </div>
       </div>
 
-      <MonacoPanel value={rowValue} theme={theme} onSave={onSave} />
+      <MonacoPanel
+        value={rowValue}
+        theme={theme}
+        onSave={onSave}
+        disabled={!rowValue}
+      />
     </div>
   );
 }

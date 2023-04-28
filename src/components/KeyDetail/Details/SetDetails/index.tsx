@@ -13,7 +13,7 @@ interface Props {
 
 function SetDetails({ value = [], theme, onSave }: Props) {
   const [_, setIndex] = useSafeState<number>();
-  const [rowValue, setRowValue] = useSafeState<string>('');
+  const [rowValue, setRowValue] = useSafeState<string>();
   const columns: TableColumnProps[] = useMemo(
     () => [
       {
@@ -32,7 +32,7 @@ function SetDetails({ value = [], theme, onSave }: Props) {
     []
   );
   const dataSource = useMemo(() => {
-    if (isArray(value)) {
+    if (!isArray(value)) {
       return [];
     }
     return value.map((t, i) => ({
@@ -70,7 +70,12 @@ function SetDetails({ value = [], theme, onSave }: Props) {
         </div>
       </div>
 
-      <MonacoPanel value={rowValue} theme={theme} onSave={onSave} />
+      <MonacoPanel
+        value={rowValue}
+        theme={theme}
+        onSave={onSave}
+        disabled={!rowValue}
+      />
     </div>
   );
 }

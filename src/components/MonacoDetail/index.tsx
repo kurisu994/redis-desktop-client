@@ -7,13 +7,14 @@ import st from './index.module.less';
 import { Nullable } from '@/typing/global';
 import helper from '@/utils/helper';
 import { Format } from '@icon-park/react';
-import { Button, Message } from '@arco-design/web-react';
+import { Button, Input, Message } from '@arco-design/web-react';
 import { IconCopy } from '@arco-design/web-react/icon';
 
 interface Props {
   value?: string;
   theme: 'vs-dark' | 'light';
   language?: string;
+  disabled?: boolean;
   onChange?: (value?: string) => unknown;
 }
 
@@ -26,6 +27,7 @@ function MonacoPanel({
   value,
   theme,
   language = 'plaintext',
+  disabled,
   onChange,
 }: Props) {
   const monacoObjects = useRef<Nullable<IEditorMount>>(null);
@@ -117,18 +119,30 @@ function MonacoPanel({
     <div className={st.wrapper}>
       <div className={st.format}>
         <Button.Group>
-          <Button icon={<Format />} onClick={handleFormat} />
-          <Button icon={<IconCopy />} onClick={handleCopy} />
+          <Button
+            disabled={disabled}
+            icon={<Format />}
+            onClick={handleFormat}
+          />
+          <Button
+            disabled={disabled}
+            icon={<IconCopy />}
+            onClick={handleCopy}
+          />
         </Button.Group>
       </div>
-      <MonacoEditor
-        theme={theme}
-        language={language}
-        options={monacoOptions}
-        value={value}
-        onChange={_onChange}
-        onMount={handleEditorDidMount}
-      />
+      {disabled ? (
+        <Input.TextArea className={st.textarea} disabled={disabled} />
+      ) : (
+        <MonacoEditor
+          theme={theme}
+          language={language}
+          options={monacoOptions}
+          value={value}
+          onChange={_onChange}
+          onMount={handleEditorDidMount}
+        />
+      )}
     </div>
   );
 }
