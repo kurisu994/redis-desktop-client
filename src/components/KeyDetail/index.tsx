@@ -11,11 +11,10 @@ export interface Props {
   keyType?: RedisKeyType;
   value?: any;
   theme: 'vs-dark' | 'light';
+  onSave?: (value: any) => void;
 }
 
-const KeyDetail = (props: Props) => {
-  const { keyType, value, theme } = props;
-
+const KeyDetail = ({ keyType, value, theme, onSave }: Props) => {
   const TypeDetails: any = {
     [RedisKeyType.ZSET]: (
       <ZSetDetails value={value} onSave={console.log} theme={theme} />
@@ -24,7 +23,11 @@ const KeyDetail = (props: Props) => {
       <SetDetails value={value} onSave={console.log} theme={theme} />
     ),
     [RedisKeyType.STRING]: (
-      <StringDetails value={value} onSave={console.log} theme={theme} />
+      <StringDetails
+        value={value}
+        onSave={(val) => onSave?.(val)}
+        theme={theme}
+      />
     ),
     [RedisKeyType.HASH]: (
       <HashDetails value={value} onSave={console.log} theme={theme} />

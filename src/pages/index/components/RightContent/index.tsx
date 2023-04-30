@@ -26,6 +26,10 @@ function RightContent({
 }: Props) {
   const { monacoTheme } = useContext(GlobalContext);
 
+  const save = (value: any) => {
+    console.log(value);
+  };
+
   return (
     <Layout>
       <Header className={st.header}>
@@ -55,6 +59,7 @@ function RightContent({
               keyType={redisValue?.keyType}
               value={redisValue?.value}
               theme={monacoTheme ?? 'light'}
+              onSave={save}
             />
           </>
         ) : (
