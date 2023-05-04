@@ -40,15 +40,30 @@ function RedisKeyBar({
     isRunning ? 1000 : null
   );
 
+  const onChangeKeyName = () => {
+    //TODO
+  };
+
+  const onChangeTtl = () => {
+    //TODO
+  };
+
   return (
     <div className={st['space-wrapper']}>
       <Typography.Text className={st['type-text']}>
         {(keyType && RedisKeyType[keyType]) || '-'}:
       </Typography.Text>
       <Input value={redisKey} className={st['input']} disabled />
-      <Button className={st.btn}>Rename</Button>
-      <Button className={st.statistic}>{`TTL:${second}`}</Button>
-      <Button className={st.btn}>Delete</Button>
+      <Button className={st.btn} onClick={onChangeKeyName}>
+        Rename
+      </Button>
+      <Button
+        className={st.statistic}
+        onClick={onChangeTtl}
+      >{`TTL:${second}`}</Button>
+      <Button className={st.btn} onClick={onDelete}>
+        Delete
+      </Button>
       <Button onClick={onReload}>Reload Value</Button>
     </div>
   );
