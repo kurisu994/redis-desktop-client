@@ -9,9 +9,16 @@ interface Props {
   keyType?: number;
   redisKey?: string;
   onReload?: () => unknown;
+  onDelete?: () => unknown;
 }
 
-function RedisKeyBar({ ttl = -1, keyType, redisKey, onReload }: Props) {
+function RedisKeyBar({
+  ttl = -1,
+  keyType,
+  redisKey,
+  onReload,
+  onDelete,
+}: Props) {
   const [isRunning, checkRunning] = useState(false);
   const [second, setSecond] = useState<number>(-1);
 
