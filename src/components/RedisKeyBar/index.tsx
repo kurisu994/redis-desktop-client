@@ -64,7 +64,9 @@ function RedisKeyBar({
       <Button className={st.btn} onClick={onDelete}>
         Delete
       </Button>
-      <Button onClick={onReload}>Reload Value</Button>
+      <Button className={st.reload} onClick={onReload}>
+        Reload Value
+      </Button>
     </div>
   );
 }
