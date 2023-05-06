@@ -62,22 +62,22 @@ export interface SimpleConnection {
   /** 连接超时时间 */
   conTimeout: number;
 }
-
+/** 测试redis服务的连通性 */
 export function testCon(params: SimpleConnection) {
   return request<boolean>(CMD.TEST_SERVER, { info: params });
 }
-
+/** 保存redis服务信息 */
 export function saveCon(params: SaveParams) {
   return request<boolean>(CMD.SAVE_SERVER, { server: params });
 }
-
+/** 移除一个redis服务信息 */
 export function removeCon(id?: number) {
   if (!id) {
     return Promise.resolve(true);
   }
   return request<boolean>(CMD.REMOVE_SERVER, { id });
 }
-
+/** 拷贝一个redis服务 */
 export function copyCon(id?: number) {
   return request<boolean>(CMD.COPY_SERVER, { id });
 }
@@ -88,11 +88,19 @@ export interface RedisValue {
   ttl: number;
   value: string;
 }
-
+/** 读取redis key 的值 */
 export function readValue(redisOption?: {
   id: number;
   db: number;
   key: string;
 }) {
   return request<RedisValue>(CMD.READ_VALUE, { redis_option: redisOption });
+}
+/** 删除redis key */
+export function deleteRedisKey(redisOption?: {
+  id: number;
+  db: number;
+  key: string;
+}) {
+  return request<RedisValue>(CMD.DELETE_KEY, { redis_option: redisOption });
 }

@@ -8,11 +8,11 @@ import { useRequest } from 'ahooks';
 import {
   getConList,
   saveCon,
-  SaveParams,
   Connection,
   removeCon,
   copyCon,
   readValue,
+  deleteRedisKey,
 } from './api';
 
 import './index.less';
@@ -36,11 +36,12 @@ export default function Index() {
       Message.error(e.message);
     },
   });
-
   const {
     data: redisValue,
-    run: reload,
+    run: queryValue,
     refresh,
+    params,
+    mutate: mutateRedisValue,
   } = useRequest(readValue, {
     manual: true,
     defaultParams: [undefined],
@@ -48,11 +49,6 @@ export default function Index() {
       Message.error(e.message);
     },
   });
-
-  const handQueryValue = (server: number, db: number, key: string) => {
-    reload({ id: server, db, key });
-  };
-
   const handleCollapsed = () => {
     setCollapsed(!collapsed);
   };
@@ -66,10 +62,6 @@ export default function Index() {
       setConnection(con);
       setVisible(true);
     }
-  };
-
-  const handSave = (item: SaveParams) => {
-    save({ ...item, cluster: 0, nodes: undefined });
   };
 
   const handRemove = (id?: number) => {
@@ -87,6 +79,7 @@ export default function Index() {
       },
     });
   };
+
   const onCopy = (id?: number) => {
     if (!id) {
       return;
@@ -94,6 +87,27 @@ export default function Index() {
     copyCon?.(id)
       .then(() => run())
       .catch((e) => Message.error(e.message));
+  };
+
+  const handleDeleteRedisKey = () => {
+    Modal.confirm({
+      title: 'Warning',
+      content: 'Do you want to require delete this key?',
+      okText: 'Delete',
+      okButtonProps: {
+        status: 'danger',
+      },
+      cancelText: 'Cancel',
+      onOk: async () => {
+        try {
+          await deleteRedisKey(params[0]);
+          Message.success('delete success');
+          mutateRedisValue(undefined);
+        } catch (e: any) {
+          Message.error(e.message);
+        }
+      },
+    });
   };
 
   return (
@@ -126,15 +140,16 @@ export default function Index() {
             onEdit={(id) => onEditCon(id)}
             onRemove={(id) => handRemove(id)}
             onCopy={(id) => onCopy(id)}
-            onSelectKey={(db, key) => handQueryValue(server.id, db, key)}
+            onSelectKey={(db, key) => queryValue({ id: server.id, db, key })}
           />
         ))}
       </Sider>
       <RightContent
         siderCollapsed={collapsed}
-        handlerSiderCollapse={handleCollapsed}
+        handleSiderCollapse={handleCollapsed}
         redisValue={redisValue}
         refresh={refresh}
+        deleteKey={handleDeleteRedisKey}
       />
       <EditModal
         visible={visible}
@@ -144,7 +159,7 @@ export default function Index() {
           setVisible(false);
           setConnection(undefined);
         }}
-        onOk={(item) => handSave(item)}
+        onOk={(item) => save({ ...item, cluster: 0, nodes: undefined })}
       />
     </Layout>
   );

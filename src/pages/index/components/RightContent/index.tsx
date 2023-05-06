@@ -13,16 +13,18 @@ const Content = Layout.Content;
 
 interface Props {
   siderCollapsed?: boolean;
-  handlerSiderCollapse?: () => unknown;
+  handleSiderCollapse?: () => unknown;
   refresh?: () => unknown;
   redisValue?: RedisValue;
+  deleteKey?: () => unknown;
 }
 
 function RightContent({
   siderCollapsed,
-  handlerSiderCollapse,
+  handleSiderCollapse,
   redisValue,
   refresh,
+  deleteKey,
 }: Props) {
   const { monacoTheme } = useContext(GlobalContext);
 
@@ -37,7 +39,7 @@ function RightContent({
           type="text"
           iconOnly
           className={st.trigger}
-          onClick={() => handlerSiderCollapse?.()}
+          onClick={handleSiderCollapse}
         >
           {siderCollapsed ? (
             <IconMenuUnfold className={st.icon} />
@@ -54,6 +56,7 @@ function RightContent({
               keyType={redisValue?.keyType}
               redisKey={redisValue?.key}
               onReload={refresh}
+              onDelete={deleteKey}
             />
             <KeyDetail
               keyType={redisValue?.keyType}
