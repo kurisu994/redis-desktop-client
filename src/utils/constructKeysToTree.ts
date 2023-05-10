@@ -12,6 +12,11 @@ interface Props {
   delimiter?: string;
 }
 
+/**
+ * keys数组转树形结构
+ * @param props key相关数据
+ * @returns 树形结构的keytree
+ */
 export const constructKeysToTree = (props: Props): any[] => {
   const { items: keys, delimiter = ':' } = props;
   const keysSymbol = `keys${delimiter}keys`;
