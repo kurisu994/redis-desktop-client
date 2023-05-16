@@ -11,6 +11,7 @@ import { Connection } from '../../api';
 import { queryDbs, queryRedisKeys } from './api';
 import { IconDesktop } from '@arco-design/web-react/icon';
 import ServerBtnGroup from './ServerBtnGroup';
+import { constructKeysToTree } from '@/utils/constructKeysToTree';
 
 interface Props {
   server: Connection;
@@ -163,6 +164,7 @@ function LeftContent({ server, onEdit, onRemove, onCopy, onSelectKey }: Props) {
     cur_key?: string
   ) => {
     const res = await queryRedisKeys(id, db_index);
+    console.log(constructKeysToTree({ items: res }));
     return (res || []).map((t) => ({
       name: t,
       id: `${cur_key}-${t}`,

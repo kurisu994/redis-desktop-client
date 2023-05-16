@@ -1,14 +1,5 @@
-type IKeyPropTypes = {
-  nameString: string;
-  name: string;
-  type: any;
-  ttl: number;
-  size: number;
-  length: number;
-};
-
 interface Props {
-  items: IKeyPropTypes[];
+  items?: string[];
   delimiter?: string;
 }
 
@@ -18,29 +9,23 @@ interface Props {
  * @returns 树形结构的keytree
  */
 export const constructKeysToTree = (props: Props): any[] => {
-  const { items: keys, delimiter = ':' } = props;
+  const { items: keys = [], delimiter = ':' } = props;
   const keysSymbol = `keys${delimiter}keys`;
   const tree: any = {};
-
   keys.forEach((key: any) => {
-    // eslint-disable-next-line prefer-object-spread
     let currentNode: any = tree;
-    const { nameString: name = '' } = key;
-    const nameSplitted = name.split(delimiter);
-    const lastIndex = nameSplitted.length - 1;
+    const keySplitted = key.split(delimiter);
+    const lastIndex = keySplitted.length - 1;
 
-    nameSplitted.forEach((value: any, index: number) => {
-      // create a key leaf
+    keySplitted.forEach((value: any, index: number) => {
       if (index === lastIndex) {
         if (currentNode[keysSymbol] === undefined) {
           currentNode[keysSymbol] = {};
         }
-
-        currentNode[keysSymbol][name] = key;
+        currentNode[keysSymbol][key] = key;
       } else if (currentNode[value] === undefined) {
         currentNode[value] = {};
       }
-
       currentNode = currentNode[value];
     });
   });
@@ -62,7 +47,6 @@ export const constructKeysToTree = (props: Props): any[] => {
   // FormatTreeData
   const formatTreeData = (tree: any, previousKey = '', delimiter = ':') => {
     const treeNodes = Reflect.ownKeys(tree);
-
     // sort Ungrouped Keys group to top
     treeNodes.some((key, index) => {
       if (key === keysSymbol) {
@@ -86,10 +70,12 @@ export const constructKeysToTree = (props: Props): any[] => {
           (a: any, b: any) => a + (b.keyCount || 0),
           0
         );
+        node.leaf = false;
       } else {
         // populate leaf with keys
         node.children = [];
         node.keys = tree[keysSymbol] ?? [];
+        node.leaf = true;
         node.keyCount = Object.keys(node.keys ?? [])?.length ?? 1;
       }
 

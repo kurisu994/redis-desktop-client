@@ -14,5 +14,5 @@ export function queryDbs(id?: number) {
 }
 
 export function queryRedisKeys(id: number, db: number) {
-  return request<String[]>(CMD.KEY_LIST, { id, db });
+  return request<string[]>(CMD.KEY_LIST, { id, db });
 }
