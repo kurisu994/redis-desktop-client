@@ -212,6 +212,7 @@ function LeftContent({ server, onEdit, onRemove, onCopy, onSelectKey }: Props) {
       loadMore={(node) => loadMore(node)}
       treeData={treeData}
       renderExtra={extraRender}
+      style={{ overflowX: 'clip' }}
     />
   );
 }
