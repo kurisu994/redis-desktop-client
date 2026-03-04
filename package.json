@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@heroui/react": "^2.8.9",
+    "@heroui/theme": "^2.4.26",
     "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/plugin-store": "^2.4.2",
     "framer-motion": "^12.34.4",
