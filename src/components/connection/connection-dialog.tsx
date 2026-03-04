@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Modal,
@@ -40,28 +40,33 @@ export function ConnectionDialog() {
   const [testState, setTestState] = useState<TestState>({ status: "idle" });
   const [saving, setSaving] = useState(false);
 
-  /** 对话框打开时重置表单 */
+  /** 对话框打开时初始化表单 */
+  useEffect(() => {
+    if (!isDialogOpen) return;
+    setTestState({ status: "idle" });
+    setSaving(false);
+    if (editingConnection) {
+      setName(editingConnection.name);
+      setHost(editingConnection.host);
+      setPort(String(editingConnection.port));
+      setUsername(editingConnection.username || "default");
+      setPassword(editingConnection.password || "");
+      setDb(String(editingConnection.db));
+    } else {
+      setName("");
+      setHost("127.0.0.1");
+      setPort("6379");
+      setUsername("default");
+      setPassword("");
+      setDb("0");
+    }
+  }, [isDialogOpen, editingConnection]);
+
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      if (open && editingConnection) {
-        setName(editingConnection.name);
-        setHost(editingConnection.host);
-        setPort(String(editingConnection.port));
-        setUsername(editingConnection.username || "default");
-        setPassword(editingConnection.password || "");
-        setDb(String(editingConnection.db));
-      } else if (open) {
-        setName("");
-        setHost("127.0.0.1");
-        setPort("6379");
-        setUsername("default");
-        setPassword("");
-        setDb("0");
-      }
-      setTestState({ status: "idle" });
       if (!open) closeDialog();
     },
-    [editingConnection, closeDialog]
+    [closeDialog]
   );
 
   /** 测试连接 */
