@@ -64,7 +64,7 @@
 | 14 | CI 工作流 — 代码检查 | ✅ | ESLint + TypeScript 类型检查 + `cargo clippy` + `cargo fmt` |
 | 15 | CI 工作流 — 构建验证 | ✅ | 四目标（macOS ARM/Intel、Linux、Windows）并行构建 |
 | 16 | CI 工作流 — 测试 | ✅ | `cargo test` 后端测试 |
-| 17 | 配置 Conventional Commits | ✅ | `commitlint` + `husky` 已配置 |
+| 17 | 配置 Conventional Commits | ✅ | 自定义 `verify-commit.js` + `husky` 已配置 |
 | 18 | 编写 justfile | ✅ | 含 dev/build/lint/fmt/test/version/release/i18n-check 等命令 |
 
 #### 1.5 justfile 命令规划 ✅ 已实现
@@ -75,7 +75,6 @@
 # === 开发 ===
 dev              # 启动 Tauri 开发模式（前端 + 后端热重载）
 dev-web          # 仅启动 Next.js 前端开发服务器
-dev-tauri        # 仅启动 Tauri 后端开发
 
 # === 构建 ===
 build            # 构建生产版本（Tauri 桌面应用）
@@ -91,23 +90,19 @@ fmt-web          # prettier --write
 fmt-rust         # cargo fmt
 
 # === 测试 ===
-test             # 运行全部测试（前端 + 后端）
-test-web         # 前端单元测试
+test             # 运行全部测试
 test-rust        # cargo test
 
 # === 依赖管理 ===
-install          # 安装全部依赖（npm install + cargo fetch）
-update           # 更新全部依赖
+install          # 安装全部依赖（pnpm install + cargo fetch）
 clean            # 清理构建产物
 
 # === 版本 & 发布 ===
 version bump     # 同步更新 package.json / Cargo.toml / tauri.conf.json 版本号
-changelog        # 基于 Conventional Commits 生成 Changelog
 release tag      # 创建 Git Tag 并推送（触发 Release 流水线）
 
 # === 工具 ===
 i18n-check       # 检查翻译完整性（key 缺失检测）
-icons            # 从源图生成各平台图标资源
 ```
 
 ### 交付物
@@ -356,14 +351,14 @@ icons            # 从源图生成各平台图标资源
 | 7 | 导出连接配置 | 将连接列表导出为 JSON 文件（密码脱敏可选） |
 | 8 | 导入连接配置 | 从 JSON 文件导入连接，合并或覆盖现有配置 |
 
-#### 6.3 国际化
+#### 6.3 国际化（已在 Phase 1 完成基础集成）
 
 | # | 任务 | 说明 |
 |---|------|------|
-| 9 | i18n 框架集成 | 集成 `next-intl` 或 `i18next`，建立翻译资源目录 |
+| 9 | i18n 补全 | 补充所有新增功能的翻译 key（Phase 2~5 的 UI 文案） |
 | 10 | 中文翻译 | 全部 UI 文案中文化 |
 | 11 | 英文翻译 | 全部 UI 文案英文化 |
-| 12 | 语言切换 UI | 设置中切换语言，持久化偏好 |
+| 12 | 语言偏好持久化 | 设置中切换语言，偏好存储到 Tauri Store |
 
 #### 6.4 用户体验完善
 

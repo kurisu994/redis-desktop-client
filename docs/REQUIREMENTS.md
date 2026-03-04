@@ -11,10 +11,13 @@
 | 层级 | 技术 | 说明 |
 |------|------|------|
 | 桌面框架 | **Tauri v2** | Rust 后端，负责 Redis 连接管理、数据操作、系统集成 |
-| 前端框架 | **Next.js** (App Router) | React 前端，负责 UI 渲染与交互逻辑 |
-| UI 组件库 | **HeroUI** | 基于 Tailwind CSS 的组件库，提供美观一致的界面 |
-| Redis 客户端 | **redis-rs** | Rust 生态的 Redis 客户端库 |
+| 前端框架 | **Next.js 16** (App Router + Turbopack) | React 19 前端，负责 UI 渲染与交互逻辑 |
+| UI 组件库 | **HeroUI** (@heroui/react) | 基于 Tailwind CSS 的组件库，提供美观一致的界面 |
+| 样式 | **Tailwind CSS v4** | CSS-first 配置模式，通过 `@plugin` 指令集成 HeroUI |
+| 图标 | **lucide-react** | React SVG 图标组件库 |
+| Redis 客户端 | **redis-rs** | Rust 生态的 Redis 客户端库（tokio 异步） |
 | 状态管理 | **Zustand** | 轻量级前端状态管理 |
+| 国际化 | **i18next** + **react-i18next** | 前端国际化框架，支持中/英文 |
 | 数据持久化 | **Tauri Store Plugin** | 本地存储连接配置等数据 |
 | 任务管理 | **just** | 跨平台命令运行器，统一项目常用命令入口 |
 

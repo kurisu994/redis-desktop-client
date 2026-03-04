@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Redis Desktop Client
 
-## Getting Started
+跨平台 Redis 桌面客户端，基于 Tauri 2 + Next.js 16 + HeroUI 构建。
 
-First, run the development server:
+## 技术栈
+
+- **桌面框架**：Tauri 2.x
+- **前端**：Next.js 16 (Turbopack) + React 19 + TypeScript
+- **UI 组件库**：HeroUI (@heroui/react)
+- **样式**：Tailwind CSS 4.x
+- **状态管理**：Zustand 5.x
+- **国际化**：i18next + react-i18next（中/英）
+- **图标**：lucide-react
+- **后端**：Rust (Edition 2021) + Tokio + redis-rs
+
+## 开发环境准备
+
+### 前置依赖
+
+- [Node.js](https://nodejs.org/) (LTS)
+- [pnpm](https://pnpm.io/)
+- [Rust](https://rustup.rs/) (MSRV 1.77.2)
+- [just](https://github.com/casey/just)（命令运行器）
+- Tauri 2 系统依赖（参考 [Tauri 官方文档](https://v2.tauri.app/start/prerequisites/)）
+
+### 安装依赖
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+just install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 启动开发
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# 启动 Tauri 完整开发环境（前后端热重载）
+just dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# 仅启动 Next.js 前端（localhost:3000）
+just dev-web
+```
 
-## Learn More
+### 构建
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# 生产构建（桌面应用）
+just build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 仅构建前端
+just build-web
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 常用命令
 
-## Deploy on Vercel
+| 命令 | 说明 |
+|------|------|
+| `just dev` | 启动 Tauri 开发模式 |
+| `just dev-web` | 仅启动前端 |
+| `just build` | 生产构建 |
+| `just lint` | 完整代码检查（ESLint + tsc + Clippy） |
+| `just fmt` | 格式化全部代码 |
+| `just test-rust` | Rust 单元测试 |
+| `just i18n-check` | 检查翻译 key 完整性 |
+| `just clean` | 清理构建产物 |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 项目结构
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/                        # 前端源码
+├── app/                    # Next.js App Router
+├── components/             # React 组件
+│   ├── providers.tsx       # 全局 Provider
+│   └── layout/             # 布局组件
+├── stores/                 # Zustand 状态仓库
+└── i18n/                   # 国际化配置与翻译文件
+
+src-tauri/                  # Rust 后端
+├── src/
+│   ├── lib.rs              # Tauri 入口
+│   ├── commands/           # Tauri Command 处理器
+│   ├── redis/              # Redis 客户端封装
+│   └── config/             # 配置管理
+└── tauri.conf.json         # Tauri 配置
+
+docs/                       # 项目文档
+├── REQUIREMENTS.md         # 产品需求文档
+└── DEVELOPMENT_PLAN.md     # 开发计划
+```
+
+## License
+
+MIT

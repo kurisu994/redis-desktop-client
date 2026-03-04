@@ -100,7 +100,7 @@ const hasMounted = useSyncExternalStore(
 - UI 组件优先使用 HeroUI（`@heroui/react`），不要引入其他 UI 库
 - 样式使用 Tailwind CSS utility class，不写自定义 CSS
 - 路径别名：`@/*` 对应 `./src/*`
-- 图标：使用内联 SVG 组件（项目未引入图标库）
+- 图标：使用 `lucide-react`
 
 ### 状态管理
 
@@ -169,32 +169,16 @@ just install      # 安装所有依赖（pnpm + cargo）
 just clean        # 清理构建产物
 ```
 
-## Git 提交规范
-
-使用 **Conventional Commits**，由自定义脚本 `scripts/verify-commit.js` + husky 强制执行。
-
-格式：`[可选表情] type(scope): 中文描述`
-
-```
-🚀 feat(连接管理): 添加 SSH 隧道支持
-🐛 fix(侧边栏): 修复折叠状态下图标不居中
-♻️ refactor(store): 重构连接状态管理逻辑
-📄 docs(readme): 更新安装说明
-```
-
-**注意**：
-
-- 提交信息全部使用中文
-- 可以使用 emoji 前缀（与变更类型语义匹配）
-- **不要**添加 `Co-authored-by: Copilot` trailer
-- type 可选值：feat, fix, docs, style, refactor, perf, test, tests, chore, workflow, build, ci, CI, typos, types, wip, release, dep, locale
-
 ## 设计参考
 
 `docs/` 目录包含项目文档：
 
 - `REQUIREMENTS.md` — 产品需求文档
 - `DEVELOPMENT_PLAN.md` — 开发计划
+- [Next.js](https://nextjs.org/docs) — Next.js 框架文档
+- [HeroUI](https://www.heroui.com/docs/guide/introduction) — HeroUI 组件库文档
+- [Lucide](https://lucide.dev/) — Lucide 图标库文档
+- [Tauri](https://v2.tauri.app/start/) — Tauri 桌面框架文档
 
 实现新功能时应参考以上文档。
 
