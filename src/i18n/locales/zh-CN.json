@@ -140,7 +140,12 @@
   },
   "cli": {
     "title": "命令行",
-    "placeholder": "输入 Redis 命令..."
+    "placeholder": "输入 Redis 命令...",
+    "noConnection": "请先连接 Redis 服务器以使用命令行",
+    "noTab": "暂无命令行会话",
+    "newTab": "新建命令行会话",
+    "connectedTo": "已连接到 {{name}}",
+    "helpHint": "输入命令，Tab 补全，↑↓ 浏览历史，Ctrl+L 清屏"
   },
   "monitor": {
     "title": "监控",

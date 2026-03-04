@@ -72,6 +72,8 @@ pub fn run() {
             // 导入导出
             commands::export::export_connections,
             commands::export::import_connections,
+            // CLI 命令执行
+            commands::cli::execute_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

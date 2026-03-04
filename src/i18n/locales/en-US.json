@@ -140,7 +140,12 @@
   },
   "cli": {
     "title": "CLI",
-    "placeholder": "Enter Redis command..."
+    "placeholder": "Enter Redis command...",
+    "noConnection": "Connect to a Redis server to use CLI",
+    "noTab": "No CLI session open",
+    "newTab": "New CLI Tab",
+    "connectedTo": "Connected to {{name}}",
+    "helpHint": "Type commands, Tab to autocomplete, ↑↓ for history, Ctrl+L to clear"
   },
   "monitor": {
     "title": "Monitor",

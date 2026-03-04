@@ -178,6 +178,26 @@ function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
     case "import_connections":
       return { total: 0, imported: 0, skipped: 0, overwritten: 0 } as T;
 
+    // CLI mock
+    case "execute_command": {
+      const cmd = ((args?.command as string) || "").trim().toUpperCase();
+      if (cmd === "PING") {
+        return { output: "PONG", result_type: "ok", elapsed_ms: 1 } as T;
+      }
+      if (cmd.startsWith("INFO")) {
+        return {
+          output: '"# Server\\nredis_version:7.0.0\\nredis_mode:standalone"',
+          result_type: "bulk",
+          elapsed_ms: 2,
+        } as T;
+      }
+      return {
+        output: "OK",
+        result_type: "ok",
+        elapsed_ms: 1,
+      } as T;
+    }
+
     default:
       throw new Error(`未知的 IPC 命令: ${cmd}`);
   }
@@ -535,4 +555,22 @@ export async function importConnections(
     json,
     conflict_strategy: conflictStrategy,
   });
+}
+
+// ============ CLI API ============
+
+/** CLI 命令执行结果 */
+export interface CommandResult {
+  output: string;
+  result_type: string;
+  elapsed_ms: number;
+}
+
+/** 执行 Redis 命令 */
+export async function executeCommand(
+  id: string,
+  db: number,
+  command: string
+): Promise<CommandResult> {
+  return invoke<CommandResult>("execute_command", { id, db, command });
 }

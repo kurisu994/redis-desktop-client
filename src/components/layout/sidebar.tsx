@@ -314,6 +314,41 @@ function ContextMenuItem({
   );
 }
 
+/** 侧边栏底部导航按钮 — 切换主内容区视图 */
+function SidebarNavButton({
+  icon,
+  label,
+  view,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  view: "browser" | "cli";
+}) {
+  const { mainView, setMainView } = useAppStore();
+  const { activeConnectionId, connectionStatus } = useConnectionStore();
+  const isConnected =
+    activeConnectionId !== null &&
+    connectionStatus[activeConnectionId] === "connected";
+  const isActive = mainView === view;
+
+  return (
+    <button
+      className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors ${
+        isActive && isConnected
+          ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+          : "text-default-500 hover:bg-default-100"
+      } ${!isConnected ? "opacity-50 cursor-not-allowed" : ""}`}
+      onClick={() => {
+        if (isConnected) setMainView(view);
+      }}
+      disabled={!isConnected}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
 /** 左侧边栏组件 — 连接列表 */
 export function Sidebar() {
   const { t } = useTranslation();
@@ -342,10 +377,16 @@ export function Sidebar() {
     <aside className="w-60 border-r border-divider bg-content1 flex flex-col shrink-0">
       {/* 侧边栏头部 */}
       <div className="flex items-center justify-between h-10 px-3 border-b border-divider">
-        <div className="flex items-center gap-1.5 text-sm font-medium">
+        <button
+          className="flex items-center gap-1.5 text-sm font-medium hover:text-primary transition-colors"
+          onClick={() => {
+            const { mainView, setMainView } = useAppStore.getState();
+            if (mainView !== "browser") setMainView("browser");
+          }}
+        >
           <DatabaseIcon />
           <span>{t("connection.title")}</span>
-        </div>
+        </button>
         <button
           onClick={toggleSidebar}
           className="p-1 rounded-md hover:bg-default-100 transition-colors"
@@ -386,10 +427,11 @@ export function Sidebar() {
 
       {/* 底部导航 — CLI / Monitor / Pub/Sub */}
       <div className="border-t border-divider shrink-0">
-        <button className="flex items-center gap-2 w-full px-3 py-2 text-xs text-default-500 hover:bg-default-100 transition-colors">
-          <TerminalIcon />
-          <span>{t("cli.title")}</span>
-        </button>
+        <SidebarNavButton
+          icon={<TerminalIcon />}
+          label={t("cli.title")}
+          view="cli"
+        />
         <button className="flex items-center gap-2 w-full px-3 py-2 text-xs text-default-500 hover:bg-default-100 transition-colors">
           <ActivityIcon />
           <span>{t("monitor.title")}</span>

@@ -27,18 +27,19 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 
 ### 前端结构
 
-应用为单页面（`src/app/page.tsx`），布局为：`TitleBar` + `Sidebar` + 主内容区（`DataBrowser` 或 `WelcomePage`）+ `StatusBar`，加上全局浮层 `ConnectionDialog`。
+应用为单页面（`src/app/page.tsx`），布局为：`TitleBar` + `Sidebar` + 主内容区（`DataBrowser` / `CliConsole` / `WelcomePage`）+ `StatusBar`，加上全局浮层 `ConnectionDialog`。
 
 **State（`src/stores/`）**
-- `app-store.ts`：全局 UI 状态（侧边栏折叠）
+- `app-store.ts`：全局 UI 状态（侧边栏折叠、主视图模式 browser/cli）
 - `connection-store.ts`：连接配置列表、活跃连接、连接状态（connected/disconnected/connecting）、对话框状态
 - `browser-store.ts`：数据浏览器状态（Key 列表、SCAN 游标、选中 Key、DB 切换、视图模式）
+- `cli-store.ts`：CLI 控制台状态（多 Tab 管理、命令历史、输出日志）
 
 **IPC 封装（`src/lib/tauri-api.ts`）**
 所有 Tauri 后端调用都通过此文件封装。在浏览器（`just dev-web`）环境中自动走 mock 实现，Tauri 环境中调用真实后端。新增后端命令时需同步在此文件添加函数和 mock 实现。
 
 **组件（`src/components/`）**
-按功能模块组织：`browser/`（数据浏览器相关）、`connection/`（连接对话框）、`layout/`（布局组件）。
+按功能模块组织：`browser/`（数据浏览器相关）、`cli/`（CLI 终端）、`connection/`（连接对话框）、`layout/`（布局组件）。
 
 **国际化（`src/i18n/`）**
 翻译文件：`src/i18n/locales/en-US.json` 和 `zh-CN.json`，按功能模块分 key（两层嵌套）。修改 UI 文案后运行 `just i18n-check` 确认 key 同步。
@@ -46,7 +47,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 ### Rust 后端结构（`src-tauri/src/`）
 
 - `lib.rs`：Tauri 入口，注册所有 Tauri Commands 和全局状态（`ConnectionStore`、`RedisClientManager`）
-- `commands/`：Tauri Command 处理器，按功能分文件（`connection.rs`、`keys.rs`、`values.rs`、`export.rs`）
+- `commands/`：Tauri Command 处理器，按功能分文件（`connection.rs`、`keys.rs`、`values.rs`、`export.rs`、`cli.rs`）
 - `redis/client.rs`：`RedisClientManager`，基于 `HashMap<String, MultiplexedConnection>` + `Mutex` 管理多连接生命周期
 - `config/store.rs`：`ConnectionStore`，负责连接配置的持久化（`connections.json`），密码使用 AES-256-GCM 加密
 - `config/encryption.rs`：加密工具，Master Key 自动生成并持久化到 `app_data_dir/master-key`
@@ -58,6 +59,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 ## 开发进度
 
 - Phase 1-3（基础框架、连接管理、数据浏览）✅ 已完成
-- Phase 4（CLI 控制台）、Phase 5（高级功能）、Phase 6（高级连接 & 发布）🔲 未开始
+- Phase 4（CLI 控制台）✅ 已完成
+- Phase 5（高级功能）、Phase 6（高级连接 & 发布）🔲 未开始
 
 详见 `docs/DEVELOPMENT_PLAN.md`。
