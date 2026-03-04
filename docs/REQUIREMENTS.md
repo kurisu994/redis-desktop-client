@@ -15,6 +15,7 @@
 | UI 组件库 | **HeroUI** (@heroui/react) | 基于 Tailwind CSS 的组件库，提供美观一致的界面 |
 | 样式 | **Tailwind CSS v4** | CSS-first 配置模式，通过 `@plugin` 指令集成 HeroUI |
 | 图标 | **lucide-react** | React SVG 图标组件库 |
+| 代码编辑器 | **Monaco Editor** (@monaco-editor/react) | VS Code 内核编辑器，用于值编辑器的语法高亮、格式化、Diff 对比 |
 | Redis 客户端 | **redis-rs** | Rust 生态的 Redis 客户端库（tokio 异步） |
 | 状态管理 | **Zustand** | 轻量级前端状态管理 |
 | 国际化 | **i18next** + **react-i18next** | 前端国际化框架，支持中/英文 |
@@ -88,11 +89,23 @@
 - 删除 Key（单个/批量，需二次确认）
 - 收藏/标记常用 Key
 
-#### 2.2.4 值编辑器
-- 多格式查看：纯文本、JSON 格式化、十六进制
-- JSON 值自动格式化和语法高亮
-- 大文本值支持搜索
-- 编辑前后对比（Diff 视图）
+#### 2.2.4 值编辑器（基于 Monaco Editor）
+- 集成 **Monaco Editor**（`@monaco-editor/react`）作为核心编辑器
+- 支持多种格式语法高亮与格式化：
+  - JSON
+  - XML
+  - YAML
+  - HTML
+  - CSS
+  - JavaScript / TypeScript
+  - SQL
+  - Markdown
+  - 纯文本 (Plaintext)
+  - 十六进制 (Hex)
+- 自动检测值的格式并切换对应语言模式
+- 编辑前后对比（Monaco Diff Editor）
+- 内置搜索（Ctrl+F）
+- 支持深色/浅色主题跟随应用主题
 - 支持复制值到剪贴板
 
 ### 2.3 命令行控制台 (CLI)

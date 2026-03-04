@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 项目自定义排除
+    "**/demo/**",
   ]),
 ]);
 
