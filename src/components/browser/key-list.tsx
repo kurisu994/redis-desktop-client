@@ -23,6 +23,16 @@ const TYPE_LABEL_COLORS: Record<string, string> = {
   stream: "text-cyan-400 bg-cyan-500/10",
 };
 
+/** 选中态圆点发光效果 */
+const TYPE_GLOW: Record<string, string> = {
+  string: "shadow-[0_0_8px_rgba(34,197,94,0.5)]",
+  hash: "shadow-[0_0_8px_rgba(59,130,246,0.5)]",
+  list: "shadow-[0_0_8px_rgba(249,115,22,0.5)]",
+  set: "shadow-[0_0_8px_rgba(168,85,247,0.5)]",
+  zset: "shadow-[0_0_8px_rgba(239,68,68,0.5)]",
+  stream: "shadow-[0_0_8px_rgba(6,182,212,0.5)]",
+};
+
 interface KeyListProps {
   keys: KeyEntry[];
   selectedKey: string | null;
@@ -40,15 +50,15 @@ export function KeyList({ keys, selectedKey, onSelectKey }: KeyListProps) {
           <button
             className={`flex items-center gap-2 w-full py-1.5 px-3 text-sm transition-colors ${
               isSelected
-                ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
-                : "hover:bg-default-100"
+                ? "bg-indigo-500/15 text-indigo-300"
+                : "hover:bg-white/5 text-zinc-400"
             }`}
             onClick={() => onSelectKey(entry.key)}
           >
             <span
               className={`w-2 h-2 rounded-full shrink-0 ${
                 TYPE_COLORS[entry.key_type] || "bg-default-400"
-              }`}
+              } ${isSelected ? TYPE_GLOW[entry.key_type] || "" : ""}`}
             />
             <span className="truncate font-mono text-xs flex-1 text-left">
               {entry.key}

@@ -56,6 +56,7 @@ impl RedisClientManager {
     }
 
     /// 检查连接是否存在
+    #[allow(dead_code)]
     pub async fn is_connected(&self, id: &str) -> bool {
         let clients = self.clients.lock().await;
         clients.contains_key(id)

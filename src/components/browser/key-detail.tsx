@@ -79,14 +79,14 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
 
   return (
     <>
-      <div className="px-4 py-3 border-b border-divider">
+      <div className="p-5 border-b border-divider">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             {/* Key 名称 */}
             {renaming ? (
               <div className="flex items-center gap-2">
                 <input
-                  className="text-lg font-mono bg-transparent border-b border-primary outline-none flex-1"
+                  className="text-xl font-mono bg-transparent border-b border-primary outline-none flex-1"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleRename()}
@@ -104,13 +104,13 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
                 </Button>
               </div>
             ) : (
-              <h2 className="text-base font-mono font-medium break-all tracking-tight">
+              <h2 className="text-xl font-mono font-medium break-all tracking-tight">
                 {keyName}
               </h2>
             )}
 
             {/* 元信息标签 */}
-            <div className="flex items-center gap-4 mt-2 text-xs font-mono flex-wrap">
+            <div className="flex items-center gap-5 mt-3 text-sm font-mono flex-wrap">
               {/* 类型 */}
               <span
                 className={`flex items-center gap-1.5 px-2 py-0.5 rounded ${

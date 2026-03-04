@@ -164,7 +164,7 @@ export function DataBrowser() {
       {/* 左右分栏 */}
       <div className="flex-1 flex overflow-hidden">
         {/* 左栏：Key 列表 */}
-        <div className="w-72 flex flex-col border-r border-divider bg-content1/50">
+        <div className="w-72 flex flex-col border-r border-divider dark:bg-[#0E0E11]">
           <div className="flex-1 overflow-y-auto">
             {viewMode === "tree" ? (
               <KeyTree
@@ -182,7 +182,7 @@ export function DataBrowser() {
           </div>
 
           {/* Key 列表底部状态 */}
-          <div className="px-3 py-1.5 text-xs border-t border-divider flex justify-between items-center text-default-400">
+          <div className="px-4 py-2 text-xs border-t border-divider flex justify-between items-center text-zinc-500">
             <span>{t("browser.totalKeys", { count: keys.length })}</span>
             {!scanComplete && (
               <button
@@ -197,7 +197,7 @@ export function DataBrowser() {
         </div>
 
         {/* 右栏：值编辑器 */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 dark:bg-[#151619]">
           {selectedKey && keyInfo ? (
             <>
               <KeyDetail

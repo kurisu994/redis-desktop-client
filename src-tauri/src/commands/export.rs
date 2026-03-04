@@ -43,7 +43,10 @@ pub async fn export_connections(
 
     let exported: Vec<ExportedConnection> = connections
         .into_iter()
-        .filter(|c| ids.as_ref().is_none_or(|list| list.contains(&c.id)))
+        .filter(|c| match ids.as_ref() {
+            None => true,
+            Some(list) => list.contains(&c.id),
+        })
         .map(|c| ExportedConnection {
             id: c.id,
             name: c.name,

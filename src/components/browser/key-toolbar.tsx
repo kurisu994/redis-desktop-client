@@ -58,7 +58,7 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
 
   return (
     <>
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-divider bg-content1/50">
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-divider dark:bg-[#151619]/50">
         {/* 数据库选择器 */}
         <Select
           size="sm"

@@ -226,8 +226,8 @@ function HashViewer({
       <TableView
         headers={[t("valueEditor.field"), t("valueEditor.value"), ""]}
         rows={fields.map((f) => [
-          <span key="f" className="text-primary font-medium">{f.field}</span>,
-          <span key="v" className="break-all">{f.value}</span>,
+          <span key="f" className="text-indigo-300 font-medium">{f.field}</span>,
+          <span key="v" className="break-all text-zinc-300">{f.value}</span>,
           <RowActions
             key="a"
             onEdit={() => {
@@ -294,8 +294,8 @@ function ListViewer({
       <TableView
         headers={[t("valueEditor.index"), t("valueEditor.value"), ""]}
         rows={items.map((item, i) => [
-          <span key="i" className="text-primary font-medium">{i}</span>,
-          <span key="v" className="break-all">{item}</span>,
+          <span key="i" className="text-indigo-300 font-medium">{i}</span>,
+          <span key="v" className="break-all text-zinc-300">{item}</span>,
           <RowActions key="a" onDelete={() => handleDelete(i)} />,
         ])}
         widths={["w-20", "", "w-20"]}
@@ -362,7 +362,7 @@ function SetViewer({
       <TableView
         headers={[t("valueEditor.member"), ""]}
         rows={members.map((m) => [
-          <span key="m" className="break-all">{m}</span>,
+          <span key="m" className="break-all text-zinc-300">{m}</span>,
           <RowActions key="a" onDelete={() => handleDelete(m)} />,
         ])}
         widths={["", "w-20"]}
@@ -423,8 +423,8 @@ function ZSetViewer({
       <TableView
         headers={[t("valueEditor.score"), t("valueEditor.member"), ""]}
         rows={members.map((m) => [
-          <span key="s" className="text-primary font-medium">{m.score}</span>,
-          <span key="m" className="break-all">{m.member}</span>,
+          <span key="s" className="text-indigo-300 font-medium">{m.score}</span>,
+          <span key="m" className="break-all text-zinc-300">{m.member}</span>,
           <RowActions key="a" onDelete={() => handleDelete(m.member)} />,
         ])}
         widths={["w-28", "", "w-20"]}
@@ -500,11 +500,11 @@ function StreamViewer({
       <TableView
         headers={[t("valueEditor.streamId"), t("valueEditor.streamFields"), ""]}
         rows={entries.map((e) => [
-          <span key="id" className="text-primary font-medium text-xs">{e.id}</span>,
+          <span key="id" className="text-indigo-300 font-medium text-xs">{e.id}</span>,
           <div key="f" className="space-y-0.5">
             {e.fields.map(([k, v], i) => (
-              <span key={i} className="text-xs">
-                <span className="text-primary">{k}</span>: {v}
+              <span key={i} className="text-xs text-zinc-300">
+                <span className="text-indigo-300">{k}</span>: {v}
                 {i < e.fields.length - 1 && ", "}
               </span>
             ))}
@@ -548,35 +548,37 @@ function TableView({
   widths: string[];
 }) {
   return (
-    <div className="flex-1 overflow-auto">
-      <table className="w-full text-sm text-left">
-        <thead className="text-xs uppercase font-medium tracking-wider bg-content2/50 text-default-500 sticky top-0">
-          <tr>
-            {headers.map((h, i) => (
-              <th
-                key={i}
-                className={`px-4 py-2.5 border-b border-divider ${widths[i] || ""}`}
-              >
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="font-mono text-[13px]">
-          {rows.map((cells, rowIdx) => (
-            <tr
-              key={rowIdx}
-              className="border-b border-divider hover:bg-default-50 dark:hover:bg-default-50/5 group"
-            >
-              {cells.map((cell, cellIdx) => (
-                <td key={cellIdx} className="px-4 py-2">
-                  {cell}
-                </td>
+    <div className="flex-1 overflow-auto p-5">
+      <div className="rounded-lg border border-zinc-800/60 dark:bg-[#0E0E11] shadow-sm overflow-hidden">
+        <table className="w-full text-sm text-left">
+          <thead className="text-xs uppercase font-medium tracking-wider dark:bg-zinc-900/80 bg-zinc-50 dark:text-zinc-400 text-zinc-500 sticky top-0">
+            <tr>
+              {headers.map((h, i) => (
+                <th
+                  key={i}
+                  className={`px-4 py-3 border-b border-zinc-800/60 ${widths[i] || ""}`}
+                >
+                  {h}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="font-mono text-[13px]">
+            {rows.map((cells, rowIdx) => (
+              <tr
+                key={rowIdx}
+                className="border-b border-zinc-800/60 hover:bg-white/5 group"
+              >
+                {cells.map((cell, cellIdx) => (
+                  <td key={cellIdx} className="px-4 py-2.5">
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -590,13 +592,15 @@ function TableFooter({
   onAdd: () => void;
 }) {
   return (
-    <div className="px-3 py-2 border-t border-divider">
-      <button
-        onClick={onAdd}
-        className="text-xs text-primary hover:text-primary-600 flex items-center gap-1.5 font-medium px-2 py-1 rounded hover:bg-primary/10 transition-colors"
-      >
-        <Plus className="w-3.5 h-3.5" /> {label}
-      </button>
+    <div className="px-5 pb-2">
+      <div className="p-2.5 border-t border-zinc-800/60 dark:bg-zinc-900/30 bg-zinc-50 rounded-b-lg">
+        <button
+          onClick={onAdd}
+          className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 font-medium px-2 py-1 rounded hover:bg-indigo-500/10 transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" /> {label}
+        </button>
+      </div>
     </div>
   );
 }
@@ -614,7 +618,7 @@ function RowActions({
       {onEdit && (
         <button
           onClick={onEdit}
-          className="text-default-400 hover:text-primary p-1"
+          className="text-zinc-500 hover:text-indigo-400 p-1"
         >
           <Pencil className="w-3.5 h-3.5" />
         </button>
@@ -622,7 +626,7 @@ function RowActions({
       {onDelete && (
         <button
           onClick={onDelete}
-          className="text-default-400 hover:text-danger p-1"
+          className="text-zinc-500 hover:text-red-400 p-1"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>

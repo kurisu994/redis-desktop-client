@@ -5,8 +5,8 @@ use base64::Engine;
 use std::path::Path;
 
 /// 加密后的数据格式：base64(nonce + ciphertext)
+///
 /// nonce 固定 12 字节，拼接在密文前面
-
 /// 获取或生成 Master Key — 首次运行生成并持久化到文件
 pub fn get_or_create_master_key(key_path: &Path) -> Result<[u8; 32], String> {
     if key_path.exists() {

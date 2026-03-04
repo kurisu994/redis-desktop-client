@@ -14,6 +14,16 @@ const TYPE_COLORS: Record<string, string> = {
   stream: "bg-cyan-500",
 };
 
+/** 选中态圆点发光效果 */
+const TYPE_GLOW: Record<string, string> = {
+  string: "shadow-[0_0_8px_rgba(34,197,94,0.5)]",
+  hash: "shadow-[0_0_8px_rgba(59,130,246,0.5)]",
+  list: "shadow-[0_0_8px_rgba(249,115,22,0.5)]",
+  set: "shadow-[0_0_8px_rgba(168,85,247,0.5)]",
+  zset: "shadow-[0_0_8px_rgba(239,68,68,0.5)]",
+  stream: "shadow-[0_0_8px_rgba(6,182,212,0.5)]",
+};
+
 interface TreeNode {
   name: string;
   fullPath: string;
@@ -85,24 +95,24 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
     return (
       <div key={node.fullPath}>
         <button
-          className="flex items-center gap-1.5 w-full py-1.5 px-2 rounded-md hover:bg-default-100 cursor-pointer text-sm transition-colors"
+          className="flex items-center gap-2 w-full py-1.5 px-2 rounded-md hover:bg-white/5 cursor-pointer text-sm transition-colors"
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
           onClick={() => toggleFolder(node.fullPath)}
         >
           {isExpanded ? (
-            <ChevronDown className="w-3.5 h-3.5 text-default-400 shrink-0" />
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
           ) : (
-            <ChevronRight className="w-3.5 h-3.5 text-default-400 shrink-0" />
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
           )}
-          <Folder className="w-4 h-4 text-warning shrink-0" />
-          <span className="truncate">{node.name}</span>
-          <span className="text-default-300 text-xs ml-auto shrink-0">
+          <Folder className="w-4 h-4 text-yellow-500/80 shrink-0" />
+          <span className="truncate text-zinc-300">{node.name}</span>
+          <span className="text-zinc-500 text-xs ml-auto shrink-0">
             {childCount}
           </span>
         </button>
 
         {isExpanded && (
-          <div>
+          <div className="ml-4 border-l border-zinc-800/50 pl-0.5" style={{ marginLeft: `${depth * 16 + 20}px` }}>
             {/* 子文件夹 */}
             {Array.from(node.children.values())
               .sort((a, b) => a.name.localeCompare(b.name))
@@ -120,7 +130,6 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
   /** 渲染叶子节点（Key） */
   const renderLeaf = (entry: KeyEntry, depth: number) => {
     const isSelected = selectedKey === entry.key;
-    // 取 Key 的最后一段作为显示名
     const parts = entry.key.split(":");
     const displayName = parts[parts.length - 1];
 
@@ -129,8 +138,8 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
         key={entry.key}
         className={`flex items-center gap-2 w-full py-1.5 px-2 rounded-md cursor-pointer text-sm transition-colors ${
           isSelected
-            ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
-            : "hover:bg-default-100"
+            ? "bg-indigo-500/15 text-indigo-300"
+            : "hover:bg-white/5 text-zinc-400"
         }`}
         style={{ paddingLeft: `${depth * 16 + 28}px` }}
         onClick={() => onSelectKey(entry.key)}
@@ -138,7 +147,7 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
         <span
           className={`w-2 h-2 rounded-full shrink-0 ${
             TYPE_COLORS[entry.key_type] || "bg-default-400"
-          } ${isSelected ? "shadow-[0_0_6px_rgba(var(--heroui-primary-500),0.5)]" : ""}`}
+          } ${isSelected ? TYPE_GLOW[entry.key_type] || "" : ""}`}
         />
         <span className="truncate font-mono text-xs">{displayName}</span>
       </button>
@@ -155,7 +164,7 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
   }
 
   return (
-    <div className="p-1 text-sm select-none">
+    <div className="p-2 text-sm font-mono tracking-tight select-none">
       {/* 根级文件夹 */}
       {Array.from(tree.children.values())
         .sort((a, b) => a.name.localeCompare(b.name))
