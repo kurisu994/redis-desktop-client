@@ -6,9 +6,9 @@ import type { KeyEntry, KeyInfo, DbSize } from "@/stores/browser-store";
  * 在浏览器开发环境中提供 mock 实现，Tauri 环境中调用真实后端
  */
 
-/** 判断是否在 Tauri 环境中运行 */
+/** 判断是否在 Tauri 环境中运行（Tauri v2 使用 __TAURI_INTERNALS__） */
 function isTauri(): boolean {
-  return typeof window !== "undefined" && "__TAURI__" in window;
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
 /** 动态导入 Tauri invoke */
