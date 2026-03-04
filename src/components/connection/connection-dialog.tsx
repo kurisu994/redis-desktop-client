@@ -14,7 +14,7 @@ import {
   Tabs,
 } from "@heroui/react";
 import { useConnectionStore, type ConnectionConfig } from "@/stores/connection-store";
-import { saveConnection, testConnection, connectRedis, listConnections } from "@/lib/tauri-api";
+import { saveConnection, testConnection, listConnections } from "@/lib/tauri-api";
 
 /** 测试结果状态 */
 interface TestState {
@@ -25,7 +25,7 @@ interface TestState {
 /** 新建/编辑连接对话框 */
 export function ConnectionDialog() {
   const { t } = useTranslation();
-  const { isDialogOpen, editingConnection, closeDialog, setConnections, setConnectionStatus } =
+  const { isDialogOpen, editingConnection, closeDialog, setConnections } =
     useConnectionStore();
 
   const isEditing = !!editingConnection;
@@ -96,9 +96,9 @@ export function ConnectionDialog() {
     }
   }, [host, port, username, password, db, t]);
 
-  /** 保存并连接 */
+  /** 保存连接配置 */
   const handleSave = useCallback(
-    async (shouldConnect: boolean) => {
+    async () => {
       setSaving(true);
       try {
         const config: ConnectionConfig = {
@@ -114,16 +114,6 @@ export function ConnectionDialog() {
         await saveConnection(config);
         const updated = await listConnections();
         setConnections(updated);
-
-        if (shouldConnect) {
-          setConnectionStatus(config.id, "connecting");
-          try {
-            await connectRedis(config.id);
-            setConnectionStatus(config.id, "connected");
-          } catch {
-            setConnectionStatus(config.id, "disconnected");
-          }
-        }
         closeDialog();
       } catch (err) {
         console.error("保存连接失败:", err);
@@ -131,7 +121,7 @@ export function ConnectionDialog() {
         setSaving(false);
       }
     },
-    [name, host, port, username, password, db, editingConnection, closeDialog, setConnections, setConnectionStatus]
+    [name, host, port, username, password, db, editingConnection, closeDialog, setConnections]
   );
 
   return (
@@ -235,10 +225,10 @@ export function ConnectionDialog() {
           </Button>
           <Button
             color="primary"
-            onPress={() => handleSave(true)}
+            onPress={() => handleSave()}
             isLoading={saving}
           >
-            {t("connection.saveAndConnect")}
+            {t("actions.save")}
           </Button>
         </ModalFooter>
       </ModalContent>
