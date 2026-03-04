@@ -4,6 +4,7 @@ import { TitleBar } from "@/components/layout/title-bar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { StatusBar } from "@/components/layout/status-bar";
 import { WelcomePage } from "@/components/layout/welcome-page";
+import { ConnectionDialog } from "@/components/connection/connection-dialog";
 
 /** 应用主页 — 三栏布局 */
 export default function Home() {
@@ -17,6 +18,7 @@ export default function Home() {
         </main>
       </div>
       <StatusBar />
+      <ConnectionDialog />
     </div>
   );
 }

@@ -1,8 +1,17 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@heroui/react";
 import { useAppStore } from "@/stores/app-store";
+import { useConnectionStore, type ConnectionConfig } from "@/stores/connection-store";
+import {
+  listConnections,
+  connectRedis,
+  disconnectRedis,
+  deleteConnection as deleteConnectionApi,
+  saveConnection,
+} from "@/lib/tauri-api";
 
 function DatabaseIcon() {
   return (
@@ -72,10 +81,196 @@ function ChevronIcon({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+/** 右键菜单 */
+interface ContextMenuState {
+  visible: boolean;
+  x: number;
+  y: number;
+  connectionId: string | null;
+}
+
+/** 连接列表项组件 */
+function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
+  const { t } = useTranslation();
+  const {
+    connectionStatus,
+    activeConnectionId,
+    setActiveConnection,
+    setConnectionStatus,
+    setConnections,
+    openDialog,
+  } = useConnectionStore();
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    connectionId: null,
+  });
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const status = connectionStatus[connection.id] || "disconnected";
+  const isActive = activeConnectionId === connection.id;
+
+  /** 右键菜单 */
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setContextMenu({ visible: true, x: e.clientX, y: e.clientY, connectionId: connection.id });
+    },
+    [connection.id]
+  );
+
+  /** 点击选中连接 */
+  const handleClick = useCallback(() => {
+    setActiveConnection(connection.id);
+  }, [connection.id, setActiveConnection]);
+
+  /** 双击连接/断开 */
+  const handleDoubleClick = useCallback(async () => {
+    if (status === "connected") {
+      setConnectionStatus(connection.id, "disconnected");
+      await disconnectRedis(connection.id);
+    } else {
+      setConnectionStatus(connection.id, "connecting");
+      try {
+        await connectRedis(connection.id);
+        setConnectionStatus(connection.id, "connected");
+        setActiveConnection(connection.id);
+      } catch {
+        setConnectionStatus(connection.id, "disconnected");
+      }
+    }
+  }, [connection.id, status, setConnectionStatus, setActiveConnection]);
+
+  /** 关闭右键菜单 */
+  useEffect(() => {
+    if (!contextMenu.visible) return;
+    const handleClickOutside = () => setContextMenu((prev) => ({ ...prev, visible: false }));
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [contextMenu.visible]);
+
+  /** 菜单操作 */
+  const menuActions = {
+    connect: async () => {
+      setConnectionStatus(connection.id, "connecting");
+      try {
+        await connectRedis(connection.id);
+        setConnectionStatus(connection.id, "connected");
+        setActiveConnection(connection.id);
+      } catch {
+        setConnectionStatus(connection.id, "disconnected");
+      }
+    },
+    disconnect: async () => {
+      await disconnectRedis(connection.id);
+      setConnectionStatus(connection.id, "disconnected");
+    },
+    edit: () => openDialog(connection),
+    duplicate: async () => {
+      const dup: ConnectionConfig = {
+        ...connection,
+        id: crypto.randomUUID(),
+        name: `${connection.name} (${t("actions.copy")})`,
+      };
+      await saveConnection(dup);
+      const updated = await listConnections();
+      setConnections(updated);
+    },
+    delete: async () => {
+      if (confirm(t("connection.deleteConfirm", { name: connection.name }))) {
+        await deleteConnectionApi(connection.id);
+        const updated = await listConnections();
+        setConnections(updated);
+      }
+    },
+  };
+
+  return (
+    <>
+      <button
+        className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm transition-colors ${
+          isActive ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400" : "hover:bg-default-100"
+        }`}
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
+        onContextMenu={handleContextMenu}
+      >
+        {/* 状态指示器 */}
+        <span
+          className={`w-2 h-2 rounded-full shrink-0 ${
+            status === "connected"
+              ? "bg-success"
+              : status === "connecting"
+                ? "bg-warning animate-pulse"
+                : "bg-default-300"
+          }`}
+        />
+        <span className="truncate flex-1 text-left">{connection.name}</span>
+        <span className="text-default-400 text-xs shrink-0">
+          {connection.host}:{connection.port}
+        </span>
+      </button>
+
+      {/* 右键菜单 */}
+      {contextMenu.visible && (
+        <div
+          ref={menuRef}
+          className="fixed z-50 min-w-[160px] bg-content1 border border-divider rounded-lg shadow-lg py-1"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          {status !== "connected" ? (
+            <ContextMenuItem onClick={menuActions.connect}>{t("connection.connect")}</ContextMenuItem>
+          ) : (
+            <ContextMenuItem onClick={menuActions.disconnect}>{t("connection.disconnect")}</ContextMenuItem>
+          )}
+          <div className="h-px bg-divider my-1" />
+          <ContextMenuItem onClick={menuActions.edit}>{t("actions.edit")}</ContextMenuItem>
+          <ContextMenuItem onClick={menuActions.duplicate}>{t("connection.duplicate")}</ContextMenuItem>
+          <div className="h-px bg-divider my-1" />
+          <ContextMenuItem onClick={menuActions.delete} danger>
+            {t("actions.delete")}
+          </ContextMenuItem>
+        </div>
+      )}
+    </>
+  );
+}
+
+/** 右键菜单项 */
+function ContextMenuItem({
+  children,
+  onClick,
+  danger,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
+        danger
+          ? "text-danger hover:bg-danger-50"
+          : "text-foreground hover:bg-default-100"
+      }`}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
 /** 左侧边栏组件 — 连接列表 */
 export function Sidebar() {
   const { t } = useTranslation();
   const { sidebarCollapsed, toggleSidebar } = useAppStore();
+  const { connections, setConnections, openDialog } = useConnectionStore();
+
+  /** 初始化加载连接列表 */
+  useEffect(() => {
+    listConnections().then(setConnections).catch(console.error);
+  }, [setConnections]);
 
   if (sidebarCollapsed) {
     return (
@@ -113,18 +308,27 @@ export function Sidebar() {
           className="w-full"
           size="sm"
           startContent={<PlusIcon />}
+          onPress={() => openDialog()}
         >
           {t("connection.new")}
         </Button>
       </div>
 
-      {/* 连接列表（Phase 2 实现具体内容） */}
-      <div className="flex-1 overflow-y-auto p-2">
-        <div className="flex flex-col items-center justify-center h-full text-default-400 text-xs text-center px-4">
-          <DatabaseIcon />
-          <p className="mt-2">{t("connection.noConnections")}</p>
-          <p className="mt-1 text-default-300">{t("connection.noConnectionsDesc")}</p>
-        </div>
+      {/* 连接列表 */}
+      <div className="flex-1 overflow-y-auto px-2 pb-2">
+        {connections.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-default-400 text-xs text-center px-4">
+            <DatabaseIcon />
+            <p className="mt-2">{t("connection.noConnections")}</p>
+            <p className="mt-1 text-default-300">{t("connection.noConnectionsDesc")}</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-0.5">
+            {connections.map((conn) => (
+              <ConnectionItem key={conn.id} connection={conn} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 底部导航 — CLI / Monitor / Pub/Sub */}

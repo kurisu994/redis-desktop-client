@@ -2,6 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { Button } from "@heroui/react";
+import { useConnectionStore } from "@/stores/connection-store";
 
 function PlusIcon() {
   return (
@@ -24,6 +25,7 @@ function ZapIcon() {
 /** 空状态欢迎页 — 无连接时展示 */
 export function WelcomePage() {
   const { t } = useTranslation();
+  const openDialog = useConnectionStore((s) => s.openDialog);
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-center">
@@ -38,6 +40,7 @@ export function WelcomePage() {
         size="lg"
         className="mt-6"
         startContent={<PlusIcon />}
+        onPress={() => openDialog()}
       >
         {t("connection.new")}
       </Button>
