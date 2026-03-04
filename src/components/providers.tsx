@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { HeroUIProvider } from "@heroui/react";
+import { ToastProvider } from "@heroui/toast";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import "@/i18n";
 
@@ -27,7 +28,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <NextThemesProvider attribute="class" defaultTheme="dark">
-      <HeroUIProvider>{children}</HeroUIProvider>
+      <HeroUIProvider>
+        <ToastProvider placement="top-right" toastOffset={10} />
+        {children}
+      </HeroUIProvider>
     </NextThemesProvider>
   );
 }

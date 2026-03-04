@@ -28,6 +28,8 @@ interface ConnectionState {
   activeConnectionId: string | null;
   /** 连接状态映射 */
   connectionStatus: Record<string, ConnectionStatus>;
+  /** 连接错误信息映射 */
+  connectionErrors: Record<string, string>;
   /** 新建连接对话框是否打开 */
   isDialogOpen: boolean;
   /** 正在编辑的连接（null 为新建模式） */
@@ -39,6 +41,7 @@ interface ConnectionState {
   removeConnection: (id: string) => void;
   setActiveConnection: (id: string | null) => void;
   setConnectionStatus: (id: string, status: ConnectionStatus) => void;
+  setConnectionError: (id: string, error: string | null) => void;
   openDialog: (connection?: ConnectionConfig) => void;
   closeDialog: () => void;
 }
@@ -48,6 +51,7 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
   connections: [],
   activeConnectionId: null,
   connectionStatus: {},
+  connectionErrors: {},
   isDialogOpen: false,
   editingConnection: null,
 
@@ -71,6 +75,14 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
     set((state) => ({
       connectionStatus: { ...state.connectionStatus, [id]: status },
     })),
+  setConnectionError: (id, error) =>
+    set((state) => {
+      if (error === null) {
+        const { [id]: _removed, ...rest } = state.connectionErrors;
+        return { connectionErrors: rest };
+      }
+      return { connectionErrors: { ...state.connectionErrors, [id]: error } };
+    }),
   openDialog: (connection) =>
     set({ isDialogOpen: true, editingConnection: connection ?? null }),
   closeDialog: () => set({ isDialogOpen: false, editingConnection: null }),

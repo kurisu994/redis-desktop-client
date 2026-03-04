@@ -34,9 +34,10 @@ export function ConnectionDialog() {
   const [name, setName] = useState("");
   const [host, setHost] = useState("127.0.0.1");
   const [port, setPort] = useState("6379");
-  const [username, setUsername] = useState("default");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [db, setDb] = useState("0");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [testState, setTestState] = useState<TestState>({ status: "idle" });
   const [saving, setSaving] = useState(false);
 
@@ -45,18 +46,19 @@ export function ConnectionDialog() {
     if (!isDialogOpen) return;
     setTestState({ status: "idle" });
     setSaving(false);
+    setIsPasswordVisible(false);
     if (editingConnection) {
       setName(editingConnection.name);
       setHost(editingConnection.host);
       setPort(String(editingConnection.port));
-      setUsername(editingConnection.username || "default");
+      setUsername(editingConnection.username || "");
       setPassword(editingConnection.password || "");
       setDb(String(editingConnection.db));
     } else {
       setName("");
       setHost("127.0.0.1");
       setPort("6379");
-      setUsername("default");
+      setUsername("");
       setPassword("");
       setDb("0");
     }
@@ -76,7 +78,7 @@ export function ConnectionDialog() {
       const result = await testConnection(
         host,
         parseInt(port, 10),
-        username !== "default" ? username : undefined,
+        username || undefined,
         password || undefined,
         parseInt(db, 10)
       );
@@ -103,10 +105,10 @@ export function ConnectionDialog() {
       try {
         const config: ConnectionConfig = {
           id: editingConnection?.id || crypto.randomUUID(),
-          name: name || `${host}:${port}`,
+          name: name,
           host,
           port: parseInt(port, 10),
-          username: username !== "default" ? username : undefined,
+          username: username || undefined,
           password: password || undefined,
           db: parseInt(db, 10),
         };
@@ -176,7 +178,28 @@ export function ConnectionDialog() {
                   value={password}
                   onValueChange={setPassword}
                   variant="bordered"
-                  type="password"
+                  type={isPasswordVisible ? "text" : "password"}
+                  endContent={
+                    <button
+                      type="button"
+                      className="focus:outline-none text-default-400 hover:text-default-600"
+                      onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                      aria-label={isPasswordVisible ? "隐藏密码" : "显示密码"}
+                    >
+                      {isPasswordVisible ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
+                    </button>
+                  }
                 />
               </div>
             </Tab>

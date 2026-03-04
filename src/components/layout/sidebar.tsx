@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@heroui/react";
+import { addToast } from "@heroui/toast";
 import { useAppStore } from "@/stores/app-store";
 import { useConnectionStore, type ConnectionConfig } from "@/stores/connection-store";
 import { useBrowserStore, type DbSize } from "@/stores/browser-store";
@@ -158,11 +159,17 @@ function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
         setConnectionStatus(connection.id, "connected");
         setActiveConnection(connection.id);
         setConnectionId(connection.id);
-      } catch {
+      } catch (err) {
         setConnectionStatus(connection.id, "disconnected");
+        addToast({
+          title: t("connection.testFailed"),
+          description: err instanceof Error ? err.message : String(err),
+          color: "danger",
+          timeout: 5000,
+        });
       }
     }
-  }, [connection.id, status, setConnectionStatus, setActiveConnection, setConnectionId]);
+  }, [connection.id, status, setConnectionStatus, setActiveConnection, setConnectionId, t]);
 
   /** 关闭右键菜单 */
   useEffect(() => {
@@ -181,8 +188,14 @@ function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
         setConnectionStatus(connection.id, "connected");
         setActiveConnection(connection.id);
         setConnectionId(connection.id);
-      } catch {
+      } catch (err) {
         setConnectionStatus(connection.id, "disconnected");
+        addToast({
+          title: t("connection.testFailed"),
+          description: err instanceof Error ? err.message : String(err),
+          color: "danger",
+          timeout: 5000,
+        });
       }
     },
     disconnect: async () => {
@@ -229,7 +242,7 @@ function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
                 : "bg-default-300"
           }`}
         />
-        <span className="truncate flex-1 text-left">{connection.name}</span>
+        <span className="truncate flex-1 text-left">{connection.name || `${connection.host}:${connection.port}`}</span>
         <span className="text-default-400 text-xs shrink-0">
           {connection.host}:{connection.port}
         </span>
