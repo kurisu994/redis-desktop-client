@@ -5,12 +5,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@heroui/react";
 import { useAppStore } from "@/stores/app-store";
 import { useConnectionStore, type ConnectionConfig } from "@/stores/connection-store";
+import { useBrowserStore, type DbSize } from "@/stores/browser-store";
 import {
   listConnections,
   connectRedis,
   disconnectRedis,
   deleteConnection as deleteConnectionApi,
   saveConnection,
+  getDbInfo,
 } from "@/lib/tauri-api";
 
 function DatabaseIcon() {
@@ -100,16 +102,35 @@ function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
     setConnections,
     openDialog,
   } = useConnectionStore();
+  const { selectedDb, setSelectedDb, setConnectionId, resetBrowser, setDbList } =
+    useBrowserStore();
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
     x: 0,
     y: 0,
     connectionId: null,
   });
+  const [dbSizes, setDbSizes] = useState<DbSize[]>([]);
+  const [dbCount, setDbCount] = useState(16);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const status = connectionStatus[connection.id] || "disconnected";
   const isActive = activeConnectionId === connection.id;
+  const isConnected = status === "connected";
+
+  /** 连接成功后加载 db 信息 */
+  useEffect(() => {
+    if (!isConnected) return;
+    getDbInfo(connection.id)
+      .then((info) => {
+        setDbSizes(info.db_sizes);
+        setDbCount(info.db_count);
+        if (isActive) {
+          setDbList(info.db_sizes, info.db_count);
+        }
+      })
+      .catch(console.error);
+  }, [isConnected, connection.id, isActive, setDbList]);
 
   /** 右键菜单 */
   const handleContextMenu = useCallback(
@@ -136,11 +157,12 @@ function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
         await connectRedis(connection.id);
         setConnectionStatus(connection.id, "connected");
         setActiveConnection(connection.id);
+        setConnectionId(connection.id);
       } catch {
         setConnectionStatus(connection.id, "disconnected");
       }
     }
-  }, [connection.id, status, setConnectionStatus, setActiveConnection]);
+  }, [connection.id, status, setConnectionStatus, setActiveConnection, setConnectionId]);
 
   /** 关闭右键菜单 */
   useEffect(() => {
@@ -158,6 +180,7 @@ function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
         await connectRedis(connection.id);
         setConnectionStatus(connection.id, "connected");
         setActiveConnection(connection.id);
+        setConnectionId(connection.id);
       } catch {
         setConnectionStatus(connection.id, "disconnected");
       }
@@ -211,6 +234,36 @@ function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
           {connection.host}:{connection.port}
         </span>
       </button>
+
+      {/* 已连接时显示 db 子列表 */}
+      {isConnected && (
+        <div className="ml-5 mt-0.5 space-y-0.5">
+          {Array.from({ length: Math.min(dbCount, 16) }, (_, i) => {
+            const info = dbSizes.find((d) => d.db === i);
+            const size = info?.size ?? 0;
+            const isSelectedDb = isActive && selectedDb === i;
+            return (
+              <button
+                key={i}
+                className={`px-2 py-1 rounded-md text-xs cursor-pointer flex justify-between items-center w-full transition-colors ${
+                  isSelectedDb
+                    ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                    : "hover:bg-default-100 text-default-500"
+                }`}
+                onClick={() => {
+                  setActiveConnection(connection.id);
+                  setConnectionId(connection.id);
+                  setSelectedDb(i);
+                  resetBrowser();
+                }}
+              >
+                <span>db{i}</span>
+                <span className="opacity-60">{size}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* 右键菜单 */}
       {contextMenu.visible && (

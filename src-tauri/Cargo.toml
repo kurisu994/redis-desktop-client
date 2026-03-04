@@ -29,3 +29,4 @@ aes-gcm = "0.10"
 rand = "0.8"
 base64 = "0.22"
 uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }

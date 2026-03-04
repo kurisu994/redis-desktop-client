@@ -14,6 +14,7 @@
   "dependencies": {
     "@heroui/react": "^2.8.9",
     "@heroui/theme": "^2.4.26",
+    "@monaco-editor/react": "^4.7.0",
     "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/plugin-store": "^2.4.2",
     "framer-motion": "^12.34.4",
@@ -25,6 +26,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-i18next": "^16.5.4",
+    "react-virtuoso": "^4.18.3",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

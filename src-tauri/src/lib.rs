@@ -40,6 +40,38 @@ pub fn run() {
             commands::connection::list_connections,
             commands::connection::connect_redis,
             commands::connection::disconnect_redis,
+            // Key 浏览与管理
+            commands::keys::scan_keys,
+            commands::keys::get_db_info,
+            commands::keys::select_database,
+            commands::keys::get_key_info,
+            commands::keys::delete_keys,
+            commands::keys::rename_key,
+            commands::keys::set_key_ttl,
+            commands::keys::copy_key,
+            // 值操作
+            commands::values::get_string_value,
+            commands::values::get_hash_value,
+            commands::values::get_list_value,
+            commands::values::get_set_value,
+            commands::values::get_zset_value,
+            commands::values::get_stream_value,
+            commands::values::set_string_value,
+            commands::values::set_hash_field,
+            commands::values::delete_hash_field,
+            commands::values::add_list_element,
+            commands::values::set_list_element,
+            commands::values::delete_list_element,
+            commands::values::add_set_member,
+            commands::values::delete_set_member,
+            commands::values::add_zset_member,
+            commands::values::delete_zset_member,
+            commands::values::add_stream_entry,
+            commands::values::delete_stream_entry,
+            commands::values::create_key,
+            // 导入导出
+            commands::export::export_connections,
+            commands::export::import_connections,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
