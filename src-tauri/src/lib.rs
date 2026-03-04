@@ -2,6 +2,10 @@ mod commands;
 mod config;
 mod redis;
 
+use config::store::ConnectionStore;
+use redis::client::RedisClientManager;
+use tauri::Manager;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -14,10 +18,28 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            // 初始化连接存储（加密密钥 + 持久化目录）
+            let app_data_dir = app
+                .path()
+                .app_data_dir()
+                .map_err(|e| e.to_string())?;
+            let store = ConnectionStore::new(app_data_dir)
+                .map_err(|e| format!("初始化连接存储失败: {e}"))?;
+            app.manage(store);
+
+            // 初始化 Redis 连接池管理器
+            app.manage(RedisClientManager::new());
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::connection::test_connection,
+            commands::connection::save_connection,
+            commands::connection::delete_connection,
+            commands::connection::list_connections,
+            commands::connection::connect_redis,
+            commands::connection::disconnect_redis,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
