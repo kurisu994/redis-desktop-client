@@ -28,7 +28,7 @@ export function WelcomePage() {
   const openDialog = useConnectionStore((s) => s.openDialog);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center">
+    <div className="flex flex-col items-center justify-center flex-1 h-full text-center">
       <ZapIcon />
       <h1 className="text-2xl font-bold mt-6">{t("app.welcome")}</h1>
       <p className="text-default-400 mt-2 max-w-md">
