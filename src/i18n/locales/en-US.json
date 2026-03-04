@@ -1,0 +1,72 @@
+{
+  "app": {
+    "title": "Redis Desktop Client",
+    "welcome": "Welcome to Redis Desktop Client",
+    "welcomeDesc": "A cross-platform Redis desktop management tool"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "language": {
+    "label": "Language",
+    "zhCN": "Chinese (Simplified)",
+    "enUS": "English"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "copy": "Copy",
+    "refresh": "Refresh",
+    "confirm": "Confirm",
+    "close": "Close",
+    "search": "Search",
+    "settings": "Settings",
+    "create": "Create"
+  },
+  "connection": {
+    "title": "Connections",
+    "new": "New Connection",
+    "edit": "Edit Connection",
+    "test": "Test Connection",
+    "testSuccess": "Connection successful!",
+    "testFailed": "Connection failed",
+    "name": "Name",
+    "host": "Host",
+    "port": "Port",
+    "password": "Password",
+    "username": "Username",
+    "database": "Database",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "noConnections": "No connections yet",
+    "noConnectionsDesc": "Create your first connection to get started"
+  },
+  "browser": {
+    "title": "Browser",
+    "keys": "Keys",
+    "totalKeys": "Total Keys",
+    "newKey": "New Key",
+    "filterKeys": "Filter keys...",
+    "treeView": "Tree View",
+    "flatView": "Flat View"
+  },
+  "cli": {
+    "title": "CLI",
+    "placeholder": "Enter Redis command..."
+  },
+  "monitor": {
+    "title": "Monitor",
+    "serverInfo": "Server Info",
+    "slowLog": "Slow Log",
+    "realtime": "Realtime"
+  },
+  "pubsub": {
+    "title": "Pub/Sub",
+    "subscribe": "Subscribe",
+    "publish": "Publish"
+  }
+}

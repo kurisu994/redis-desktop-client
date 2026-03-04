@@ -1,0 +1,72 @@
+{
+  "app": {
+    "title": "Redis 桌面客户端",
+    "welcome": "欢迎使用 Redis 桌面客户端",
+    "welcomeDesc": "一款跨平台的 Redis 桌面管理工具"
+  },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
+  },
+  "language": {
+    "label": "语言",
+    "zhCN": "简体中文",
+    "enUS": "英文"
+  },
+  "actions": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "copy": "复制",
+    "refresh": "刷新",
+    "confirm": "确认",
+    "close": "关闭",
+    "search": "搜索",
+    "settings": "设置",
+    "create": "新建"
+  },
+  "connection": {
+    "title": "连接",
+    "new": "新建连接",
+    "edit": "编辑连接",
+    "test": "测试连接",
+    "testSuccess": "连接成功！",
+    "testFailed": "连接失败",
+    "name": "名称",
+    "host": "主机",
+    "port": "端口",
+    "password": "密码",
+    "username": "用户名",
+    "database": "数据库",
+    "connect": "连接",
+    "disconnect": "断开",
+    "noConnections": "暂无连接",
+    "noConnectionsDesc": "创建你的第一个连接以开始使用"
+  },
+  "browser": {
+    "title": "浏览器",
+    "keys": "键",
+    "totalKeys": "键总数",
+    "newKey": "新建键",
+    "filterKeys": "过滤键...",
+    "treeView": "树形视图",
+    "flatView": "平铺视图"
+  },
+  "cli": {
+    "title": "命令行",
+    "placeholder": "输入 Redis 命令..."
+  },
+  "monitor": {
+    "title": "监控",
+    "serverInfo": "服务器信息",
+    "slowLog": "慢查询日志",
+    "realtime": "实时监控"
+  },
+  "pubsub": {
+    "title": "发布/订阅",
+    "subscribe": "订阅",
+    "publish": "发布"
+  }
+}

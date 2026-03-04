@@ -7,18 +7,18 @@
 
 ## 总览
 
-| 期数 | 主题 | 核心目标 |
-|------|------|----------|
-| **Phase 1** | 基础框架搭建 | 初始化项目，集成全部技术栈（含 i18n），搭建布局与主题，建立 CI 基础流水线 |
-| **Phase 2** | 连接管理 | 实现连接的完整生命周期管理（CRUD + 测试 + 持久化） |
-| **Phase 3** | 数据浏览核心 | Key 浏览器 + 全数据类型增删改查 + TTL 管理 |
-| **Phase 4** | CLI 控制台 | 内置命令行终端、自动补全、命令历史 |
-| **Phase 5** | 高级功能 | 服务器监控、Pub/Sub、慢查询日志、数据导入导出 |
-| **Phase 6** | 高级连接 & 完善 | SSH/TLS/Sentinel/Cluster、国际化、打包发布 |
+| 期数 | 主题 | 状态 | 核心目标 |
+|------|------|------|----------|
+| **Phase 1** | 基础框架搭建 | ✅ 已完成 | 初始化项目，集成全部技术栈（含 i18n），搭建布局与主题，建立 CI 基础流水线 |
+| **Phase 2** | 连接管理 | 🔲 未开始 | 实现连接的完整生命周期管理（CRUD + 测试 + 持久化） |
+| **Phase 3** | 数据浏览核心 | 🔲 未开始 | Key 浏览器 + 全数据类型增删改查 + TTL 管理 |
+| **Phase 4** | CLI 控制台 | 🔲 未开始 | 内置命令行终端、自动补全、命令历史 |
+| **Phase 5** | 高级功能 | 🔲 未开始 | 服务器监控、Pub/Sub、慢查询日志、数据导入导出 |
+| **Phase 6** | 高级连接 & 完善 | 🔲 未开始 | SSH/TLS/Sentinel/Cluster、国际化、打包发布 |
 
 ---
 
-## Phase 1：基础框架搭建
+## Phase 1：基础框架搭建 ✅ 已完成
 
 ### 目标
 
@@ -28,48 +28,48 @@
 
 #### 1.1 项目初始化
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 1 | 初始化 Tauri v2 + Next.js 项目 | 使用 `create-tauri-app` 脚手架，选择 Next.js 模板 |
-| 2 | 集成 HeroUI | 安装 HeroUI、Tailwind CSS，配置 `tailwind.config.ts` |
-| 3 | 集成 Zustand | 安装并创建基础 Store 结构 |
-| 4 | 配置 Tauri 权限 | `tauri.conf.json` 配置窗口大小、标题、权限等 |
-| 5 | 配置 Tauri Store Plugin | 安装 `@tauri-apps/plugin-store` 用于本地持久化 |
-| 6 | 配置 Next.js 静态导出 | `output: 'export'`，确保与 Tauri 兼容 |
-| 7 | 集成 i18n 框架 | 安装 `next-intl`，建立翻译资源目录结构 `i18n/{zh-CN,en-US}/` |
-| 8 | 创建基础翻译文件 | 按模块拆分：`common.json`、`connection.json`、`browser.json`、`cli.json`、`monitor.json` |
-| 9 | 实现语言切换 | 支持中文/英文切换 + 跟随系统语言 + 偏好持久化 |
+| # | 任务 | 状态 | 说明 |
+|---|------|------|------|
+| 1 | 初始化 Tauri v2 + Next.js 项目 | ✅ | 使用 `create-next-app` + `@tauri-apps/cli init` 搭建 |
+| 2 | 集成 HeroUI | ✅ | 安装 HeroUI + Tailwind CSS v4 CSS-first 模式配置 |
+| 3 | 集成 Zustand | ✅ | 创建 `connection-store` + `app-store` |
+| 4 | 配置 Tauri 权限 | ✅ | 窗口 1280×800，最小 960×600，居中启动 |
+| 5 | 配置 Tauri Store Plugin | ✅ | `@tauri-apps/plugin-store` 已集成 |
+| 6 | 配置 Next.js 静态导出 | ✅ | `output: 'export'`，Tauri 从 `../out` 加载 |
+| 7 | 集成 i18n 框架 | ✅ | 使用 `i18next` + `react-i18next`（适配静态导出模式） |
+| 8 | 创建基础翻译文件 | ✅ | `en-US.json` + `zh-CN.json`，按功能模块分 key |
+| 9 | 实现语言切换 | ✅ | 下拉切换 + 跟随系统语言 + localStorage 持久化 |
 
 #### 1.2 基础布局 & 主题
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 10 | 实现应用主布局 | 三栏布局：左侧边栏 + 中间内容区 + 底部状态栏 |
-| 11 | 实现深色/浅色主题切换 | 基于 HeroUI 的 `next-themes`，默认深色主题 |
-| 12 | 顶部标题栏组件 | Logo、主题切换按钮、语言切换按钮、设置入口 |
-| 13 | 空状态引导页 | 无连接时展示欢迎页和快速创建连接入口 |
+| # | 任务 | 状态 | 说明 |
+|---|------|------|------|
+| 10 | 实现应用主布局 | ✅ | 三栏布局：左侧边栏 + 中间内容区 + 底部状态栏 |
+| 11 | 实现深色/浅色主题切换 | ✅ | 基于 HeroUI 的 `next-themes`，默认深色主题 |
+| 12 | 顶部标题栏组件 | ✅ | Logo、主题切换按钮、语言切换按钮、设置入口 |
+| 13 | 空状态引导页 | ✅ | 无连接时展示欢迎页和快速创建连接入口 |
 
 #### 1.3 Rust 后端基础
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 11 | 创建 Rust 模块结构 | `commands/`、`redis/`、`config/` 模块划分 |
-| 12 | 集成 redis-rs + tokio | `Cargo.toml` 添加依赖，验证异步连接可行性 |
-| 13 | 定义前后端 IPC 通信规范 | 统一 `invoke` 命令命名、参数和返回值结构 |
+| # | 任务 | 状态 | 说明 |
+|---|------|------|------|
+| 11 | 创建 Rust 模块结构 | ✅ | `commands/`、`redis/`、`config/` 模块划分 |
+| 12 | 集成 redis-rs + tokio | ✅ | redis 0.29 + tokio 异步运行时 |
+| 13 | 定义前后端 IPC 通信规范 | ✅ | 统一 `IpcResponse<T>` 结构体，`test_connection` 命令已验证 |
 
 #### 1.4 CI 基础流水线
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 14 | CI 工作流 — 代码检查 | GitHub Actions：ESLint + TypeScript 类型检查 + `cargo clippy` |
-| 15 | CI 工作流 — 构建验证 | 三平台（macOS/Windows/Linux）并行构建，确保编译通过 |
-| 16 | CI 工作流 — 测试 | 前端单元测试 + `cargo test` 后端测试 |
-| 17 | 配置 Conventional Commits | 安装 `commitlint` + `husky`，规范提交信息格式 |
-| 18 | 编写 justfile | 统一项目常用命令入口（见下方 justfile 规划） |
+| # | 任务 | 状态 | 说明 |
+|---|------|------|------|
+| 14 | CI 工作流 — 代码检查 | ✅ | ESLint + TypeScript 类型检查 + `cargo clippy` + `cargo fmt` |
+| 15 | CI 工作流 — 构建验证 | ✅ | 四目标（macOS ARM/Intel、Linux、Windows）并行构建 |
+| 16 | CI 工作流 — 测试 | ✅ | `cargo test` 后端测试 |
+| 17 | 配置 Conventional Commits | ✅ | `commitlint` + `husky` 已配置 |
+| 18 | 编写 justfile | ✅ | 含 dev/build/lint/fmt/test/version/release/i18n-check 等命令 |
 
-#### 1.5 justfile 命令规划
+#### 1.5 justfile 命令规划 ✅ 已实现
 
-项目根目录维护一个 `justfile`，作为所有开发命令的统一入口：
+项目根目录已创建 `justfile`，作为所有开发命令的统一入口（实际实现命令见项目根目录 `justfile`）：
 
 ```just
 # === 开发 ===
