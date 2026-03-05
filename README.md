@@ -1,12 +1,12 @@
 # Redis Desktop Client
 
-跨平台 Redis 桌面客户端，基于 Tauri 2 + Next.js 16 + HeroUI 构建。
+跨平台 Redis 桌面客户端，基于 Tauri 2 + Next.js 16 + shadcn/ui 构建。
 
 ## 技术栈
 
 - **桌面框架**：Tauri 2.x
 - **前端**：Next.js 16 (Turbopack) + React 19 + TypeScript
-- **UI 组件库**：HeroUI (@heroui/react)
+- **UI 组件库**：shadcn/ui
 - **样式**：Tailwind CSS 4.x
 - **状态管理**：Zustand 5.x
 - **国际化**：i18next + react-i18next（中/英）

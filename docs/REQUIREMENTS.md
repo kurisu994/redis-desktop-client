@@ -12,8 +12,8 @@
 |------|------|------|
 | 桌面框架 | **Tauri v2** | Rust 后端，负责 Redis 连接管理、数据操作、系统集成 |
 | 前端框架 | **Next.js 16** (App Router + Turbopack) | React 19 前端，负责 UI 渲染与交互逻辑 |
-| UI 组件库 | **HeroUI** (@heroui/react) | 基于 Tailwind CSS 的组件库，提供美观一致的界面 |
-| 样式 | **Tailwind CSS v4** | CSS-first 配置模式，通过 `@plugin` 指令集成 HeroUI |
+| UI 组件库 | **shadcn/ui** | 基于 Radix UI + Tailwind CSS 的组件库，提供美观一致的界面 |
+| 样式 | **Tailwind CSS v4** | CSS-first 配置模式 |
 | 图标 | **lucide-react** | React SVG 图标组件库 |
 | 代码编辑器 | **Monaco Editor** (@monaco-editor/react) | VS Code 内核编辑器，用于值编辑器的语法高亮、格式化、Diff 对比 |
 | Redis 客户端 | **redis-rs** | Rust 生态的 Redis 客户端库（tokio 异步） |
@@ -245,7 +245,7 @@
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────────┐ │ │
 │  │  │ 服务器监控 │ │ Pub/Sub  │ │  设置中心     │ │ │
 │  │  └──────────┘ └──────────┘ └──────────────┘ │ │
-│  │         │  HeroUI + Tailwind CSS  │          │ │
+│  │         │  shadcn/ui + Tailwind CSS │          │ │
 │  │         │  Zustand 状态管理        │          │ │
 │  └─────────┼─────────────────────────┼──────────┘ │
 │            │   Tauri IPC (invoke)    │            │
@@ -382,7 +382,7 @@ src-tauri/
 ## 六、开发阶段规划
 
 ### Phase 1 — 基础框架搭建
-- 初始化 Tauri v2 + Next.js + HeroUI 项目
+- 初始化 Tauri v2 + Next.js + shadcn/ui 项目
 - 搭建基础布局框架
 - 实现深色/浅色主题切换
 

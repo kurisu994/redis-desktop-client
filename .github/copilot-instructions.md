@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-跨平台 Redis 桌面客户端，基于 **Tauri 2 + Next.js 16 + HeroUI + Tailwind CSS v4** 构建。
+跨平台 Redis 桌面客户端，基于 **Tauri 2 + Next.js 16 + shadcn/ui + Tailwind CSS v4** 构建。
 前端为 React 19 客户端组件（`"use client"`），通过 `output: "export"` 静态导出后由 Tauri 加载。
 后端为 Rust（Tokio 异步运行时 + redis-rs），通过 Tauri Command 暴露给前端。
 
@@ -12,7 +12,7 @@
 | ------------ | ----------------------- | ----------- |
 | 桌面框架     | Tauri                   | 2.x         |
 | 前端框架     | Next.js (Turbopack)     | 16.x        |
-| UI 组件库    | HeroUI (@heroui/react)  | 2.8.x       |
+| UI 组件库    | shadcn/ui               | -           |
 | 样式         | Tailwind CSS            | 4.x         |
 | 状态管理     | Zustand                 | 5.x         |
 | 国际化       | i18next + react-i18next | -           |
@@ -25,12 +25,12 @@
 src/
 ├── app/                    # Next.js App Router
 │   ├── layout.tsx         # 根布局（字体、Metadata）
-│   ├── page.tsx           # 主页面（TitleBar + Sidebar + Main + StatusBar）
-│   ├── globals.css        # Tailwind v4 + HeroUI 插件入口
-│   └── hero.ts            # HeroUI Tailwind v4 插件导出
+│   ├── page.tsx           # 主页面（TitleBar + Sidebar + Main）
+│   ├── globals.css        # Tailwind v4 + shadcn/ui 主题变量
 ├── components/
-│   ├── providers.tsx      # 全局 Provider（HeroUI + 主题 + i18n）
-│   └── layout/            # 布局组件（sidebar, titlebar, status-bar, welcome-page, language-switcher）
+│   ├── providers.tsx      # 全局 Provider（TooltipProvider + 主题 + i18n）
+│   ├── ui/               # shadcn/ui 组件（button, dialog, input 等）
+│   └── layout/            # 布局组件（sidebar, titlebar, welcome-page, language-switcher）
 ├── stores/                # Zustand 状态仓库
 │   ├── app-store.ts      # 应用 UI 状态（侧边栏折叠等）
 │   └── connection-store.ts # Redis 连接管理
@@ -50,34 +50,15 @@ src-tauri/
 
 ## 关键约定
 
-### HeroUI + Tailwind CSS v4 集成（重要）
+### shadcn/ui + Tailwind CSS v4 集成
 
-HeroUI 在 Tailwind v4 下**不能**直接用 `@plugin "@heroui/theme/plugin"`（会报 "w is not a function"），
-也**不要**用 `@config` 引入 tailwind.config.ts（会导致 CSS 工具类冲突）。
+项目使用 shadcn/ui 组件库，组件源码位于 `src/components/ui/` 目录。通过 `components.json` 配置，使用 `pnpm dlx shadcn@latest add <component>` 添加新组件。
 
-正确做法：
+主题在 `globals.css` 中通过 CSS 变量定义（oklch 色彩空间），主色调为紫色/紫罗兰色。
 
-1. `src/app/hero.ts` 导出 `heroui()` 插件
-2. `globals.css` 中用 `@plugin "./hero.ts"` 引入
-3. `@source` 指令扫描 HeroUI 组件类名
+### 打开外部链接
 
-```css
-/* globals.css */
-@import "tailwindcss";
-@plugin "./hero.ts";
-@source "../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
-@custom-variant dark (&:is(.dark *));
-```
-
-### pnpm + HeroUI 依赖
-
-`@heroui/theme` 不会被 pnpm 自动提升，必须作为**直接依赖**安装：
-
-```bash
-pnpm add @heroui/theme
-```
-
-否则 `@plugin` 指令无法解析该模块。
+使用 `tauri-plugin-opener` 在 Tauri 环境中打开外部 URL。参考 `title-bar.tsx` 中的 `openExternal()` 函数。
 
 ### Hydration 安全
 
@@ -97,10 +78,10 @@ const hasMounted = useSyncExternalStore(
 ### 前端组件规范
 
 - 所有页面组件使用 `"use client"` 指令（Next.js static export 模式）
-- UI 组件优先使用 HeroUI（`@heroui/react`），不要引入其他 UI 库
+- UI 组件优先使用 shadcn/ui（`src/components/ui/`），不要引入其他 UI 库
 - 样式使用 Tailwind CSS utility class，不写自定义 CSS
 - 路径别名：`@/*` 对应 `./src/*`
-- 图标：使用 `lucide-react`
+- 图标：使用 `lucide-react`（注意 `Github` 图标已废弃，使用自定义 SVG 替代）
 
 ### 状态管理
 
@@ -176,10 +157,10 @@ just clean        # 清理构建产物
 - `REQUIREMENTS.md` — 产品需求文档
 - `DEVELOPMENT_PLAN.md` — 开发计划
 - [Next.js](https://nextjs.org/docs) — Next.js 框架文档
-- [HeroUI](https://www.heroui.com/docs/guide/introduction) — HeroUI 组件库文档
+- [shadcn/ui](https://ui.shadcn.com/docs) — shadcn/ui 组件库文档
+- [shadcn/ui LLM](https://ui.shadcn.com/llms.txt) — shadcn/ui 组件库 LLM 文档
 - [Lucide](https://lucide.dev/) — Lucide 图标库文档
 - [Tauri](https://v2.tauri.app/start/) — Tauri 桌面框架文档
-- [ShadcnUI](https://ui.shadcn.com/llms.txt) — ShadcnUI 组件库llm文档
 
 实现新功能时应参考以上文档。
 
