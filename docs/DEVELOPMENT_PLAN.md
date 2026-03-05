@@ -13,7 +13,7 @@
 | **Phase 2** | 连接管理 | ✅ 已完成 | 实现连接的完整生命周期管理（CRUD + 测试 + 持久化） |
 | **Phase 3** | 数据浏览核心 | ✅ 已完成 | Key 浏览器 + 全数据类型增删改查 + TTL 管理 |
 | **Phase 4** | CLI 控制台 | ✅ 已完成 | 内置命令行终端、自动补全、命令历史 |
-| **Phase 5** | 高级功能 | 🔲 未开始 | 服务器监控、Pub/Sub、慢查询日志、数据导入导出 |
+| **Phase 5** | 高级功能 | 🔲 未开始 | 服务器监控（INFO + 实时图表）、慢查询日志、Pub/Sub、Key 数据导入导出 |
 | **Phase 6** | 高级连接 & 完善 | 🔲 未开始 | SSH/TLS/Sentinel/Cluster、国际化、打包发布 |
 
 ---
@@ -276,70 +276,105 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 ---
 
-## Phase 5：高级功能
+## Phase 5：高级功能 🔲 未开始
 
 ### 目标
 
 实现服务器监控、发布订阅、慢查询日志和数据导入导出。本期结束后，用户可以全面掌握 Redis 服务器运行状态，并方便地进行数据迁移。
 
+### 前置基础
+
+以下基础设施已在前序 Phase 中完成，Phase 5 可直接复用：
+
+| 已有基础 | 说明 |
+|---------|------|
+| 侧边栏导航占位 | `sidebar.tsx` 底部已有 Monitor、Pub/Sub 按钮（目前为静态占位，无功能绑定） |
+| i18n 基础 key | `monitor.title`、`monitor.serverInfo`、`monitor.slowLog`、`monitor.realtime`、`pubsub.title`、`pubsub.subscribe`、`pubsub.publish` 已定义 |
+| MainView 类型 | `app-store.ts` 中 `MainView = "browser" \| "cli"`，需扩展 `"monitor" \| "pubsub"` |
+| IPC 封装模式 | `lib/tauri-api.ts` 已建立 Tauri/Mock 双模式调用规范，新命令按相同模式添加 |
+| Tauri Event 机制 | Tauri 2 内置 Event 系统，可用于实时数据推送（监控指标、Pub/Sub 消息） |
+
 ### 任务清单
 
 #### 5.1 服务器信息
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 1 | INFO 信息后端 | `get_server_info` 命令，解析 `INFO` 返回值为结构化数据 |
-| 2 | 服务器信息页面 | 分 Tab/区块展示 Server、Clients、Memory、Stats、Replication、Keyspace |
-| 3 | 关键指标卡片 | 顶部展示：版本号、运行时间、已用内存、客户端数、Key 总数 |
-| 4 | 自动刷新 | 支持配置刷新间隔，默认 5 秒 |
+| # | 任务 | 说明 | 状态 |
+|---|------|------|------|
+| 1 | 扩展 MainView 类型 | `app-store.ts` 增加 `"monitor"` 视图模式；侧边栏 Monitor 按钮绑定切换逻辑 | 🔲 |
+| 2 | INFO 信息后端命令 | 新增 `commands/server.rs`，实现 `get_server_info` 命令，解析 `INFO` 返回值为 `HashMap<String, HashMap<String, String>>` 结构化数据 | 🔲 |
+| 3 | INFO 信息 API 封装 | `tauri-api.ts` 添加 `getServerInfo()` 函数 + Mock 实现 | 🔲 |
+| 4 | Monitor Store | 新增 `stores/monitor-store.ts`，管理服务器信息、监控数据、慢查询、刷新间隔等状态 | 🔲 |
+| 5 | 服务器信息页面 | 新增 `components/monitor/server-info.tsx`，分区块展示 Server、Clients、Memory、Stats、Replication、Keyspace | 🔲 |
+| 6 | 关键指标卡片 | 页面顶部卡片组：Redis 版本号、运行时间、已用内存/峰值、客户端连接数、Key 总数 | 🔲 |
+| 7 | 自动刷新 | 定时器轮询 `get_server_info`，默认 5 秒刷新，可暂停 | 🔲 |
 
 #### 5.2 实时监控
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 5 | 监控数据采集 | 后端定时执行 `INFO` 采集指标，通过 Tauri Event 推送到前端 |
-| 6 | 实时图表组件 | 基于 `recharts` 实现折线图：ops/sec、内存、连接数、命中率 |
-| 7 | 暂停/继续 | 暂停图表更新，保留已有数据 |
-| 8 | 刷新间隔配置 | 下拉选择：1s / 2s / 5s / 10s |
+| # | 任务 | 说明 | 状态 |
+|---|------|------|------|
+| 8 | 安装 recharts | `pnpm add recharts`，图表库依赖 | 🔲 |
+| 9 | 监控数据采集后端 | `commands/server.rs` 新增 `start_monitor` / `stop_monitor` 命令，后端 Tokio 定时任务执行 `INFO`，通过 Tauri Event (`redis://monitor`) 推送指标 | 🔲 |
+| 10 | 监控数据 API 封装 | `tauri-api.ts` 添加 `startMonitor()` / `stopMonitor()` + 前端 Event 监听封装 | 🔲 |
+| 11 | 实时图表组件 | 新增 `components/monitor/realtime-charts.tsx`，基于 `recharts` 折线图展示：ops/sec、内存使用量、客户端连接数、命中率 | 🔲 |
+| 12 | 暂停/继续 | 暂停按钮冻结图表更新，保留已采集数据点；继续后恢复实时更新 | 🔲 |
+| 13 | 刷新间隔配置 | 下拉选择器：1s / 2s / 5s / 10s，切换后通知后端调整采集频率 | 🔲 |
+| 14 | Monitor 主页面 | 新增 `components/monitor/monitor-page.tsx`，整合服务器信息 + 实时图表 + 慢查询 Tab 布局 | 🔲 |
 
 #### 5.3 慢查询日志
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 9 | 慢查询后端 | `get_slowlog` 命令，返回慢查询列表 |
-| 10 | 慢查询列表页 | 表格展示：ID、执行时间(μs)、命令、时间戳、客户端地址 |
-| 11 | 慢查询阈值设置 | 修改 `slowlog-log-slower-than` 配置 |
-| 12 | 清空慢查询日志 | `SLOWLOG RESET` + 确认弹窗 |
+| # | 任务 | 说明 | 状态 |
+|---|------|------|------|
+| 15 | 慢查询后端命令 | `commands/server.rs` 新增 `get_slowlog` 命令，执行 `SLOWLOG GET`，返回 `Vec<SlowLogEntry>`（id、timestamp、duration_us、command、client_addr） | 🔲 |
+| 16 | 慢查询 API 封装 | `tauri-api.ts` 添加 `getSlowLog()` / `resetSlowLog()` / `setSlowLogThreshold()` + Mock | 🔲 |
+| 17 | 慢查询列表页 | 新增 `components/monitor/slow-log.tsx`，HeroUI Table 展示：ID、执行时间(μs)、命令、时间戳、客户端地址 | 🔲 |
+| 18 | 慢查询阈值设置 | UI 输入框修改 `slowlog-log-slower-than` 配置（`CONFIG SET`） | 🔲 |
+| 19 | 清空慢查询日志 | `SLOWLOG RESET` 按钮 + 二次确认弹窗 | 🔲 |
+| 20 | 慢查询刷新 | 手动刷新按钮 + 可选自动刷新 | 🔲 |
 
 #### 5.4 发布/订阅 (Pub/Sub)
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 13 | Pub/Sub 后端 | 基于独立连接实现 `SUBSCRIBE`/`PSUBSCRIBE`，通过 Tauri Event 推送消息 |
-| 14 | 订阅管理 UI | 输入频道名/模式，添加/取消订阅 |
-| 15 | 消息实时列表 | 展示：时间戳、频道、消息内容，支持虚拟滚动 |
-| 16 | 发布消息 | 输入频道和内容，发送 `PUBLISH` 命令 |
-| 17 | 消息过滤与搜索 | 按频道或内容关键词过滤 |
-| 18 | 暂停/继续 | 暂停接收显示，不断开连接 |
+| # | 任务 | 说明 | 状态 |
+|---|------|------|------|
+| 21 | 扩展 MainView 类型 | `app-store.ts` 增加 `"pubsub"` 视图模式；侧边栏 Pub/Sub 按钮绑定切换逻辑 | 🔲 |
+| 22 | Pub/Sub 后端命令 | 新增 `commands/pubsub.rs`，基于**独立连接**（非复用 MultiplexedConnection）实现 `subscribe_channels` / `unsubscribe_channels` / `publish_message`；订阅消息通过 Tauri Event (`redis://pubsub`) 推送到前端 | 🔲 |
+| 23 | Pub/Sub API 封装 | `tauri-api.ts` 添加 `subscribeChannels()` / `unsubscribeChannels()` / `publishMessage()` + Event 监听封装 + Mock | 🔲 |
+| 24 | Pub/Sub Store | 新增 `stores/pubsub-store.ts`，管理订阅频道列表、消息列表、暂停状态、过滤条件 | 🔲 |
+| 25 | 订阅管理 UI | 新增 `components/pubsub/pubsub-page.tsx`，输入框添加频道名/模式，显示当前订阅列表，支持逐个取消订阅 | 🔲 |
+| 26 | 消息实时列表 | 新增 `components/pubsub/message-list.tsx`，展示：时间戳、频道、消息内容；使用 `react-virtuoso` 虚拟滚动 | 🔲 |
+| 27 | 发布消息 | 输入目标频道和消息内容，发送 `PUBLISH` 命令 | 🔲 |
+| 28 | 消息过滤与搜索 | 工具栏按频道或内容关键词过滤消息列表 | 🔲 |
+| 29 | 暂停/继续 | 暂停按钮停止向列表追加新消息（不断开订阅连接），继续后恢复显示 | 🔲 |
 
 #### 5.5 数据导入/导出
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 19 | 导出后端 | 将选中 Key 的类型+值+TTL 序列化为 JSON |
-| 20 | 导出 UI | 选择 Key（多选/模式匹配）→ 选择保存路径 → 导出 |
-| 21 | 导入后端 | 解析 JSON 文件，按类型逐个写入 Redis |
-| 22 | 导入 UI | 选择文件 → 预览内容 → 冲突策略（跳过/覆盖/重命名）→ 导入 |
-| 23 | 批量导出 | 按模式匹配批量导出，显示进度 |
-| 24 | 导入/导出进度条 | 大批量操作时显示进度和预估剩余时间 |
+> **注意**：Phase 3 已实现的是**连接配置**导入导出（`export.rs`），本节是 **Key 数据**导入导出。
+
+| # | 任务 | 说明 | 状态 |
+|---|------|------|------|
+| 30 | 导出后端命令 | 新增 `commands/data.rs`（或扩展 `export.rs`），实现 `export_keys` 命令：按 Key 列表读取类型+值+TTL，序列化为 JSON；通过 Tauri Event 推送进度 | 🔲 |
+| 31 | 导入后端命令 | 实现 `import_keys` 命令：解析 JSON 文件，按类型逐个写入 Redis，支持冲突策略（skip/overwrite/rename）；推送进度 | 🔲 |
+| 32 | 导入导出 API 封装 | `tauri-api.ts` 添加 `exportKeys()` / `importKeys()` + 进度 Event 监听 + Mock | 🔲 |
+| 33 | 导出 UI | 新增 `components/browser/export-dialog.tsx`，选择 Key（多选/模式匹配）→ 选择保存路径（`@tauri-apps/plugin-dialog`）→ 开始导出 | 🔲 |
+| 34 | 导入 UI | 新增 `components/browser/import-dialog.tsx`，选择文件 → 预览内容摘要 → 选择冲突策略 → 开始导入 | 🔲 |
+| 35 | 进度条 | 导入/导出过程中显示进度条（已处理/总数 + 预估剩余时间） | 🔲 |
+| 36 | 工具栏集成 | `key-toolbar.tsx` 增加导入/导出按钮入口 | 🔲 |
+
+#### 5.6 国际化补充
+
+| # | 任务 | 说明 | 状态 |
+|---|------|------|------|
+| 37 | 补充 monitor i18n | 服务器信息、实时监控、慢查询相关翻译 key（en-US + zh-CN） | 🔲 |
+| 38 | 补充 pubsub i18n | 发布订阅相关翻译 key（en-US + zh-CN） | 🔲 |
+| 39 | 补充 data export/import i18n | 数据导入导出相关翻译 key（en-US + zh-CN） | 🔲 |
 
 ### 交付物
 
-- ✅ 服务器信息展示页 + 关键指标卡片
-- ✅ 实时性能监控图表（ops/sec、内存、连接数、命中率）
-- ✅ 慢查询日志管理
-- ✅ Pub/Sub 发布订阅（订阅/发布/实时消息列表）
-- ✅ 数据导入/导出（JSON 格式 + 冲突策略 + 进度展示）
+- 🔲 服务器信息展示页 + 关键指标卡片
+- 🔲 实时性能监控图表（ops/sec、内存、连接数、命中率）
+- 🔲 慢查询日志管理（列表 + 阈值设置 + 清空）
+- 🔲 Pub/Sub 发布订阅（订阅/发布/实时消息列表/过滤）
+- 🔲 Key 数据导入/导出（JSON 格式 + 冲突策略 + 进度展示）
+- 🔲 Phase 5 全部功能的中英文翻译
 
 ---
 
@@ -362,12 +397,12 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 | 5 | Sentinel 连接 | 实现 Sentinel 模式连接逻辑 + UI 配置表单 |
 | 6 | Cluster 连接 | 实现 Cluster 模式连接逻辑 + UI 配置（节点发现 + 路由） |
 
-#### 6.2 连接配置导入/导出
+#### 6.2 连接配置导入/导出（后端已在 Phase 3 完成）
 
 | # | 任务 | 说明 |
 |---|------|------|
-| 7 | 导出连接配置 | 将连接列表导出为 JSON 文件（密码脱敏可选） |
-| 8 | 导入连接配置 | 从 JSON 文件导入连接，合并或覆盖现有配置 |
+| 7 | 导出连接配置 UI | 前端对话框：选择导出范围（全部/指定连接）→ 选择保存路径 → 调用已有 `export_connections` 命令（密码脱敏可选） |
+| 8 | 导入连接配置 UI | 前端对话框：选择 JSON 文件 → 预览连接列表 → 选择冲突策略 → 调用已有 `import_connections` 命令 |
 
 #### 6.3 国际化（已在 Phase 1 完成基础集成）
 
