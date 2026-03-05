@@ -2,25 +2,13 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Shield, Plus, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
 import {
   useConnectionStore,
@@ -61,8 +49,7 @@ const defaultTls: TlsConfig = {
 /** 新建/编辑连接对话框 */
 export function ConnectionDialog() {
   const { t } = useTranslation();
-  const { isDialogOpen, editingConnection, closeDialog, setConnections } =
-    useConnectionStore();
+  const { isDialogOpen, editingConnection, closeDialog, setConnections } = useConnectionStore();
 
   const isEditing = !!editingConnection;
 
@@ -149,7 +136,7 @@ export function ConnectionDialog() {
     (open: boolean) => {
       if (!open) closeDialog();
     },
-    [closeDialog]
+    [closeDialog],
   );
 
   /** 构建当前配置对象 */
@@ -178,8 +165,20 @@ export function ConnectionDialog() {
     }
     return config;
   }, [
-    editingConnection, name, host, port, username, password, db,
-    connectionType, ssh, tls, sentinelNodes, sentinelMaster, sentinelPassword, clusterNodes,
+    editingConnection,
+    name,
+    host,
+    port,
+    username,
+    password,
+    db,
+    connectionType,
+    ssh,
+    tls,
+    sentinelNodes,
+    sentinelMaster,
+    sentinelPassword,
+    clusterNodes,
   ]);
 
   /** 测试连接 */
@@ -228,9 +227,7 @@ export function ConnectionDialog() {
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? t("connection.edit") : t("connection.new")}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? t("connection.edit") : t("connection.new")}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto">
           <Tabs defaultValue="general">
@@ -257,10 +254,7 @@ export function ConnectionDialog() {
                 {/* 连接类型选择 */}
                 <div className="space-y-2">
                   <Label>{t("connection.connectionType")}</Label>
-                  <Select
-                    value={connectionType}
-                    onValueChange={(val) => setConnectionType(val as ConnectionType)}
-                  >
+                  <Select value={connectionType} onValueChange={(val) => setConnectionType(val as ConnectionType)}>
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
@@ -278,28 +272,16 @@ export function ConnectionDialog() {
                     <div className="flex gap-3">
                       <div className="space-y-2 flex-[3]">
                         <Label>{t("connection.host")}</Label>
-                        <Input
-                          value={host}
-                          onChange={(e) => setHost(e.target.value)}
-                          required
-                        />
+                        <Input value={host} onChange={(e) => setHost(e.target.value)} required />
                       </div>
                       <div className="space-y-2 flex-1">
                         <Label>{t("connection.port")}</Label>
-                        <Input
-                          value={port}
-                          onChange={(e) => setPort(e.target.value)}
-                          required
-                          type="number"
-                        />
+                        <Input value={port} onChange={(e) => setPort(e.target.value)} required type="number" />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label>{t("connection.username")}</Label>
-                      <Input
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                      />
+                      <Input value={username} placeholder="default" onChange={(e) => setUsername(e.target.value)} />
                     </div>
                     <PasswordInput
                       label={t("connection.password")}
@@ -310,11 +292,7 @@ export function ConnectionDialog() {
                     />
                     <div className="space-y-2">
                       <Label>{t("connection.database")}</Label>
-                      <Input
-                        value={db}
-                        onChange={(e) => setDb(e.target.value)}
-                        type="number"
-                      />
+                      <Input value={db} onChange={(e) => setDb(e.target.value)} type="number" />
                     </div>
                   </>
                 )}
@@ -357,11 +335,7 @@ export function ConnectionDialog() {
             <TabsContent value="ssh">
               <div className="flex flex-col gap-4 pt-2">
                 <div className="flex items-center gap-2">
-                  <Switch
-                    id="ssh-enable"
-                    checked={ssh.enabled}
-                    onCheckedChange={(v) => updateSsh({ enabled: v })}
-                  />
+                  <Switch id="ssh-enable" checked={ssh.enabled} onCheckedChange={(v) => updateSsh({ enabled: v })} />
                   <Label htmlFor="ssh-enable">{t("connection.enableSsh")}</Label>
                 </div>
                 {ssh.enabled && (
@@ -369,11 +343,7 @@ export function ConnectionDialog() {
                     <div className="flex gap-3">
                       <div className="space-y-2 flex-[3]">
                         <Label>{t("connection.sshHost")}</Label>
-                        <Input
-                          value={ssh.host}
-                          onChange={(e) => updateSsh({ host: e.target.value })}
-                          required
-                        />
+                        <Input value={ssh.host} onChange={(e) => updateSsh({ host: e.target.value })} required />
                       </div>
                       <div className="space-y-2 flex-1">
                         <Label>{t("connection.sshPort")}</Label>
@@ -386,11 +356,7 @@ export function ConnectionDialog() {
                     </div>
                     <div className="space-y-2">
                       <Label>{t("connection.sshUsername")}</Label>
-                      <Input
-                        value={ssh.username}
-                        onChange={(e) => updateSsh({ username: e.target.value })}
-                        required
-                      />
+                      <Input value={ssh.username} onChange={(e) => updateSsh({ username: e.target.value })} required />
                     </div>
                     <div className="space-y-2">
                       <Label>{t("connection.sshAuthType")}</Label>
@@ -445,11 +411,7 @@ export function ConnectionDialog() {
             <TabsContent value="tls">
               <div className="flex flex-col gap-4 pt-2">
                 <div className="flex items-center gap-2">
-                  <Switch
-                    id="tls-enable"
-                    checked={tls.enabled}
-                    onCheckedChange={(v) => updateTls({ enabled: v })}
-                  />
+                  <Switch id="tls-enable" checked={tls.enabled} onCheckedChange={(v) => updateTls({ enabled: v })} />
                   <Label htmlFor="tls-enable">{t("connection.enableTls")}</Label>
                 </div>
                 {tls.enabled && (
@@ -515,11 +477,7 @@ export function ConnectionDialog() {
           )}
         </div>
         <DialogFooter className="sm:justify-between">
-          <Button
-            variant="secondary"
-            onClick={handleTest}
-            disabled={testState.status === "testing"}
-          >
+          <Button variant="secondary" onClick={handleTest} disabled={testState.status === "testing"}>
             {testState.status === "testing" && <Loader2 className="animate-spin" />}
             {t("connection.test")}
           </Button>
@@ -527,10 +485,7 @@ export function ConnectionDialog() {
             <Button variant="secondary" onClick={closeDialog}>
               {t("actions.cancel")}
             </Button>
-            <Button
-              onClick={() => handleSave()}
-              disabled={saving}
-            >
+            <Button onClick={() => handleSave()} disabled={saving}>
               {saving && <Loader2 className="animate-spin" />}
               {t("actions.save")}
             </Button>
@@ -612,11 +567,7 @@ function SentinelForm({
     <>
       <div className="space-y-2">
         <Label>{t("connection.sentinelMaster")}</Label>
-        <Input
-          value={masterName}
-          onChange={(e) => setMasterName(e.target.value)}
-          required
-        />
+        <Input value={masterName} onChange={(e) => setMasterName(e.target.value)} required />
       </div>
       <div className="text-sm text-muted-foreground font-medium">{t("connection.sentinelNodes")}</div>
       {nodes.map((node, i) => (
@@ -654,44 +605,25 @@ function SentinelForm({
           )}
         </div>
       ))}
-      <Button
-        size="sm"
-        variant="secondary"
-        onClick={() => setNodes([...nodes, { host: "127.0.0.1", port: 26379 }])}
-      >
+      <Button size="sm" variant="secondary" onClick={() => setNodes([...nodes, { host: "127.0.0.1", port: 26379 }])}>
         <Plus size={14} />
         {t("connection.addNode")}
       </Button>
       <div className="space-y-2">
         <Label>{t("connection.sentinelPasswordLabel")}</Label>
-        <Input
-          value={sentinelPassword}
-          onChange={(e) => setSentinelPassword(e.target.value)}
-          type="password"
-        />
+        <Input value={sentinelPassword} onChange={(e) => setSentinelPassword(e.target.value)} type="password" />
       </div>
       <div className="space-y-2">
         <Label>{t("connection.username")}</Label>
-        <Input
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+        <Input value={username} onChange={(e) => setUsername(e.target.value)} />
       </div>
       <div className="space-y-2">
         <Label>{t("connection.password")}</Label>
-        <Input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          type="password"
-        />
+        <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" />
       </div>
       <div className="space-y-2">
         <Label>{t("connection.database")}</Label>
-        <Input
-          value={db}
-          onChange={(e) => setDb(e.target.value)}
-          type="number"
-        />
+        <Input value={db} onChange={(e) => setDb(e.target.value)} type="number" />
       </div>
     </>
   );
@@ -753,28 +685,17 @@ function ClusterForm({
           )}
         </div>
       ))}
-      <Button
-        size="sm"
-        variant="secondary"
-        onClick={() => setNodes([...nodes, { host: "127.0.0.1", port: 6379 }])}
-      >
+      <Button size="sm" variant="secondary" onClick={() => setNodes([...nodes, { host: "127.0.0.1", port: 6379 }])}>
         <Plus size={14} />
         {t("connection.addNode")}
       </Button>
       <div className="space-y-2">
         <Label>{t("connection.username")}</Label>
-        <Input
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+        <Input value={username} onChange={(e) => setUsername(e.target.value)} />
       </div>
       <div className="space-y-2">
         <Label>{t("connection.password")}</Label>
-        <Input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          type="password"
-        />
+        <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" />
       </div>
     </>
   );

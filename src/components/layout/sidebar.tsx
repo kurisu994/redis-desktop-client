@@ -10,7 +10,7 @@ import { useBrowserStore, type DbSize } from "@/stores/browser-store";
 import { ExportConnectionsDialog } from "@/components/connection/export-connections-dialog";
 import { ImportConnectionsDialog } from "@/components/connection/import-connections-dialog";
 import {
-  Plus, Database, Terminal, Activity, Radio, Settings, Download, ChevronLeft,
+  Plus, Database, Terminal, Activity, Radio, Download, ChevronLeft,
 } from "lucide-react";
 import {
   listConnections,
@@ -371,7 +371,6 @@ export function Sidebar() {
         <SidebarNavButton icon={<Terminal size={16} />} label={t("cli.title")} view="cli" />
         <SidebarNavButton icon={<Activity size={16} />} label={t("monitor.title")} view="monitor" />
         <SidebarNavButton icon={<Radio size={16} />} label={t("pubsub.title")} view="pubsub" />
-        <SidebarNavButton icon={<Settings size={16} />} label={t("actions.settings")} view="settings" alwaysEnabled />
       </div>
 
       {/* 导出/导入对话框 */}

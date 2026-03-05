@@ -2,7 +2,6 @@
 
 import { TitleBar } from "@/components/layout/title-bar";
 import { Sidebar } from "@/components/layout/sidebar";
-import { StatusBar } from "@/components/layout/status-bar";
 import { TabBar } from "@/components/layout/tab-bar";
 import { WelcomePage } from "@/components/layout/welcome-page";
 import { ConnectionDialog } from "@/components/connection/connection-dialog";
@@ -60,7 +59,6 @@ export default function Home() {
           </main>
         </div>
       </div>
-      <StatusBar />
       <ConnectionDialog />
     </div>
   );
