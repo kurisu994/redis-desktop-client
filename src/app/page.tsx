@@ -3,6 +3,7 @@
 import { TitleBar } from "@/components/layout/title-bar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { StatusBar } from "@/components/layout/status-bar";
+import { TabBar } from "@/components/layout/tab-bar";
 import { WelcomePage } from "@/components/layout/welcome-page";
 import { ConnectionDialog } from "@/components/connection/connection-dialog";
 import { DataBrowser } from "@/components/browser/data-browser";
@@ -18,22 +19,24 @@ import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
 /** 应用主页 — 三栏布局 */
 export default function Home() {
   const { activeConnectionId, connectionStatus } = useConnectionStore();
-  const { mainView } = useAppStore();
+  const { tabs, activeTabId } = useAppStore();
 
   // 注册全局快捷键
   useGlobalShortcuts();
 
   // 判断当前是否有已连接的连接
-  const isConnected =
-    activeConnectionId !== null &&
-    connectionStatus[activeConnectionId] === "connected";
+  const isConnected = activeConnectionId !== null && connectionStatus[activeConnectionId] === "connected";
 
-  /** 根据视图模式和连接状态渲染主内容区 */
+  // 获取当前活跃 Tab 的类型
+  const activeTab = tabs.find((t) => t.id === activeTabId);
+  const activeType = activeTab?.type ?? "browser";
+
+  /** 根据活跃 Tab 类型和连接状态渲染主内容区 */
   const renderMainContent = () => {
     // 设置页面无需连接
-    if (mainView === "settings") return <SettingsPage />;
+    if (activeType === "settings") return <SettingsPage />;
     if (!isConnected) return <WelcomePage />;
-    switch (mainView) {
+    switch (activeType) {
       case "cli":
         return <CliConsole />;
       case "monitor":
@@ -50,9 +53,12 @@ export default function Home() {
       <TitleBar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 flex overflow-hidden">
-          <ErrorBoundary>{renderMainContent()}</ErrorBoundary>
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <TabBar />
+          <main className="flex-1 flex overflow-hidden">
+            <ErrorBoundary>{renderMainContent()}</ErrorBoundary>
+          </main>
+        </div>
       </div>
       <StatusBar />
       <ConnectionDialog />

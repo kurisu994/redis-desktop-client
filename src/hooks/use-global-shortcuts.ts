@@ -10,7 +10,7 @@ import { useBrowserStore } from "@/stores/browser-store";
  * 监听常用快捷键并触发对应操作
  */
 export function useGlobalShortcuts() {
-  const { setMainView } = useAppStore();
+  const { openTab, activateTab } = useAppStore();
   const { openDialog } = useConnectionStore();
   const { refreshKeys } = useBrowserStore();
 
@@ -28,20 +28,18 @@ export function useGlobalShortcuts() {
           break;
         case "t":
         case "T":
-          // Cmd+T: 切换到 CLI 视图
+          // Cmd+T: 打开/激活 CLI Tab
           e.preventDefault();
-          setMainView("cli");
+          openTab("cli");
           break;
         case "f":
         case "F":
-          // Cmd+F: 聚焦搜索框
+          // Cmd+F: 聚焦搜索框（切到 browser Tab）
           if (!e.shiftKey) {
             e.preventDefault();
-            setMainView("browser");
+            activateTab("browser");
             setTimeout(() => {
-              const input = document.querySelector<HTMLInputElement>(
-                '[data-search-input="true"]'
-              );
+              const input = document.querySelector<HTMLInputElement>('[data-search-input="true"]');
               input?.focus();
             }, 100);
           }
@@ -55,9 +53,9 @@ export function useGlobalShortcuts() {
           }
           break;
         case ",":
-          // Cmd+,: 打开设置
+          // Cmd+,: 打开/激活设置 Tab
           e.preventDefault();
-          setMainView("settings");
+          openTab("settings");
           break;
         default:
           break;
@@ -66,5 +64,5 @@ export function useGlobalShortcuts() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setMainView, openDialog, refreshKeys]);
+  }, [openTab, activateTab, openDialog, refreshKeys]);
 }

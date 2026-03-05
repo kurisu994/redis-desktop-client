@@ -20,7 +20,17 @@ import {
 
 function DatabaseIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <ellipse cx="12" cy="5" rx="9" ry="3" />
       <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
       <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
@@ -30,7 +40,17 @@ function DatabaseIcon() {
 
 function PlusIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -39,7 +59,17 @@ function PlusIcon() {
 
 function TerminalIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="4 17 10 11 4 5" />
       <line x1="12" y1="19" x2="20" y2="19" />
     </svg>
@@ -48,7 +78,17 @@ function TerminalIcon() {
 
 function ActivityIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
     </svg>
   );
@@ -56,7 +96,17 @@ function ActivityIcon() {
 
 function RadioIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
       <path d="M13.06 7.34A16 16 0 0 1 19 10" />
       <path d="M2 12.95A10 10 0 0 1 8 6" />
@@ -69,7 +119,17 @@ function RadioIcon() {
 
 function SettingsIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
@@ -78,7 +138,17 @@ function SettingsIcon() {
 
 function ImportExportIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
@@ -116,16 +186,9 @@ interface ContextMenuState {
 /** 连接列表项组件 */
 function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
   const { t } = useTranslation();
-  const {
-    connectionStatus,
-    activeConnectionId,
-    setActiveConnection,
-    setConnectionStatus,
-    setConnections,
-    openDialog,
-  } = useConnectionStore();
-  const { selectedDb, setSelectedDb, setConnectionId, resetBrowser, setDbList } =
-    useBrowserStore();
+  const { connectionStatus, activeConnectionId, setActiveConnection, setConnectionStatus, setConnections, openDialog } =
+    useConnectionStore();
+  const { selectedDb, setSelectedDb, setConnectionId, resetBrowser, setDbList } = useBrowserStore();
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
     x: 0,
@@ -160,7 +223,7 @@ function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
       e.preventDefault();
       setContextMenu({ visible: true, x: e.clientX, y: e.clientY, connectionId: connection.id });
     },
-    [connection.id]
+    [connection.id],
   );
 
   /** 点击选中连接 */
@@ -247,7 +310,9 @@ function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
     <>
       <button
         className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm transition-colors ${
-          isActive ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400" : "hover:bg-default-100"
+          isActive
+            ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+            : "hover:bg-default-100"
         }`}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
@@ -289,6 +354,8 @@ function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
                   setConnectionId(connection.id);
                   setSelectedDb(i);
                   resetBrowser();
+                  // 切换到数据浏览 Tab
+                  useAppStore.getState().activateTab("browser");
                 }}
               >
                 <span>db{i}</span>
@@ -337,9 +404,7 @@ function ContextMenuItem({
   return (
     <button
       className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
-        danger
-          ? "text-danger hover:bg-danger-50"
-          : "text-foreground hover:bg-default-100"
+        danger ? "text-danger hover:bg-danger-50" : "text-foreground hover:bg-default-100"
       }`}
       onClick={onClick}
     >
@@ -348,7 +413,7 @@ function ContextMenuItem({
   );
 }
 
-/** 侧边栏底部导航按钮 — 切换主内容区视图 */
+/** 侧边栏底部导航按钮 — 打开或激活对应 Tab */
 function SidebarNavButton({
   icon,
   label,
@@ -361,12 +426,12 @@ function SidebarNavButton({
   /** 无需连接即可使用 */
   alwaysEnabled?: boolean;
 }) {
-  const { mainView, setMainView } = useAppStore();
+  const { tabs, activeTabId, openTab } = useAppStore();
   const { activeConnectionId, connectionStatus } = useConnectionStore();
-  const isConnected =
-    activeConnectionId !== null &&
-    connectionStatus[activeConnectionId] === "connected";
-  const isActive = mainView === view;
+  const isConnected = activeConnectionId !== null && connectionStatus[activeConnectionId] === "connected";
+  // 检查当前活跃 Tab 是否为该类型
+  const activeTab = tabs.find((t) => t.id === activeTabId);
+  const isActive = activeTab?.type === view;
   const enabled = alwaysEnabled || isConnected;
 
   return (
@@ -377,7 +442,7 @@ function SidebarNavButton({
           : "text-default-500 hover:bg-default-100"
       } ${!enabled ? "opacity-50 cursor-not-allowed" : ""}`}
       onClick={() => {
-        if (enabled) setMainView(view);
+        if (enabled) openTab(view);
       }}
       disabled={!enabled}
     >
@@ -403,10 +468,7 @@ export function Sidebar() {
   if (sidebarCollapsed) {
     return (
       <aside className="w-10 border-r border-divider bg-content1 flex flex-col items-center pt-2 shrink-0">
-        <button
-          onClick={toggleSidebar}
-          className="p-1.5 rounded-md hover:bg-default-100 transition-colors"
-        >
+        <button onClick={toggleSidebar} className="p-1.5 rounded-md hover:bg-default-100 transition-colors">
           <ChevronIcon collapsed={true} />
         </button>
       </aside>
@@ -420,8 +482,7 @@ export function Sidebar() {
         <button
           className="flex items-center gap-1.5 text-sm font-medium hover:text-primary transition-colors"
           onClick={() => {
-            const { mainView, setMainView } = useAppStore.getState();
-            if (mainView !== "browser") setMainView("browser");
+            useAppStore.getState().activateTab("browser");
           }}
         >
           <DatabaseIcon />
@@ -435,10 +496,7 @@ export function Sidebar() {
           >
             <ImportExportIcon />
           </button>
-          <button
-            onClick={toggleSidebar}
-            className="p-1 rounded-md hover:bg-default-100 transition-colors"
-          >
+          <button onClick={toggleSidebar} className="p-1 rounded-md hover:bg-default-100 transition-colors">
             <ChevronIcon collapsed={false} />
           </button>
         </div>
@@ -446,13 +504,7 @@ export function Sidebar() {
 
       {/* 新建连接按钮 */}
       <div className="p-2">
-        <Button
-          color="primary"
-          className="w-full"
-          size="sm"
-          startContent={<PlusIcon />}
-          onPress={() => openDialog()}
-        >
+        <Button color="primary" className="w-full" size="sm" startContent={<PlusIcon />} onPress={() => openDialog()}>
           {t("connection.new")}
         </Button>
       </div>
@@ -476,27 +528,10 @@ export function Sidebar() {
 
       {/* 底部导航 */}
       <div className="border-t border-divider shrink-0">
-        <SidebarNavButton
-          icon={<TerminalIcon />}
-          label={t("cli.title")}
-          view="cli"
-        />
-        <SidebarNavButton
-          icon={<ActivityIcon />}
-          label={t("monitor.title")}
-          view="monitor"
-        />
-        <SidebarNavButton
-          icon={<RadioIcon />}
-          label={t("pubsub.title")}
-          view="pubsub"
-        />
-        <SidebarNavButton
-          icon={<SettingsIcon />}
-          label={t("actions.settings")}
-          view="settings"
-          alwaysEnabled
-        />
+        <SidebarNavButton icon={<TerminalIcon />} label={t("cli.title")} view="cli" />
+        <SidebarNavButton icon={<ActivityIcon />} label={t("monitor.title")} view="monitor" />
+        <SidebarNavButton icon={<RadioIcon />} label={t("pubsub.title")} view="pubsub" />
+        <SidebarNavButton icon={<SettingsIcon />} label={t("actions.settings")} view="settings" alwaysEnabled />
       </div>
 
       {/* 导出/导入对话框 */}
