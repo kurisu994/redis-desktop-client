@@ -1,9 +1,9 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { HeroUIProvider } from "@heroui/react";
-import { ToastProvider } from "@heroui/toast";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import "@/i18n";
 
 const emptySubscribe = () => () => {};
@@ -17,7 +17,7 @@ function useHasMounted() {
   );
 }
 
-/** 全局 Provider 组件，集成 HeroUI + 主题切换 + i18n */
+/** 全局 Provider 组件，集成主题切换 + Tooltip + i18n */
 export function Providers({ children }: { children: React.ReactNode }) {
   const mounted = useHasMounted();
 
@@ -28,10 +28,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <NextThemesProvider attribute="class" defaultTheme="dark">
-      <HeroUIProvider>
-        <ToastProvider placement="top-right" toastOffset={10} />
+      <TooltipProvider delayDuration={300}>
         {children}
-      </HeroUIProvider>
+        <Toaster position="top-right" richColors />
+      </TooltipProvider>
     </NextThemesProvider>
   );
 }

@@ -46,16 +46,16 @@ export function TabBar() {
   if (tabs.length <= 1 && !tabs[0]?.closable) return null;
 
   return (
-    <div className="flex items-center border-b border-divider bg-content1 shrink-0 overflow-x-auto">
+    <div className="flex items-center border-b border-border bg-card shrink-0 overflow-x-auto">
       {tabs.map((tab) => {
         const isActive = tab.id === activeTabId;
         return (
           <button
             key={tab.id}
-            className={`group flex items-center gap-1.5 px-3 py-1.5 text-xs border-r border-divider transition-colors whitespace-nowrap ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 text-xs border-r border-border transition-colors whitespace-nowrap ${
               isActive
                 ? "bg-background text-foreground border-b-2 border-b-primary"
-                : "text-default-500 hover:bg-default-100 hover:text-foreground border-b-2 border-b-transparent"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground border-b-2 border-b-transparent"
             }`}
             onClick={() => activateTab(tab.id)}
           >
@@ -64,7 +64,7 @@ export function TabBar() {
             {tab.closable && (
               <span
                 role="button"
-                className="ml-1 p-0.5 rounded hover:bg-default-300 dark:hover:bg-default-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="ml-1 p-0.5 rounded hover:bg-muted dark:hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={(e) => {
                   e.stopPropagation();
                   closeTab(tab.id);

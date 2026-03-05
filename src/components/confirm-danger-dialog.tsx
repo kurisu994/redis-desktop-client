@@ -2,16 +2,16 @@
 
 import { useState, useCallback } from "react";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Input,
-} from "@heroui/react";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 
 interface ConfirmDangerDialogProps {
   isOpen: boolean;
@@ -61,39 +61,40 @@ export function ConfirmDangerDialog({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => !open && handleClose()} size="md">
-      <ModalContent>
-        <ModalHeader className="flex items-center gap-2">
-          <AlertTriangle size={18} className="text-danger" />
-          <span>{title}</span>
-        </ModalHeader>
-        <ModalBody>
-          <p className="text-sm text-default-600">{message}</p>
-          <p className="text-sm text-default-500 mt-2">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle size={18} className="text-destructive" />
+            <span>{title}</span>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">{message}</p>
+          <p className="text-sm text-muted-foreground">
             {t("confirm.typeToConfirm", { text: confirmText })}
           </p>
           <Input
             value={input}
-            onValueChange={setInput}
-            variant="bordered"
+            onChange={(e) => setInput(e.target.value)}
             placeholder={confirmText}
-            color={input && !isMatch ? "danger" : "default"}
+            className={input && !isMatch ? "border-destructive" : ""}
           />
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="flat" onPress={handleClose}>
+        </div>
+        <DialogFooter>
+          <Button variant="secondary" onClick={handleClose}>
             {t("actions.cancel")}
           </Button>
           <Button
-            color="danger"
-            onPress={handleConfirm}
-            isLoading={loading}
-            isDisabled={!isMatch}
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={loading || !isMatch}
           >
+            {loading && <Loader2 className="animate-spin" size={14} />}
             {t("actions.confirm")}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

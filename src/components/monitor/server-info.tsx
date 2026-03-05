@@ -1,8 +1,18 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { Card, CardBody, Chip } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { ServerInfo } from "@/lib/tauri-api";
+
+/** Badge 颜色映射 */
+const colorMap = {
+  primary: "",
+  success: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  warning: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  secondary: "",
+  danger: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+} as const;
 
 /** 关键指标卡片组 — 展示 Redis 版本、运行时间、内存、连接数、Key 总数 */
 export function InfoCards({ info }: { info: ServerInfo }) {
@@ -35,13 +45,13 @@ export function InfoCards({ info }: { info: ServerInfo }) {
   return (
     <div className="grid grid-cols-5 gap-3">
       {cards.map((card) => (
-        <Card key={card.label} className="bg-content2">
-          <CardBody className="p-3 text-center">
-            <p className="text-xs text-default-500">{card.label}</p>
-            <Chip color={card.color} variant="flat" size="sm" className="mt-1">
+        <Card key={card.label} className="bg-muted">
+          <CardContent className="p-3 text-center">
+            <p className="text-xs text-muted-foreground">{card.label}</p>
+            <Badge variant="secondary" className={`mt-1 ${colorMap[card.color]}`}>
               {card.value}
-            </Chip>
-          </CardBody>
+            </Badge>
+          </CardContent>
         </Card>
       ))}
     </div>
@@ -69,8 +79,8 @@ export function ServerInfoPanel({ info }: { info: ServerInfo }) {
         const data = info[section];
         if (!data || Object.keys(data).length === 0) return null;
         return (
-          <Card key={section} className="bg-content2">
-            <CardBody className="p-3">
+          <Card key={section} className="bg-muted">
+            <CardContent className="p-3">
               <h4 className="text-xs font-semibold text-primary mb-2">
                 {sectionLabels[section] || section}
               </h4>
@@ -80,12 +90,12 @@ export function ServerInfoPanel({ info }: { info: ServerInfo }) {
                     key={key}
                     className="flex justify-between text-xs gap-2"
                   >
-                    <span className="text-default-500 truncate shrink-0">{key}</span>
+                    <span className="text-muted-foreground truncate shrink-0">{key}</span>
                     <span className="text-foreground truncate text-right">{value}</span>
                   </div>
                 ))}
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         );
       })}

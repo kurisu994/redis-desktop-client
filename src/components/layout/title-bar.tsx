@@ -2,7 +2,12 @@
 
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
-import { Button, Tooltip } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Sun, Moon, Settings } from "lucide-react";
 import { LanguageSwitcher } from "./language-switcher";
 
@@ -16,7 +21,7 @@ export function TitleBar() {
   };
 
   return (
-    <header className="flex items-center justify-between h-12 px-4 border-b border-divider bg-content1 shrink-0">
+    <header className="flex items-center justify-between h-12 px-4 border-b bg-card shrink-0">
       {/* 左侧 Logo */}
       <div className="flex items-center gap-2">
         <img src="/logo.png" alt="R" className="w-6 h-6 object-contain" />
@@ -26,15 +31,21 @@ export function TitleBar() {
       {/* 右侧操作按钮 */}
       <div className="flex items-center gap-1">
         <LanguageSwitcher />
-        <Tooltip content={theme === "dark" ? t("theme.light") : t("theme.dark")}>
-          <Button isIconOnly variant="light" size="sm" onPress={toggleTheme}>
-            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-          </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{theme === "dark" ? t("theme.light") : t("theme.dark")}</TooltipContent>
         </Tooltip>
-        <Tooltip content={t("actions.settings")}>
-          <Button isIconOnly variant="light" size="sm">
-            <Settings size={20} />
-          </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Settings size={20} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t("actions.settings")}</TooltipContent>
         </Tooltip>
       </div>
     </header>

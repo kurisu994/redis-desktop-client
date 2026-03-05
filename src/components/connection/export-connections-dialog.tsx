@@ -2,19 +2,18 @@
 
 import { useState, useCallback } from "react";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Checkbox,
-  CheckboxGroup,
-} from "@heroui/react";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "react-i18next";
 import { useConnectionStore } from "@/stores/connection-store";
 import { exportConnections } from "@/lib/tauri-api";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 
 /** 连接配置导出对话框 */
 export function ExportConnectionsDialog({
@@ -37,6 +36,13 @@ export function ExportConnectionsDialog({
     } else {
       setSelectedIds(connections.map((c) => c.id));
     }
+  };
+
+  /** 切换单个连接的选中状态 */
+  const toggleId = (id: string, checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((i) => i !== id)
+    );
   };
 
   /** 执行导出 */
@@ -76,59 +82,64 @@ export function ExportConnectionsDialog({
   }, [selectedIds, includePassword, connections.length, onClose]);
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()} size="md">
-      <ModalContent>
-        <ModalHeader>{t("connection.exportConnections")}</ModalHeader>
-        <ModalBody>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("connection.exportConnections")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-default-500">
+            <span className="text-sm text-muted-foreground">
               {t("browser.totalKeys", { count: selectedIds.length })}
             </span>
-            <Button size="sm" variant="light" onPress={toggleAll}>
+            <Button size="sm" variant="ghost" onClick={toggleAll}>
               {selectedIds.length === connections.length
                 ? t("actions.cancel")
                 : "全选"}
             </Button>
           </div>
-          <CheckboxGroup
-            value={selectedIds}
-            onValueChange={setSelectedIds}
-            className="max-h-60 overflow-y-auto"
-          >
+          <div className="max-h-60 overflow-y-auto space-y-2">
             {connections.map((c) => (
-              <Checkbox key={c.id} value={c.id}>
-                <span className="text-sm">{c.name || c.host}</span>
-                <span className="text-xs text-default-400 ml-2">
-                  {c.host}:{c.port}
-                </span>
-              </Checkbox>
+              <div key={c.id} className="flex items-center gap-2">
+                <Checkbox
+                  id={`conn-${c.id}`}
+                  checked={selectedIds.includes(c.id)}
+                  onCheckedChange={(checked) => toggleId(c.id, !!checked)}
+                />
+                <label htmlFor={`conn-${c.id}`} className="flex items-center cursor-pointer">
+                  <span className="text-sm">{c.name || c.host}</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    {c.host}:{c.port}
+                  </span>
+                </label>
+              </div>
             ))}
-          </CheckboxGroup>
-          <Checkbox
-            isSelected={includePassword}
-            onValueChange={setIncludePassword}
-            className="mt-2"
-            size="sm"
-            color="warning"
-          >
-            {t("connection.includePassword")}
-          </Checkbox>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="flat" onPress={onClose}>
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <Checkbox
+              id="include-password"
+              checked={includePassword}
+              onCheckedChange={(checked) => setIncludePassword(!!checked)}
+            />
+            <label htmlFor="include-password" className="text-sm cursor-pointer">
+              {t("connection.includePassword")}
+            </label>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="secondary" onClick={onClose}>
             {t("actions.cancel")}
           </Button>
           <Button
-            color="primary"
-            onPress={handleExport}
-            isLoading={exporting}
-            isDisabled={selectedIds.length === 0}
-            startContent={<Download size={16} />}
+            onClick={handleExport}
+            disabled={exporting || selectedIds.length === 0}
           >
+            {exporting && <Loader2 className="animate-spin" size={14} />}
+            <Download size={16} />
             {t("actions.export")}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

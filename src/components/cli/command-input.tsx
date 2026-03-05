@@ -365,24 +365,24 @@ export function CommandInput({
   );
 
   return (
-    <div className="relative border-t border-divider">
+    <div className="relative border-t border-border">
       {/* 参数提示 */}
       {activeHint && (
-        <div className="px-3 py-1 text-xs text-default-400 font-mono bg-default-50 dark:bg-default-50/5 border-b border-divider">
+        <div className="px-3 py-1 text-xs text-muted-foreground font-mono bg-muted/50 dark:bg-muted/5 border-b border-border">
           {activeHint}
         </div>
       )}
 
       {/* 自动补全下拉 */}
       {showSuggestions && (
-        <div className="absolute bottom-full left-0 right-0 z-10 max-h-48 overflow-y-auto bg-content1 border border-divider rounded-t-lg shadow-lg">
+        <div className="absolute bottom-full left-0 right-0 z-10 max-h-48 overflow-y-auto bg-card border border-border rounded-t-lg shadow-lg">
           {suggestions.map((cmd, i) => (
             <button
               key={cmd}
               className={`w-full text-left px-3 py-1.5 font-mono text-sm flex justify-between items-center ${
                 i === selectedSuggestion
                   ? "bg-primary-100 dark:bg-primary-900/30 text-primary"
-                  : "hover:bg-default-100"
+                  : "hover:bg-accent"
               }`}
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -392,7 +392,7 @@ export function CommandInput({
               }}
             >
               <span>{cmd}</span>
-              <span className="text-xs text-default-400 truncate ml-4">
+              <span className="text-xs text-muted-foreground truncate ml-4">
                 {REDIS_COMMANDS[cmd]}
               </span>
             </button>
@@ -402,7 +402,7 @@ export function CommandInput({
 
       {/* 输入框 */}
       <div className="flex items-center gap-2 px-3 py-2">
-        <span className="text-success font-mono text-sm select-none shrink-0">
+        <span className="text-green-500 font-mono text-sm select-none shrink-0">
           redis&gt;
         </span>
         <input
@@ -417,7 +417,7 @@ export function CommandInput({
           }}
           disabled={disabled}
           placeholder={t("cli.placeholder")}
-          className="flex-1 bg-transparent outline-none font-mono text-sm text-foreground placeholder:text-default-400"
+          className="flex-1 bg-transparent outline-none font-mono text-sm text-foreground placeholder:text-muted-foreground"
           autoComplete="off"
           spellCheck={false}
         />

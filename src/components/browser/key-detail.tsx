@@ -2,7 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import type { KeyInfo } from "@/stores/browser-store";
 import { useBrowserStore } from "@/stores/browser-store";
 import { deleteKeys, setKeyTtl, copyKey, renameKey } from "@/lib/tauri-api";
@@ -79,7 +79,7 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
 
   return (
     <>
-      <div className="p-5 border-b border-divider">
+      <div className="p-5 border-b border-border">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             {/* Key 名称 */}
@@ -92,13 +92,13 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
                   onKeyDown={(e) => e.key === "Enter" && handleRename()}
                   autoFocus
                 />
-                <Button size="sm" color="primary" onPress={handleRename}>
+                <Button size="sm" onClick={handleRename}>
                   {t("actions.confirm")}
                 </Button>
                 <Button
                   size="sm"
-                  variant="light"
-                  onPress={() => setRenaming(false)}
+                  variant="ghost"
+                  onClick={() => setRenaming(false)}
                 >
                   {t("actions.cancel")}
                 </Button>
@@ -114,19 +114,19 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
               {/* 类型 */}
               <span
                 className={`flex items-center gap-1.5 px-2 py-0.5 rounded ${
-                  TYPE_BADGE[keyInfo.key_type] || "text-default-400 bg-default-100"
+                  TYPE_BADGE[keyInfo.key_type] || "text-muted-foreground bg-muted"
                 }`}
               >
                 <span
                   className={`w-2 h-2 rounded-full ${
-                    TYPE_DOT[keyInfo.key_type] || "bg-default-400"
+                    TYPE_DOT[keyInfo.key_type] || "bg-muted-foreground"
                   }`}
                 />
                 {keyInfo.key_type.toUpperCase()}
               </span>
 
               {/* TTL */}
-              <span className="flex items-center gap-1 text-default-400">
+              <span className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="w-3.5 h-3.5" />
                 {keyInfo.ttl < 0
                   ? t("keyDetail.ttlNone")
@@ -134,17 +134,17 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
               </span>
 
               {/* 大小 */}
-              <span className="text-default-400">
+              <span className="text-muted-foreground">
                 {t("keyDetail.size")}: {formatSize(keyInfo.size)}
               </span>
 
               {/* 长度 */}
-              <span className="text-default-400">
+              <span className="text-muted-foreground">
                 {t("keyDetail.length")}: {keyInfo.length}
               </span>
 
               {/* 编码 */}
-              <span className="text-default-400">
+              <span className="text-muted-foreground">
                 {t("keyDetail.encoding")}: {keyInfo.encoding}
               </span>
             </div>
@@ -154,34 +154,34 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
           <div className="flex items-center gap-1.5 shrink-0">
             <Button
               size="sm"
-              variant="bordered"
-              startContent={<Clock className="w-3.5 h-3.5" />}
-              onPress={() => setShowTtl(true)}
+              variant="outline"
+              onClick={() => setShowTtl(true)}
             >
+              <Clock className="w-3.5 h-3.5" />
               TTL
             </Button>
             <Button
               size="sm"
-              variant="bordered"
-              color="danger"
-              startContent={<Trash2 className="w-3.5 h-3.5" />}
-              onPress={handleDelete}
+              variant="outline"
+              className="text-destructive hover:text-destructive"
+              onClick={handleDelete}
             >
+              <Trash2 className="w-3.5 h-3.5" />
               {t("actions.delete")}
             </Button>
             <div className="relative">
               <Button
-                isIconOnly
-                size="sm"
-                variant="bordered"
-                onPress={() => setShowMore(!showMore)}
+                size="icon"
+                variant="outline"
+                onClick={() => setShowMore(!showMore)}
+                className="h-8 w-8"
               >
                 <MoreVertical className="w-4 h-4" />
               </Button>
               {showMore && (
-                <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-content1 border border-divider rounded-lg shadow-lg py-1">
+                <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-card border border-border rounded-lg shadow-lg py-1">
                   <button
-                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-default-100 flex items-center gap-2"
+                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent flex items-center gap-2"
                     onClick={() => {
                       setShowMore(false);
                       setNewName(keyName);
@@ -192,7 +192,7 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
                     {t("keyDetail.renameKey")}
                   </button>
                   <button
-                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-default-100 flex items-center gap-2"
+                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent flex items-center gap-2"
                     onClick={() => {
                       setShowMore(false);
                       handleCopy();

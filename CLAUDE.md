@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 技术栈
 
-Tauri 2 + Next.js 16（静态导出）+ React 19 + TypeScript + HeroUI + Tailwind CSS 4 + Zustand 5 + i18next，后端为 Rust（Tokio + redis-rs）。
+Tauri 2 + Next.js 16（静态导出）+ React 19 + TypeScript + shadcn/ui + Tailwind CSS 4 + Zustand 5 + i18next，后端为 Rust（Tokio + redis-rs）。
 
 ## 常用命令
 

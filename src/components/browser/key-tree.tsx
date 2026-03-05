@@ -146,7 +146,7 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
       >
         <span
           className={`w-2 h-2 rounded-full shrink-0 ${
-            TYPE_COLORS[entry.key_type] || "bg-default-400"
+            TYPE_COLORS[entry.key_type] || "bg-muted-foreground"
           } ${isSelected ? TYPE_GLOW[entry.key_type] || "" : ""}`}
         />
         <span className="truncate font-mono text-xs">{displayName}</span>

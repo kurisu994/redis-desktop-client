@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import type { SlowLogEntry } from "@/lib/tauri-api";
 
 /** 慢查询日志列表 */
@@ -20,10 +20,10 @@ export function SlowLog({
     <div className="flex flex-col h-full">
       {/* 工具栏 */}
       <div className="flex items-center gap-2 mb-3">
-        <Button size="sm" variant="flat" onPress={onRefresh}>
+        <Button size="sm" variant="secondary" onClick={onRefresh}>
           {t("actions.refresh")}
         </Button>
-        <Button size="sm" variant="flat" color="danger" onPress={onReset}>
+        <Button size="sm" variant="destructive" onClick={onReset}>
           {t("monitor.resetSlowLog")}
         </Button>
       </div>
@@ -31,13 +31,13 @@ export function SlowLog({
       {/* 表格 */}
       <div className="flex-1 overflow-y-auto">
         {entries.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-default-400 text-sm">
+          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
             {t("monitor.noSlowLog")}
           </div>
         ) : (
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-divider text-default-500">
+              <tr className="border-b border-border text-muted-foreground">
                 <th className="text-left p-2 w-16">ID</th>
                 <th className="text-left p-2 w-32">{t("monitor.timestamp")}</th>
                 <th className="text-right p-2 w-24">{t("monitor.duration")}</th>
@@ -49,19 +49,19 @@ export function SlowLog({
               {entries.map((entry) => (
                 <tr
                   key={entry.id}
-                  className="border-b border-divider/50 hover:bg-default-100"
+                  className="border-b border-border/50 hover:bg-accent"
                 >
-                  <td className="p-2 text-default-500">{entry.id}</td>
+                  <td className="p-2 text-muted-foreground">{entry.id}</td>
                   <td className="p-2">
                     {new Date(entry.timestamp * 1000).toLocaleString()}
                   </td>
-                  <td className="p-2 text-right font-mono text-warning">
+                  <td className="p-2 text-right font-mono text-yellow-500">
                     {entry.duration_us.toLocaleString()}μs
                   </td>
                   <td className="p-2 font-mono truncate max-w-md">
                     {entry.command}
                   </td>
-                  <td className="p-2 text-default-500">{entry.client_addr}</td>
+                  <td className="p-2 text-muted-foreground">{entry.client_addr}</td>
                 </tr>
               ))}
             </tbody>

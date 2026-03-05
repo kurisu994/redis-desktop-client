@@ -24,7 +24,7 @@ import {
   addStreamEntry,
   deleteStreamEntry,
 } from "@/lib/tauri-api";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2, Save } from "lucide-react";
 import { AddFieldDialog } from "./add-field-dialog";
 import Editor from "@monaco-editor/react";
@@ -93,7 +93,7 @@ export function ValueViewer({ keyName, keyInfo, onValueChanged }: ValueViewerPro
       );
     default:
       return (
-        <div className="flex-1 flex items-center justify-center text-default-400">
+        <div className="flex-1 flex items-center justify-center text-muted-foreground">
           不支持的数据类型: {keyInfo.key_type}
         </div>
       );
@@ -146,12 +146,12 @@ function StringViewer({
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* 格式切换栏 */}
-      <div className="flex items-center gap-4 px-4 py-1.5 border-b border-divider text-xs font-medium">
+      <div className="flex items-center gap-4 px-4 py-1.5 border-b border-border text-xs font-medium">
         {(["text", "json"] as const).map((f) => (
           <button
             key={f}
             className={`transition-colors ${
-              format === f ? "text-primary" : "text-default-400 hover:text-foreground"
+              format === f ? "text-primary" : "text-muted-foreground hover:text-foreground"
             }`}
             onClick={() => setFormat(f)}
           >
@@ -162,10 +162,9 @@ function StringViewer({
         {isDirty && (
           <Button
             size="sm"
-            color="primary"
-            startContent={<Save className="w-3.5 h-3.5" />}
-            onPress={handleSave}
+            onClick={handleSave}
           >
+            <Save className="w-3.5 h-3.5" />
             {t("actions.save")}
           </Button>
         )}

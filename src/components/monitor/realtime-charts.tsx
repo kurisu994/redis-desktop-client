@@ -37,7 +37,7 @@ export function RealtimeCharts({
 
   if (chartData.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-default-400 text-sm">
+      <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
         {t("monitor.waitingData")}
       </div>
     );
@@ -46,7 +46,7 @@ export function RealtimeCharts({
   return (
     <div className="grid grid-cols-2 gap-3 h-full">
       {/* ops/sec 图表 */}
-      <div className="bg-content2 rounded-lg p-3">
+      <div className="bg-muted rounded-lg p-3">
         <h4 className="text-xs font-semibold text-primary mb-2">
           {t("monitor.opsPerSec")}
         </h4>
@@ -68,7 +68,7 @@ export function RealtimeCharts({
       </div>
 
       {/* 内存 (MB) 图表 */}
-      <div className="bg-content2 rounded-lg p-3">
+      <div className="bg-muted rounded-lg p-3">
         <h4 className="text-xs font-semibold text-warning mb-2">
           {t("monitor.memoryMB")}
         </h4>
@@ -90,7 +90,7 @@ export function RealtimeCharts({
       </div>
 
       {/* 连接数图表 */}
-      <div className="bg-content2 rounded-lg p-3">
+      <div className="bg-muted rounded-lg p-3">
         <h4 className="text-xs font-semibold text-secondary mb-2">
           {t("monitor.connectedClients")}
         </h4>
@@ -112,8 +112,8 @@ export function RealtimeCharts({
       </div>
 
       {/* 命中率 (%) 图表 */}
-      <div className="bg-content2 rounded-lg p-3">
-        <h4 className="text-xs font-semibold text-success mb-2">
+      <div className="bg-muted rounded-lg p-3">
+        <h4 className="text-xs font-semibold text-green-500 mb-2">
           {t("monitor.hitRate")}
         </h4>
         <ResponsiveContainer width="100%" height={160}>

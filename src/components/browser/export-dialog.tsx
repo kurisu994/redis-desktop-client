@@ -3,16 +3,18 @@
 import { useTranslation } from "react-i18next";
 import { useCallback, useState } from "react";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Input,
-  Progress,
-} from "@heroui/react";
-import { addToast } from "@heroui/toast";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { useConnectionStore } from "@/stores/connection-store";
 import { useBrowserStore } from "@/stores/browser-store";
 import { exportKeys } from "@/lib/tauri-api";
@@ -58,7 +60,7 @@ export function ExportDialog({
         });
         if (path) {
           await writeTextFile(path, json);
-          addToast({ title: t("dataExport.exportSuccess"), color: "success" });
+          toast.success(t("dataExport.exportSuccess"));
           onClose();
         }
       } else {
@@ -70,47 +72,50 @@ export function ExportDialog({
         a.download = `redis-export-db${selectedDb}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        addToast({ title: t("dataExport.exportSuccess"), color: "success" });
+        toast.success(t("dataExport.exportSuccess"));
         onClose();
       }
     } catch (err) {
-      addToast({ title: String(err), color: "danger" });
+      toast.error(String(err));
     } finally {
       setExporting(false);
     }
   }, [activeConnectionId, selectedDb, matchingKeys, onClose, t]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
-      <ModalContent>
-        <ModalHeader>{t("dataExport.title")}</ModalHeader>
-        <ModalBody>
-          <Input
-            label={t("dataExport.pattern")}
-            placeholder="*"
-            value={pattern}
-            onValueChange={setPattern}
-            size="sm"
-          />
-          <p className="text-xs text-default-500">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{t("dataExport.title")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label>{t("dataExport.pattern")}</Label>
+            <Input
+              className="h-8 text-sm"
+              placeholder="*"
+              value={pattern}
+              onChange={(e) => setPattern(e.target.value)}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
             {t("dataExport.matchCount", { count: matchingKeys.length })}
           </p>
-          {exporting && <Progress isIndeterminate size="sm" />}
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="flat" onPress={onClose}>
+          {exporting && <Progress value={undefined} className="h-1" />}
+        </div>
+        <DialogFooter>
+          <Button variant="secondary" onClick={onClose}>
             {t("actions.cancel")}
           </Button>
           <Button
-            color="primary"
-            onPress={handleExport}
-            isLoading={exporting}
-            isDisabled={matchingKeys.length === 0}
+            onClick={handleExport}
+            disabled={exporting || matchingKeys.length === 0}
           >
+            {exporting && <Loader2 className="animate-spin" size={14} />}
             {t("actions.export")}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

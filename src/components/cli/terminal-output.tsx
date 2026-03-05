@@ -7,13 +7,13 @@ import type { OutputEntry } from "@/stores/cli-store";
 function getResultColor(resultType?: string): string {
   switch (resultType) {
     case "ok":
-      return "text-success";
+      return "text-green-500";
     case "error":
-      return "text-danger";
+      return "text-destructive";
     case "integer":
       return "text-primary";
     case "nil":
-      return "text-default-400";
+      return "text-muted-foreground";
     case "bulk":
       return "text-warning";
     case "array":
@@ -47,11 +47,11 @@ export function TerminalOutput({ outputs }: TerminalOutputProps) {
         <div key={i}>
           {entry.type === "command" ? (
             <div className="flex items-start gap-1.5">
-              <span className="text-success shrink-0 select-none">&gt;</span>
+              <span className="text-green-500 shrink-0 select-none">&gt;</span>
               <span className="text-foreground">{entry.content}</span>
             </div>
           ) : entry.type === "error" ? (
-            <div className="text-danger whitespace-pre-wrap pl-3">
+            <div className="text-destructive whitespace-pre-wrap pl-3">
               {entry.content}
             </div>
           ) : (
@@ -62,7 +62,7 @@ export function TerminalOutput({ outputs }: TerminalOutputProps) {
                 {entry.content}
               </span>
               {entry.elapsedMs !== undefined && (
-                <span className="text-default-400 text-xs ml-2">
+                <span className="text-muted-foreground text-xs ml-2">
                   ({entry.elapsedMs}ms)
                 </span>
               )}

@@ -179,6 +179,7 @@ just clean        # 清理构建产物
 - [HeroUI](https://www.heroui.com/docs/guide/introduction) — HeroUI 组件库文档
 - [Lucide](https://lucide.dev/) — Lucide 图标库文档
 - [Tauri](https://v2.tauri.app/start/) — Tauri 桌面框架文档
+- [ShadcnUI](https://ui.shadcn.com/llms.txt) — ShadcnUI 组件库llm文档
 
 实现新功能时应参考以上文档。
 

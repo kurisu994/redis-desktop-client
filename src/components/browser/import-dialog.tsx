@@ -3,17 +3,24 @@
 import { useTranslation } from "react-i18next";
 import { useCallback, useState } from "react";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
   Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
   SelectItem,
-  Progress,
-} from "@heroui/react";
-import { addToast } from "@heroui/toast";
+} from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { useConnectionStore } from "@/stores/connection-store";
 import { useBrowserStore } from "@/stores/browser-store";
 import { importKeys } from "@/lib/tauri-api";
@@ -90,69 +97,72 @@ export function ImportDialog({
         fileContent,
         conflictStrategy
       );
-      addToast({
-        title: t("dataImport.importSuccess", {
+      toast.success(
+        t("dataImport.importSuccess", {
           imported: result.imported,
           skipped: result.skipped,
           total: result.total,
-        }),
-        color: "success",
-      });
+        })
+      );
       onImportComplete();
       onClose();
     } catch (err) {
-      addToast({ title: String(err), color: "danger" });
+      toast.error(String(err));
     } finally {
       setImporting(false);
     }
   }, [activeConnectionId, selectedDb, fileContent, conflictStrategy, onImportComplete, onClose, t]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
-      <ModalContent>
-        <ModalHeader>{t("dataImport.title")}</ModalHeader>
-        <ModalBody>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{t("dataImport.title")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="flat" onPress={handleSelectFile}>
+            <Button size="sm" variant="secondary" onClick={handleSelectFile}>
               {t("dataImport.selectFile")}
             </Button>
             {fileName && (
-              <span className="text-xs text-default-500">
+              <span className="text-xs text-muted-foreground">
                 {fileName} ({keyCount} {t("dataImport.keys")})
               </span>
             )}
           </div>
 
-          <Select
-            label={t("connection.conflictStrategy")}
-            size="sm"
-            selectedKeys={new Set([conflictStrategy])}
-            onSelectionChange={(keys) => {
-              const val = Array.from(keys)[0] as "skip" | "overwrite" | "rename";
-              setConflictStrategy(val);
-            }}
-          >
-            <SelectItem key="skip">{t("connection.conflictSkip")}</SelectItem>
-            <SelectItem key="overwrite">{t("connection.conflictOverwrite")}</SelectItem>
-            <SelectItem key="rename">{t("connection.conflictRename")}</SelectItem>
-          </Select>
+          <div className="space-y-2">
+            <Label>{t("connection.conflictStrategy")}</Label>
+            <Select
+              value={conflictStrategy}
+              onValueChange={(val) => setConflictStrategy(val as "skip" | "overwrite" | "rename")}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="skip">{t("connection.conflictSkip")}</SelectItem>
+                <SelectItem value="overwrite">{t("connection.conflictOverwrite")}</SelectItem>
+                <SelectItem value="rename">{t("connection.conflictRename")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          {importing && <Progress isIndeterminate size="sm" />}
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="flat" onPress={onClose}>
+          {importing && <Progress value={undefined} className="h-1" />}
+        </div>
+        <DialogFooter>
+          <Button variant="secondary" onClick={onClose}>
             {t("actions.cancel")}
           </Button>
           <Button
-            color="primary"
-            onPress={handleImport}
-            isLoading={importing}
-            isDisabled={!fileContent}
+            onClick={handleImport}
+            disabled={importing || !fileContent}
           >
+            {importing && <Loader2 className="animate-spin" size={14} />}
             {t("actions.import")}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

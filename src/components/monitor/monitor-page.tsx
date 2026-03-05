@@ -2,7 +2,15 @@
 
 import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useRef } from "react";
-import { Button, Select, SelectItem, Tab, Tabs } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMonitorStore, type MonitorTab } from "@/stores/monitor-store";
 import { useConnectionStore } from "@/stores/connection-store";
 import { getServerInfo, getSlowLog, resetSlowLog } from "@/lib/tauri-api";
@@ -128,34 +136,34 @@ export function MonitorPage() {
       {/* 工具栏 */}
       <div className="flex items-center justify-between">
         <Tabs
-          size="sm"
-          selectedKey={activeTab}
-          onSelectionChange={(key) => setActiveTab(key as MonitorTab)}
+          value={activeTab}
+          onValueChange={(val) => setActiveTab(val as MonitorTab)}
         >
-          <Tab key="info" title={t("monitor.serverInfo")} />
-          <Tab key="realtime" title={t("monitor.realtime")} />
-          <Tab key="slowlog" title={t("monitor.slowLog")} />
+          <TabsList>
+            <TabsTrigger value="info">{t("monitor.serverInfo")}</TabsTrigger>
+            <TabsTrigger value="realtime">{t("monitor.realtime")}</TabsTrigger>
+            <TabsTrigger value="slowlog">{t("monitor.slowLog")}</TabsTrigger>
+          </TabsList>
         </Tabs>
         <div className="flex items-center gap-2">
           <Select
-            size="sm"
-            className="w-20"
-            selectedKeys={new Set([String(refreshInterval)])}
-            onSelectionChange={(keys) => {
-              const val = Array.from(keys)[0] as string;
-              setRefreshInterval(parseInt(val, 10));
-            }}
-            aria-label={t("monitor.interval")}
+            value={String(refreshInterval)}
+            onValueChange={(val) => setRefreshInterval(parseInt(val, 10))}
           >
-            {INTERVAL_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value}>{opt.label}</SelectItem>
-            ))}
+            <SelectTrigger className="w-20 h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {INTERVAL_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
           </Select>
           <Button
             size="sm"
-            variant="flat"
-            color={paused ? "success" : "warning"}
-            onPress={() => setPaused(!paused)}
+            variant="secondary"
+            className={paused ? "bg-green-600 hover:bg-green-700 text-white" : "bg-yellow-600 hover:bg-yellow-700 text-white"}
+            onClick={() => setPaused(!paused)}
           >
             {paused ? t("monitor.resume") : t("monitor.pause")}
           </Button>
@@ -168,7 +176,7 @@ export function MonitorPage() {
           <ServerInfoPanel info={serverInfo} />
         )}
         {activeTab === "info" && !serverInfo && (
-          <div className="flex items-center justify-center h-full text-default-400 text-sm">
+          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
             {loading ? t("monitor.loading") : t("monitor.noData")}
           </div>
         )}

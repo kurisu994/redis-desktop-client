@@ -2,9 +2,17 @@
 
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
-import { Button, Input, Select, SelectItem } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { useBrowserStore } from "@/stores/browser-store";
-import { Search, RefreshCw, Plus, List, FolderTree, Download, Upload } from "lucide-react";
+import { Search, RefreshCw, Plus, List, FolderTree, Download, Upload, X, Loader2 } from "lucide-react";
 import { KeyDialog } from "./key-dialog";
 import { ExportDialog } from "./export-dialog";
 import { ImportDialog } from "./import-dialog";
@@ -34,8 +42,7 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
   const [showImport, setShowImport] = useState(false);
 
   /** 切换数据库 */
-  const handleDbChange = (keys: Set<string> | string) => {
-    const val = typeof keys === "string" ? keys : Array.from(keys)[0];
+  const handleDbChange = (val: string) => {
     if (val !== undefined) {
       const db = parseInt(val, 10);
       setSelectedDb(db);
@@ -62,64 +69,70 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
 
   return (
     <>
-      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-divider dark:bg-[#151619]/50">
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border dark:bg-[#151619]/50">
         {/* 数据库选择器 */}
-        <Select
-          size="sm"
-          className="w-32"
-          selectedKeys={new Set([String(selectedDb)])}
-          onSelectionChange={(keys) => handleDbChange(keys as Set<string>)}
-          aria-label={t("connection.database")}
-        >
-          {dbOptions.map((opt) => (
-            <SelectItem key={opt.value} textValue={opt.label}>
-              <div className="flex justify-between items-center w-full">
-                <span>{opt.label}</span>
-                {opt.count > 0 && (
-                  <span className="text-default-400 text-xs">{opt.count}</span>
-                )}
-              </div>
-            </SelectItem>
-          ))}
+        <Select value={String(selectedDb)} onValueChange={handleDbChange}>
+          <SelectTrigger className="w-32 h-8 text-sm" aria-label={t("connection.database")}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {dbOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                <div className="flex justify-between items-center w-full">
+                  <span>{opt.label}</span>
+                  {opt.count > 0 && (
+                    <span className="text-muted-foreground text-xs ml-2">{opt.count}</span>
+                  )}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
 
         {/* 刷新按钮 */}
         <Button
-          isIconOnly
-          size="sm"
-          variant="bordered"
-          onPress={onRefresh}
-          isLoading={loading}
+          size="icon"
+          variant="outline"
+          onClick={onRefresh}
+          disabled={loading}
           aria-label={t("actions.refresh")}
+          className="h-8 w-8"
         >
-          <RefreshCw className="w-4 h-4" />
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
         </Button>
 
         {/* 搜索框 */}
-        <Input
-          size="sm"
-          className="flex-1 max-w-md"
-          placeholder={t("browser.filterKeys")}
-          value={filterPattern}
-          onValueChange={setFilterPattern}
-          onKeyDown={handleSearchSubmit}
-          startContent={<Search className="w-4 h-4 text-default-400" />}
-          isClearable
-          onClear={() => {
-            setFilterPattern("");
-            onSearch();
-          }}
-        />
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            className="h-8 text-sm pl-8 pr-8"
+            placeholder={t("browser.filterKeys")}
+            value={filterPattern}
+            onChange={(e) => setFilterPattern(e.target.value)}
+            onKeyDown={handleSearchSubmit}
+          />
+          {filterPattern && (
+            <button
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setFilterPattern("");
+                onSearch();
+              }}
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
 
         <div className="flex-1" />
 
         {/* 视图切换 */}
-        <div className="flex border border-divider rounded-lg overflow-hidden">
+        <div className="flex border border-border rounded-lg overflow-hidden">
           <button
             className={`p-1.5 transition-colors ${
               viewMode === "tree"
-                ? "bg-primary-100 text-primary dark:bg-primary-900/30"
-                : "hover:bg-default-100 text-default-500"
+                ? "bg-primary/10 text-primary dark:bg-primary/20"
+                : "hover:bg-accent text-muted-foreground"
             }`}
             onClick={() => setViewMode("tree")}
             title={t("browser.treeView")}
@@ -129,8 +142,8 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
           <button
             className={`p-1.5 transition-colors ${
               viewMode === "flat"
-                ? "bg-primary-100 text-primary dark:bg-primary-900/30"
-                : "hover:bg-default-100 text-default-500"
+                ? "bg-primary/10 text-primary dark:bg-primary/20"
+                : "hover:bg-accent text-muted-foreground"
             }`}
             onClick={() => setViewMode("flat")}
             title={t("browser.flatView")}
@@ -140,33 +153,29 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
         </div>
 
         {/* 新建 Key */}
-        <Button
-          size="sm"
-          color="primary"
-          startContent={<Plus className="w-4 h-4" />}
-          onPress={() => setShowNewKey(true)}
-        >
+        <Button size="sm" onClick={() => setShowNewKey(true)}>
+          <Plus className="w-4 h-4" />
           {t("browser.newKey")}
         </Button>
 
         {/* 导入导出 */}
         <Button
-          isIconOnly
-          size="sm"
-          variant="bordered"
-          onPress={() => setShowExport(true)}
+          size="icon"
+          variant="outline"
+          onClick={() => setShowExport(true)}
           aria-label={t("actions.export")}
           title={t("actions.export")}
+          className="h-8 w-8"
         >
           <Download className="w-4 h-4" />
         </Button>
         <Button
-          isIconOnly
-          size="sm"
-          variant="bordered"
-          onPress={() => setShowImport(true)}
+          size="icon"
+          variant="outline"
+          onClick={() => setShowImport(true)}
           aria-label={t("actions.import")}
           title={t("actions.import")}
+          className="h-8 w-8"
         >
           <Upload className="w-4 h-4" />
         </Button>

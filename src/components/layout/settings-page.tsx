@@ -1,7 +1,15 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { Select, SelectItem, Divider, Input } from "@heroui/react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { useTheme } from "next-themes";
 import { useAppStore } from "@/stores/app-store";
 import { Settings, Globe, Palette, Keyboard } from "lucide-react";
@@ -24,39 +32,31 @@ export function SettingsPage() {
         <SectionHeader icon={<Palette size={16} />} title={t("settings.appearance")} />
         <div className="flex flex-col gap-4 mb-6">
           <SettingRow label={t("settings.theme")}>
-            <Select
-              selectedKeys={[theme || "dark"]}
-              onSelectionChange={(keys) => {
-                const val = Array.from(keys)[0] as string;
-                if (val) setTheme(val);
-              }}
-              variant="bordered"
-              size="sm"
-              className="w-40"
-            >
-              <SelectItem key="dark">{t("theme.dark")}</SelectItem>
-              <SelectItem key="light">{t("theme.light")}</SelectItem>
-              <SelectItem key="system">{t("theme.system")}</SelectItem>
+            <Select value={theme || "dark"} onValueChange={setTheme}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="dark">{t("theme.dark")}</SelectItem>
+                <SelectItem value="light">{t("theme.light")}</SelectItem>
+                <SelectItem value="system">{t("theme.system")}</SelectItem>
+              </SelectContent>
             </Select>
           </SettingRow>
           <SettingRow label={t("settings.language")}>
-            <Select
-              selectedKeys={[i18n.language]}
-              onSelectionChange={(keys) => {
-                const val = Array.from(keys)[0] as string;
-                if (val) i18n.changeLanguage(val);
-              }}
-              variant="bordered"
-              size="sm"
-              className="w-40"
-            >
-              <SelectItem key="zh-CN">{t("language.zhCN")}</SelectItem>
-              <SelectItem key="en-US">{t("language.enUS")}</SelectItem>
+            <Select value={i18n.language} onValueChange={(val) => i18n.changeLanguage(val)}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="zh-CN">{t("language.zhCN")}</SelectItem>
+                <SelectItem value="en-US">{t("language.enUS")}</SelectItem>
+              </SelectContent>
             </Select>
           </SettingRow>
         </div>
 
-        <Divider className="my-4" />
+        <Separator className="my-4" />
 
         {/* 通用 */}
         <SectionHeader icon={<Globe size={16} />} title={t("settings.general")} />
@@ -64,15 +64,13 @@ export function SettingsPage() {
           <SettingRow label={t("settings.keySeparator")}>
             <Input
               value={keySeparator}
-              onValueChange={setKeySeparator}
-              variant="bordered"
-              size="sm"
+              onChange={(e) => setKeySeparator(e.target.value)}
               className="w-20"
             />
           </SettingRow>
         </div>
 
-        <Divider className="my-4" />
+        <Separator className="my-4" />
 
         {/* 快捷键说明 */}
         <SectionHeader icon={<Keyboard size={16} />} title={t("shortcuts.title")} />
@@ -85,11 +83,11 @@ export function SettingsPage() {
           <ShortcutRow label={t("shortcuts.settings")} keys={["⌘", ","]} />
         </div>
 
-        <Divider className="my-4" />
+        <Separator className="my-4" />
 
         {/* 关于 */}
         <SectionHeader icon={<Settings size={16} />} title={t("settings.about")} />
-        <div className="text-sm text-default-500">
+        <div className="text-sm text-muted-foreground">
           <p>{t("settings.currentVersion")}: 0.1.0</p>
         </div>
       </div>
@@ -101,8 +99,8 @@ export function SettingsPage() {
 function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
     <div className="flex items-center gap-2 mb-3">
-      <span className="text-default-500">{icon}</span>
-      <h2 className="text-sm font-semibold text-default-700">{title}</h2>
+      <span className="text-muted-foreground">{icon}</span>
+      <h2 className="text-sm font-semibold">{title}</h2>
     </div>
   );
 }
@@ -127,12 +125,12 @@ function SettingRow({
 function ShortcutRow({ label, keys }: { label: string; keys: string[] }) {
   return (
     <div className="flex items-center justify-between py-1">
-      <span className="text-sm text-default-600">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
       <div className="flex gap-1">
         {keys.map((key, i) => (
           <kbd
             key={i}
-            className="px-2 py-0.5 text-xs bg-default-100 rounded border border-default-200"
+            className="px-2 py-0.5 text-xs bg-muted rounded border"
           >
             {key}
           </kbd>

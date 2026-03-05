@@ -2,19 +2,25 @@
 
 import { useState, useCallback } from "react";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
   Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
   SelectItem,
-} from "@heroui/react";
+} from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import { useConnectionStore } from "@/stores/connection-store";
 import { importConnections, listConnections } from "@/lib/tauri-api";
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 
 /** 连接配置导入对话框 */
 export function ImportConnectionsDialog({
@@ -117,61 +123,65 @@ export function ImportConnectionsDialog({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => !open && handleClose()} size="md">
-      <ModalContent>
-        <ModalHeader>{t("connection.importConnections")}</ModalHeader>
-        <ModalBody>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("connection.importConnections")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
           <div className="flex gap-2 items-center">
             <Button
-              variant="bordered"
-              onPress={handleSelectFile}
-              startContent={<Upload size={16} />}
+              variant="outline"
+              onClick={handleSelectFile}
             >
+              <Upload size={16} />
               {t("dataImport.selectFile")}
             </Button>
             {fileName && (
-              <span className="text-sm text-default-500">
+              <span className="text-sm text-muted-foreground">
                 {fileName} — {previewCount} {t("dataImport.keys")}
               </span>
             )}
           </div>
 
           {jsonContent && (
-            <Select
-              label={t("connection.conflictStrategy")}
-              selectedKeys={[conflictStrategy]}
-              onSelectionChange={(keys) => {
-                const val = Array.from(keys)[0] as typeof conflictStrategy;
-                if (val) setConflictStrategy(val);
-              }}
-              variant="bordered"
-            >
-              <SelectItem key="skip">{t("connection.conflictSkip")}</SelectItem>
-              <SelectItem key="overwrite">{t("connection.conflictOverwrite")}</SelectItem>
-              <SelectItem key="rename">{t("connection.conflictRename")}</SelectItem>
-            </Select>
+            <div className="space-y-2">
+              <Label>{t("connection.conflictStrategy")}</Label>
+              <Select
+                value={conflictStrategy}
+                onValueChange={(val) => setConflictStrategy(val as typeof conflictStrategy)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="skip">{t("connection.conflictSkip")}</SelectItem>
+                  <SelectItem value="overwrite">{t("connection.conflictOverwrite")}</SelectItem>
+                  <SelectItem value="rename">{t("connection.conflictRename")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           )}
 
           {result && (
-            <div className="text-sm px-3 py-2 rounded-lg bg-success-50 text-success-600">
+            <div className="text-sm px-3 py-2 rounded-lg bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300">
               {result}
             </div>
           )}
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="flat" onPress={handleClose}>
+        </div>
+        <DialogFooter>
+          <Button variant="secondary" onClick={handleClose}>
             {t("actions.close")}
           </Button>
           <Button
-            color="primary"
-            onPress={handleImport}
-            isLoading={importing}
-            isDisabled={!jsonContent || !!result}
+            onClick={handleImport}
+            disabled={importing || !jsonContent || !!result}
           >
+            {importing && <Loader2 className="animate-spin" size={14} />}
             {t("actions.import")}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

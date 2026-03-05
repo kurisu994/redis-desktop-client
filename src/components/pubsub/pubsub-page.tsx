@@ -2,8 +2,11 @@
 
 import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
-import { Button, Chip, Input } from "@heroui/react";
-import { addToast } from "@heroui/toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { X } from "lucide-react";
 import { usePubSubStore } from "@/stores/pubsub-store";
 import { useConnectionStore } from "@/stores/connection-store";
 import type { PubSubMessage } from "@/lib/tauri-api";
@@ -67,12 +70,9 @@ export function PubSubPage() {
       await subscribeChannels(activeConnectionId, [channelInput.trim()]);
       addChannel(channelInput.trim());
       setChannelInput("");
-      addToast({
-        title: t("pubsub.subscribeSuccess", { channel: channelInput.trim() }),
-        color: "success",
-      });
+      toast.success(t("pubsub.subscribeSuccess", { channel: channelInput.trim() }));
     } catch (err) {
-      addToast({ title: String(err), color: "danger" });
+      toast.error(String(err));
     }
   }, [channelInput, activeConnectionId, addChannel, t]);
 
@@ -85,13 +85,10 @@ export function PubSubPage() {
         publishChannel.trim(),
         publishContent.trim()
       );
-      addToast({
-        title: t("pubsub.publishSuccess", { receivers: result.receivers }),
-        color: "success",
-      });
+      toast.success(t("pubsub.publishSuccess", { receivers: result.receivers }));
       setPublishContent("");
     } catch (err) {
-      addToast({ title: String(err), color: "danger" });
+      toast.error(String(err));
     }
   }, [publishChannel, publishContent, activeConnectionId, t]);
 
@@ -100,29 +97,28 @@ export function PubSubPage() {
       {/* 订阅管理 */}
       <div className="flex items-center gap-2">
         <Input
-          size="sm"
           placeholder={t("pubsub.channelPlaceholder")}
           value={channelInput}
-          onValueChange={setChannelInput}
+          onChange={(e) => setChannelInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubscribe()}
-          className="max-w-xs"
+          className="max-w-xs h-8"
         />
-        <Button size="sm" color="primary" onPress={handleSubscribe}>
+        <Button size="sm" onClick={handleSubscribe}>
           {t("pubsub.subscribe")}
         </Button>
         <div className="flex-1" />
         <Button
           size="sm"
-          variant="flat"
-          color={paused ? "success" : "warning"}
-          onPress={() => setPaused(!paused)}
+          variant="secondary"
+          className={paused ? "bg-green-600 hover:bg-green-700 text-white" : "bg-yellow-600 hover:bg-yellow-700 text-white"}
+          onClick={() => setPaused(!paused)}
         >
           {paused ? t("monitor.resume") : t("monitor.pause")}
         </Button>
         <Button
           size="sm"
-          variant="flat"
-          onPress={clearMessages}
+          variant="secondary"
+          onClick={clearMessages}
         >
           {t("pubsub.clearMessages")}
         </Button>
@@ -131,19 +127,19 @@ export function PubSubPage() {
       {/* 已订阅频道标签 */}
       {subscribedChannels.length > 0 && (
         <div className="flex items-center gap-1 flex-wrap">
-          <span className="text-xs text-default-500 mr-1">
+          <span className="text-xs text-muted-foreground mr-1">
             {t("pubsub.subscribedChannels")}:
           </span>
           {subscribedChannels.map((ch) => (
-            <Chip
-              key={ch}
-              size="sm"
-              variant="flat"
-              color="primary"
-              onClose={() => removeChannel(ch)}
-            >
+            <Badge key={ch} variant="secondary" className="gap-1 pr-1">
               {ch}
-            </Chip>
+              <button
+                onClick={() => removeChannel(ch)}
+                className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5"
+              >
+                <X size={12} />
+              </button>
+            </Badge>
           ))}
         </div>
       )}
@@ -151,36 +147,33 @@ export function PubSubPage() {
       {/* 发布消息 */}
       <div className="flex items-center gap-2">
         <Input
-          size="sm"
           placeholder={t("pubsub.publishChannelPlaceholder")}
           value={publishChannel}
-          onValueChange={setPublishChannel}
-          className="max-w-xs"
+          onChange={(e) => setPublishChannel(e.target.value)}
+          className="max-w-xs h-8"
         />
         <Input
-          size="sm"
           placeholder={t("pubsub.messagePlaceholder")}
           value={publishContent}
-          onValueChange={setPublishContent}
+          onChange={(e) => setPublishContent(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handlePublish()}
-          className="flex-1"
+          className="flex-1 h-8"
         />
-        <Button size="sm" color="secondary" onPress={handlePublish}>
+        <Button size="sm" variant="secondary" onClick={handlePublish}>
           {t("pubsub.publish")}
         </Button>
       </div>
 
       {/* 过滤 */}
       <Input
-        size="sm"
         placeholder={t("pubsub.filterPlaceholder")}
         value={filterKeyword}
-        onValueChange={setFilterKeyword}
-        className="max-w-md"
+        onChange={(e) => setFilterKeyword(e.target.value)}
+        className="max-w-md h-8"
       />
 
       {/* 消息列表 */}
-      <div className="flex-1 overflow-hidden border border-divider rounded-lg">
+      <div className="flex-1 overflow-hidden border border-border rounded-lg">
         <MessageList messages={messages} filterKeyword={filterKeyword} />
       </div>
     </div>

@@ -57,7 +57,7 @@ export function KeyList({ keys, selectedKey, onSelectKey }: KeyListProps) {
           >
             <span
               className={`w-2 h-2 rounded-full shrink-0 ${
-                TYPE_COLORS[entry.key_type] || "bg-default-400"
+                TYPE_COLORS[entry.key_type] || "bg-muted-foreground"
               } ${isSelected ? TYPE_GLOW[entry.key_type] || "" : ""}`}
             />
             <span className="truncate font-mono text-xs flex-1 text-left">
@@ -65,7 +65,7 @@ export function KeyList({ keys, selectedKey, onSelectKey }: KeyListProps) {
             </span>
             <span
               className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 uppercase font-medium ${
-                TYPE_LABEL_COLORS[entry.key_type] || "text-default-400 bg-default-100"
+                TYPE_LABEL_COLORS[entry.key_type] || "text-muted-foreground bg-accent"
               }`}
             >
               {entry.key_type}

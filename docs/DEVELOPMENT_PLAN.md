@@ -31,7 +31,7 @@
 | # | 任务 | 状态 | 说明 |
 |---|------|------|------|
 | 1 | 初始化 Tauri v2 + Next.js 项目 | ✅ | 使用 `create-next-app` + `@tauri-apps/cli init` 搭建 |
-| 2 | 集成 HeroUI | ✅ | 安装 HeroUI + Tailwind CSS v4 CSS-first 模式配置 |
+| 2 | 集成 UI 组件库 | ✅ | 初始 HeroUI → 已迁移至 shadcn/ui + Tailwind CSS v4 |
 | 3 | 集成 Zustand | ✅ | 创建 `connection-store` + `app-store` |
 | 4 | 配置 Tauri 权限 | ✅ | 窗口 1280×800，最小 960×600，居中启动 |
 | 5 | 配置 Tauri Store Plugin | ✅ | `@tauri-apps/plugin-store` 已集成 |
@@ -45,7 +45,7 @@
 | # | 任务 | 状态 | 说明 |
 |---|------|------|------|
 | 10 | 实现应用主布局 | ✅ | 三栏布局：左侧边栏 + 中间内容区 + 底部状态栏 |
-| 11 | 实现深色/浅色主题切换 | ✅ | 基于 HeroUI 的 `next-themes`，默认深色主题 |
+| 11 | 实现深色/浅色主题切换 | ✅ | 基于 `next-themes`，默认深色主题 |
 | 12 | 顶部标题栏组件 | ✅ | Logo、主题切换按钮、语言切换按钮、设置入口 |
 | 13 | 空状态引导页 | ✅ | 无连接时展示欢迎页和快速创建连接入口 |
 
@@ -107,7 +107,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 ### 交付物
 
-- ✅ 可运行的 Tauri v2 + Next.js + HeroUI 桌面应用
+- ✅ 可运行的 Tauri v2 + Next.js + shadcn/ui 桌面应用
 - ✅ 三栏布局框架 + 深色/浅色主题切换
 - ✅ Rust 后端模块结构 + redis-rs 异步连接验证
 - ✅ 前后端 IPC 通信跑通
@@ -139,7 +139,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 | # | 任务 | 状态 | 说明 |
 |---|------|------|------|
-| 6 | 新建连接对话框 | ✅ | HeroUI Modal + Tabs（General / SSH Tunnel / Advanced），SSH/Advanced 为 Phase 6 骨架 |
+| 6 | 新建连接对话框 | ✅ | shadcn Dialog + Tabs（General / SSH Tunnel / Advanced），SSH/Advanced 为 Phase 6 骨架 |
 | 7 | 连接列表组件 | ✅ | 侧边栏展示连接列表，绿/灰/黄色圆点状态指示器（已连接/未连接/连接中） |
 | 8 | 连接测试 UI | ✅ | 测试按钮 + 成功/失败/延迟反馈，内嵌在对话框中 |
 | 9 | 编辑/复制/删除连接 | ✅ | 右键菜单：连接/断开、编辑、复制连接、删除（含确认提示） |
@@ -327,7 +327,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 |---|------|------|------|
 | 15 | 慢查询后端命令 | `commands/server.rs` 新增 `get_slowlog` 命令，执行 `SLOWLOG GET`，返回 `Vec<SlowLogEntry>`（id、timestamp、duration_us、command、client_addr） | ✅ |
 | 16 | 慢查询 API 封装 | `tauri-api.ts` 添加 `getSlowLog()` / `resetSlowLog()` / `setSlowLogThreshold()` + Mock | ✅ |
-| 17 | 慢查询列表页 | 新增 `components/monitor/slow-log.tsx`，HeroUI Table 展示：ID、执行时间(μs)、命令、时间戳、客户端地址 | ✅ |
+| 17 | 慢查询列表页 | 新增 `components/monitor/slow-log.tsx`，Table 展示：ID、执行时间(μs)、命令、时间戳、客户端地址 | ✅ |
 | 18 | 慢查询阈值设置 | UI 输入框修改 `slowlog-log-slower-than` 配置（`CONFIG SET`） | ✅ |
 | 19 | 清空慢查询日志 | `SLOWLOG RESET` 按钮 + 二次确认弹窗 | ✅ |
 | 20 | 慢查询刷新 | 手动刷新按钮 + 可选自动刷新 | ✅ |
@@ -419,7 +419,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 | # | 任务 | 状态 | 说明 |
 |---|------|------|------|
 | 13 | 全局快捷键 | ✅ | useGlobalShortcuts hook：⌘N/T/F/R/,（新建连接/CLI/搜索/刷新/设置） |
-| 14 | Toast 通知系统 | ✅ | 已在 Phase 3 集成 @heroui/toast（连接成功/失败等） |
+| 14 | Toast 通知系统 | ✅ | 已迁移至 sonner（连接成功/失败等） |
 | 15 | 错误边界 | ✅ | ErrorBoundary 组件：捕获渲染异常 + 展示降级 UI + 错误详情 |
 | 16 | 加载状态 | ✅ | 已在各 Store 中管理 loading 状态 |
 | 17 | 敏感操作确认 | ✅ | ConfirmDangerDialog：输入确认文本才可执行 FLUSHDB/FLUSHALL |

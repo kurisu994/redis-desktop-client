@@ -3,14 +3,16 @@
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Input,
-} from "@heroui/react";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 
 interface TtlDialogProps {
   isOpen: boolean;
@@ -49,48 +51,53 @@ export function TtlDialog({ isOpen, currentTtl, onClose, onSave }: TtlDialogProp
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="sm">
-      <ModalContent>
-        <ModalHeader>{t("keyDetail.setTtl")}</ModalHeader>
-        <ModalBody>
-          <p className="text-sm text-default-500 mb-2">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("keyDetail.setTtl")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <p className="text-sm text-muted-foreground">
             {currentTtl < 0
               ? t("keyDetail.ttlNone")
               : t("keyDetail.ttlSeconds", { seconds: currentTtl })}
           </p>
-          <Input
-            label={t("keyDetail.ttlValue")}
-            type="number"
-            value={ttlValue}
-            onValueChange={setTtlValue}
-            placeholder="-1"
-            autoFocus
-          />
-        </ModalBody>
-        <ModalFooter>
+          <div className="space-y-2">
+            <Label>{t("keyDetail.ttlValue")}</Label>
+            <Input
+              type="number"
+              value={ttlValue}
+              onChange={(e) => setTtlValue(e.target.value)}
+              placeholder="-1"
+              autoFocus
+            />
+          </div>
+        </div>
+        <DialogFooter>
           {currentTtl > 0 && (
             <Button
-              variant="flat"
-              color="warning"
-              onPress={handlePersist}
-              isLoading={saving}
+              variant="secondary"
+              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+              onClick={handlePersist}
+              disabled={saving}
             >
+              {saving && <Loader2 className="animate-spin" size={14} />}
               {t("keyDetail.persist")}
             </Button>
           )}
           <div className="flex-1" />
-          <Button variant="light" onPress={onClose}>
+          <Button variant="ghost" onClick={onClose}>
             {t("actions.cancel")}
           </Button>
           <Button
-            color="primary"
-            onPress={handleSave}
-            isLoading={saving}
+            onClick={handleSave}
+            disabled={saving}
           >
+            {saving && <Loader2 className="animate-spin" size={14} />}
             {t("actions.save")}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

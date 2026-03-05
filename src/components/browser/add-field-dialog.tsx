@@ -3,16 +3,23 @@
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Input,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
   Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
   SelectItem,
-} from "@heroui/react";
+} from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 
 interface AddFieldDialogProps {
   isOpen: boolean;
@@ -58,67 +65,77 @@ export function AddFieldDialog({ isOpen, mode, onClose, onSave }: AddFieldDialog
   }[mode];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <ModalContent>
-        <ModalHeader>{title}</ModalHeader>
-        <ModalBody>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
           {/* Hash / Stream 需要 field */}
           {(mode === "hash" || mode === "stream") && (
-            <Input
-              label={t("valueEditor.field")}
-              value={field}
-              onValueChange={setField}
-              autoFocus
-            />
+            <div className="space-y-2">
+              <Label>{t("valueEditor.field")}</Label>
+              <Input
+                value={field}
+                onChange={(e) => setField(e.target.value)}
+                autoFocus
+              />
+            </div>
           )}
 
           {/* ZSet 需要 score */}
           {mode === "zset" && (
-            <Input
-              label={t("valueEditor.score")}
-              type="number"
-              value={score}
-              onValueChange={setScore}
-            />
+            <div className="space-y-2">
+              <Label>{t("valueEditor.score")}</Label>
+              <Input
+                type="number"
+                value={score}
+                onChange={(e) => setScore(e.target.value)}
+              />
+            </div>
           )}
 
           {/* List 需要 position */}
           {mode === "list" && (
-            <Select
-              label={t("valueEditor.position")}
-              selectedKeys={new Set([position])}
-              onSelectionChange={(keys) => {
-                const val = Array.from(keys as Set<string>)[0];
+            <div className="space-y-2">
+              <Label>{t("valueEditor.position")}</Label>
+              <Select value={position} onValueChange={(val) => {
                 if (val === "head" || val === "tail") setPosition(val);
-              }}
-            >
-              <SelectItem key="tail">{t("valueEditor.tail")}</SelectItem>
-              <SelectItem key="head">{t("valueEditor.head")}</SelectItem>
-            </Select>
+              }}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tail">{t("valueEditor.tail")}</SelectItem>
+                  <SelectItem value="head">{t("valueEditor.head")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           )}
 
           {/* 所有类型都需要 value */}
-          <Input
-            label={t("valueEditor.value")}
-            value={value}
-            onValueChange={setValue}
-            autoFocus={mode !== "hash" && mode !== "stream"}
-          />
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="light" onPress={onClose}>
+          <div className="space-y-2">
+            <Label>{t("valueEditor.value")}</Label>
+            <Input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              autoFocus={mode !== "hash" && mode !== "stream"}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>
             {t("actions.cancel")}
           </Button>
           <Button
-            color="primary"
-            onPress={handleSave}
-            isLoading={saving}
-            isDisabled={!value.trim()}
+            onClick={handleSave}
+            disabled={saving || !value.trim()}
           >
+            {saving && <Loader2 className="animate-spin" size={14} />}
             {t("actions.add")}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
