@@ -481,3 +481,42 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 |------|------|------|
 | 需求文档 | [docs/REQUIREMENTS.md](./REQUIREMENTS.md) | 完整功能需求和架构设计 |
 | 开发计划 | [docs/DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) | 本文档，6 期迭代开发计划 |
+
+---
+
+## 遗留开发计划清单
+
+> 以下为全文中标记为 🔲 的待办项汇总，按功能模块分组。
+
+### 连接管理（Phase 2）
+
+- [ ] 连接分组（文件夹）— 数据结构已预留 `group` 字段，实现 UI 拖拽排序
+
+### 数据浏览（Phase 3）
+
+- [ ] 自定义命名空间分隔符 — 设置中配置分隔符，默认 `:`
+- [ ] 大值延迟加载 — 值 > 1MB 时先显示摘要，点击后完整加载
+- [ ] 批量操作工具栏 — 多选 Key 后显示批量操作按钮
+- [ ] 收藏/标记 Key — 常用 Key 标记，快速访问
+- [ ] Diff 对比 — 使用 Monaco Diff Editor 展示编辑前后差异
+
+### CLI 控制台（Phase 4）
+
+- [ ] 常用命令面板 — 预置常用命令快捷入口
+
+### 高级连接（Phase 6）
+
+- [ ] SSH 隧道后端 — Rust 端建立 SSH 隧道（需 `russh` 库），转发本地端口到远程 Redis
+
+### 自动更新（Phase 6）
+
+- [ ] 集成 Tauri Updater Plugin — `@tauri-apps/plugin-updater`（需配置签名密钥）
+- [ ] 更新检查逻辑 — 启动时检查 + 可配置检查频率
+- [ ] 更新提示 UI — 发现新版本弹窗
+- [ ] 更新源配置 — 指向 GitHub Releases 的更新清单 JSON
+
+### 打包发布（Phase 6）
+
+- [ ] macOS 打包 & 签名 — 需配置 Apple Developer 证书
+- [ ] Windows 打包 & 签名 — 需配置代码签名证书
+- [ ] 应用图标 & 品牌 — 需设计应用图标
