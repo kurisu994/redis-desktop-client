@@ -67,6 +67,10 @@ interface BrowserState {
   setLoading: (loading: boolean) => void;
   /** 重置浏览器状态（切换连接或 db 时调用） */
   resetBrowser: () => void;
+  /** 触发刷新（递增版本号让组件重新加载） */
+  refreshKeys: () => void;
+  /** 刷新版本号 */
+  refreshVersion: number;
 }
 
 /** 数据浏览器 Store */
@@ -83,6 +87,7 @@ export const useBrowserStore = create<BrowserState>((set) => ({
   viewMode: "tree",
   filterPattern: "",
   loading: false,
+  refreshVersion: 0,
 
   setConnectionId: (id) => set({ connectionId: id }),
   setSelectedDb: (db) => set({ selectedDb: db }),
@@ -107,4 +112,11 @@ export const useBrowserStore = create<BrowserState>((set) => ({
       filterPattern: "",
       loading: false,
     }),
+  refreshKeys: () =>
+    set((state) => ({
+      keys: [],
+      scanCursor: 0,
+      scanComplete: false,
+      refreshVersion: state.refreshVersion + 1,
+    })),
 }));

@@ -1,3 +1,4 @@
+use crate::config::store::StoredConnection;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -14,17 +15,20 @@ impl RedisClientManager {
         }
     }
 
-    /// 建立连接并加入管理池
-    pub async fn connect(
-        &self,
-        id: &str,
-        host: &str,
-        port: u16,
-        username: Option<&str>,
-        password: Option<&str>,
-        db: u8,
-    ) -> Result<(), String> {
-        let url = build_redis_url(host, port, username, password, db);
+    /// 根据完整连接配置建立连接并加入管理池
+    pub async fn connect_with_config(&self, config: &StoredConnection) -> Result<(), String> {
+        let tls_enabled = config.tls.as_ref().map(|t| t.enabled).unwrap_or(false);
+        let scheme = if tls_enabled { "rediss" } else { "redis" };
+
+        let url = build_redis_url(
+            scheme,
+            &config.host,
+            config.port,
+            config.username.as_deref(),
+            config.password.as_deref(),
+            config.db,
+        );
+
         let client = redis::Client::open(url).map_err(|e| e.to_string())?;
         let conn = client
             .get_multiplexed_async_connection()
@@ -32,7 +36,7 @@ impl RedisClientManager {
             .map_err(|e| e.to_string())?;
 
         let mut clients = self.clients.lock().await;
-        clients.insert(id.to_string(), conn);
+        clients.insert(config.id.clone(), conn);
         Ok(())
     }
 
@@ -71,6 +75,7 @@ impl Default for RedisClientManager {
 
 /// 构建 Redis URL
 fn build_redis_url(
+    scheme: &str,
     host: &str,
     port: u16,
     username: Option<&str>,
@@ -78,8 +83,10 @@ fn build_redis_url(
     db: u8,
 ) -> String {
     match (username, password) {
-        (Some(user), Some(pwd)) => format!("redis://{}:{}@{}:{}/{}", user, pwd, host, port, db),
-        (None, Some(pwd)) => format!("redis://:{}@{}:{}/{}", pwd, host, port, db),
-        _ => format!("redis://{}:{}/{}", host, port, db),
+        (Some(user), Some(pwd)) => {
+            format!("{}://{}:{}@{}:{}/{}", scheme, user, pwd, host, port, db)
+        }
+        (None, Some(pwd)) => format!("{}://:{}@{}:{}/{}", scheme, pwd, host, port, db),
+        _ => format!("{}://{}:{}/{}", scheme, host, port, db),
     }
 }

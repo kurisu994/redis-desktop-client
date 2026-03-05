@@ -292,19 +292,9 @@ export async function deleteConnection(id: string): Promise<void> {
 
 /** 测试连接 */
 export async function testConnection(
-  host: string,
-  port: number,
-  username?: string,
-  password?: string,
-  db?: number
+  config: ConnectionConfig
 ): Promise<TestResult> {
-  return invoke<TestResult>("test_connection", {
-    host,
-    port,
-    username: username || null,
-    password: password || null,
-    db: db ?? 0,
-  });
+  return invoke<TestResult>("test_connection", { config });
 }
 
 /** 连接到 Redis */

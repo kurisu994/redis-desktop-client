@@ -1,5 +1,50 @@
 import { create } from "zustand";
 
+/** 连接类型 */
+export type ConnectionType = "standalone" | "sentinel" | "cluster";
+
+/** SSH 隧道配置 */
+export interface SshConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  /** 认证方式 */
+  authType: "password" | "privateKey";
+  password?: string;
+  privateKeyPath?: string;
+  passphrase?: string;
+}
+
+/** TLS/SSL 配置 */
+export interface TlsConfig {
+  enabled: boolean;
+  /** CA 证书文件路径 */
+  caCertPath?: string;
+  /** 客户端证书文件路径 */
+  clientCertPath?: string;
+  /** 客户端密钥文件路径 */
+  clientKeyPath?: string;
+  /** 是否跳过证书验证（不推荐） */
+  skipVerify?: boolean;
+}
+
+/** Sentinel 配置 */
+export interface SentinelConfig {
+  /** Sentinel 节点列表 */
+  nodes: { host: string; port: number }[];
+  /** Master 名称 */
+  masterName: string;
+  /** Sentinel 密码 */
+  sentinelPassword?: string;
+}
+
+/** Cluster 配置 */
+export interface ClusterConfig {
+  /** 集群节点列表（种子节点） */
+  nodes: { host: string; port: number }[];
+}
+
 /** 连接配置类型 */
 export interface ConnectionConfig {
   id: string;
@@ -10,6 +55,16 @@ export interface ConnectionConfig {
   password?: string;
   db: number;
   group?: string;
+  /** 连接类型 */
+  connectionType?: ConnectionType;
+  /** SSH 隧道配置 */
+  ssh?: SshConfig;
+  /** TLS/SSL 配置 */
+  tls?: TlsConfig;
+  /** Sentinel 配置 */
+  sentinel?: SentinelConfig;
+  /** Cluster 配置 */
+  cluster?: ClusterConfig;
 }
 
 /** 测试连接结果 */

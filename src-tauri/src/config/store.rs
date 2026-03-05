@@ -18,6 +18,77 @@ pub struct StoredConnection {
     pub password: Option<String>,
     pub db: u8,
     pub group: Option<String>,
+    /// 连接类型: standalone / sentinel / cluster
+    #[serde(default = "default_connection_type")]
+    pub connection_type: String,
+    /// SSH 隧道配置
+    #[serde(default)]
+    pub ssh: Option<SshConfig>,
+    /// TLS/SSL 配置
+    #[serde(default)]
+    pub tls: Option<TlsConfig>,
+    /// Sentinel 配置
+    #[serde(default)]
+    pub sentinel: Option<SentinelConfig>,
+    /// Cluster 配置
+    #[serde(default)]
+    pub cluster: Option<ClusterConfig>,
+}
+
+fn default_connection_type() -> String {
+    "standalone".to_string()
+}
+
+/// SSH 隧道配置
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SshConfig {
+    pub enabled: bool,
+    pub host: String,
+    pub port: u16,
+    pub username: String,
+    pub auth_type: String,
+    pub password: Option<String>,
+    pub private_key_path: Option<String>,
+    pub passphrase: Option<String>,
+}
+
+/// TLS/SSL 配置
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TlsConfig {
+    pub enabled: bool,
+    pub ca_cert_path: Option<String>,
+    pub client_cert_path: Option<String>,
+    pub client_key_path: Option<String>,
+    #[serde(default)]
+    pub skip_verify: bool,
+}
+
+/// Sentinel 节点
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SentinelNode {
+    pub host: String,
+    pub port: u16,
+}
+
+/// Sentinel 配置
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SentinelConfig {
+    pub nodes: Vec<SentinelNode>,
+    pub master_name: String,
+    pub sentinel_password: Option<String>,
+}
+
+/// Cluster 节点
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClusterNode {
+    pub host: String,
+    pub port: u16,
+}
+
+/// Cluster 配置
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClusterConfig {
+    pub nodes: Vec<ClusterNode>,
 }
 
 /// 连接存储管理器 — 负责连接配置的持久化读写

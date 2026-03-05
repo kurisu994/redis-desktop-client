@@ -2,9 +2,9 @@
 name = "redis-desktop-client"
 version = "0.1.0"
 description = "A cross-platform Redis desktop management tool"
-authors = ["you"]
+authors = ["lucifer994@gmail.com"]
 license = "MIT"
-repository = ""
+repository = "https://github.com/kurisu994/redis-desktop-client.git"
 edition = "2021"
 rust-version = "1.77.2"
 

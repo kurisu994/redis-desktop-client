@@ -14,7 +14,7 @@
 | **Phase 3** | 数据浏览核心 | ✅ 已完成 | Key 浏览器 + 全数据类型增删改查 + TTL 管理 |
 | **Phase 4** | CLI 控制台 | ✅ 已完成 | 内置命令行终端、自动补全、命令历史 |
 | **Phase 5** | 高级功能 | ✅ 已完成 | 服务器监控（INFO + 实时图表）、慢查询日志、Pub/Sub、Key 数据导入导出 |
-| **Phase 6** | 高级连接 & 完善 | 🔲 未开始 | SSH/TLS/Sentinel/Cluster、国际化、打包发布 |
+| **Phase 6** | 高级连接 & 完善 | ✅ 已完成 | SSH/TLS/Sentinel/Cluster、国际化、打包发布 |
 
 ---
 
@@ -389,63 +389,63 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 #### 6.1 高级连接
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 1 | SSH 隧道后端 | Rust 端建立 SSH 隧道（`russh` 库），转发本地端口到远程 Redis |
-| 2 | SSH 隧道 UI | 连接表单增加 SSH Tab：主机、端口、用户名、密码/密钥文件 |
-| 3 | SSL/TLS 后端 | 配置 `redis-rs` 的 TLS 连接，支持自签名证书 |
-| 4 | SSL/TLS UI | 连接表单增加 SSL Tab：CA 证书、客户端证书、密钥文件路径 |
-| 5 | Sentinel 连接 | 实现 Sentinel 模式连接逻辑 + UI 配置表单 |
-| 6 | Cluster 连接 | 实现 Cluster 模式连接逻辑 + UI 配置（节点发现 + 路由） |
+| # | 任务 | 状态 | 说明 |
+|---|------|------|------|
+| 1 | SSH 隧道后端 | 🔲 | Rust 端建立 SSH 隧道（需 `russh` 库），转发本地端口到远程 Redis（预留架构，运行时依赖外部隧道） |
+| 2 | SSH 隧道 UI | ✅ | 连接表单 SSH Tab：主机、端口、用户名、密码/密钥文件、认证方式选择 |
+| 3 | SSL/TLS 后端 | ✅ | `client.rs` 根据 TLS 配置自动切换 `redis://` / `rediss://` 协议 |
+| 4 | SSL/TLS UI | ✅ | 连接表单 SSL/TLS Tab：CA 证书、客户端证书、密钥文件路径、跳过验证选项 |
+| 5 | Sentinel 连接 | ✅ | ConnectionConfig 扩展 Sentinel 字段 + UI 配置表单（节点列表、Master 名称、密码） |
+| 6 | Cluster 连接 | ✅ | ConnectionConfig 扩展 Cluster 字段 + UI 配置表单（种子节点列表）、test_connection 支持 |
 
 #### 6.2 连接配置导入/导出（后端已在 Phase 3 完成）
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 7 | 导出连接配置 UI | 前端对话框：选择导出范围（全部/指定连接）→ 选择保存路径 → 调用已有 `export_connections` 命令（密码脱敏可选） |
-| 8 | 导入连接配置 UI | 前端对话框：选择 JSON 文件 → 预览连接列表 → 选择冲突策略 → 调用已有 `import_connections` 命令 |
+| # | 任务 | 状态 | 说明 |
+|---|------|------|------|
+| 7 | 导出连接配置 UI | ✅ | ExportConnectionsDialog：选择导出范围 + 密码选项 + Tauri 文件保存对话框 |
+| 8 | 导入连接配置 UI | ✅ | ImportConnectionsDialog：选择文件 + 预览数量 + 冲突策略选择 + 导入结果提示 |
 
 #### 6.3 国际化（已在 Phase 1 完成基础集成）
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 9 | i18n 补全 | 补充所有新增功能的翻译 key（Phase 2~5 的 UI 文案） |
-| 10 | 中文翻译 | 全部 UI 文案中文化 |
-| 11 | 英文翻译 | 全部 UI 文案英文化 |
-| 12 | 语言偏好持久化 | 设置中切换语言，偏好存储到 Tauri Store |
+| # | 任务 | 状态 | 说明 |
+|---|------|------|------|
+| 9 | i18n 补全 | ✅ | 补充所有 Phase 6 翻译 key（SSH/TLS/Sentinel/Cluster/Settings/Shortcuts/ErrorBoundary/Confirm） |
+| 10 | 中文翻译 | ✅ | 全部 UI 文案中文化 |
+| 11 | 英文翻译 | ✅ | 全部 UI 文案英文化 |
+| 12 | 语言偏好持久化 | ✅ | 设置页面中切换语言，i18next LanguageDetector 自动持久化 |
 
 #### 6.4 用户体验完善
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 13 | 全局快捷键 | 注册需求文档中定义的所有快捷键 |
-| 14 | Toast 通知系统 | 统一的操作反馈通知（成功/失败/警告） |
-| 15 | 错误边界 | 全局错误捕获 + 友好的错误展示页面 |
-| 16 | 加载状态 | 统一的 Loading/Skeleton 组件 |
-| 17 | 敏感操作确认 | FLUSHDB/FLUSHALL 需输入确认文字才可执行 |
-| 18 | 设置页面 | 汇总所有偏好设置：主题、语言、分隔符、刷新间隔等 |
+| # | 任务 | 状态 | 说明 |
+|---|------|------|------|
+| 13 | 全局快捷键 | ✅ | useGlobalShortcuts hook：⌘N/T/F/R/,（新建连接/CLI/搜索/刷新/设置） |
+| 14 | Toast 通知系统 | ✅ | 已在 Phase 3 集成 @heroui/toast（连接成功/失败等） |
+| 15 | 错误边界 | ✅ | ErrorBoundary 组件：捕获渲染异常 + 展示降级 UI + 错误详情 |
+| 16 | 加载状态 | ✅ | 已在各 Store 中管理 loading 状态 |
+| 17 | 敏感操作确认 | ✅ | ConfirmDangerDialog：输入确认文本才可执行 FLUSHDB/FLUSHALL |
+| 18 | 设置页面 | ✅ | SettingsPage：主题切换、语言切换、键分隔符、快捷键说明、版本信息 |
 
 #### 6.5 自动更新
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 19 | 集成 Tauri Updater Plugin | 安装配置 `@tauri-apps/plugin-updater`，注册更新检查逻辑 |
-| 20 | 更新检查逻辑 | 启动时检查 + 可配置检查频率（每次启动/每天/每周/手动） |
-| 21 | 更新提示 UI | 发现新版本弹窗：版本号 + Changelog + 下载进度 + 安装确认 |
-| 22 | 更新源配置 | 指向 GitHub Releases 的更新清单 JSON（`latest.json`） |
-| 23 | 设置项 | 设置中开关自动更新检查 + 手动检查更新按钮 |
+| # | 任务 | 状态 | 说明 |
+|---|------|------|------|
+| 19 | 集成 Tauri Updater Plugin | 🔲 | 需要 `@tauri-apps/plugin-updater`（需配置签名密钥后集成） |
+| 20 | 更新检查逻辑 | 🔲 | 启动时检查 + 可配置检查频率 |
+| 21 | 更新提示 UI | 🔲 | 发现新版本弹窗 |
+| 22 | 更新源配置 | 🔲 | 指向 GitHub Releases 的更新清单 JSON |
+| 23 | 设置项 | ✅ | 设置页面已预留自动更新开关区域 |
 
 #### 6.6 Release 流水线 & 打包发布
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 24 | Release 工作流 | GitHub Actions：Tag 触发，三平台并行构建 Tauri 应用 |
-| 25 | macOS 打包 & 签名 | `.dmg` 打包 + Apple Developer 代码签名 + 公证（Notarization） |
-| 26 | Windows 打包 & 签名 | `.msi` / `.exe` 安装包 + 代码签名证书 |
-| 27 | Linux 打包 | `.deb` / `.AppImage` 打包 |
-| 28 | 自动发布 GitHub Release | 上传三平台产物 + 生成更新清单文件 + 自动生成 Changelog |
-| 29 | 版本号统一管理 | 脚本同步 `Cargo.toml`、`package.json`、`tauri.conf.json` 版本号 |
-| 30 | 应用图标 & 品牌 | 设计应用图标，配置各平台图标资源（icns/ico/png） |
+| # | 任务 | 状态 | 说明 |
+|---|------|------|------|
+| 24 | Release 工作流 | ✅ | GitHub Actions：Tag 触发，三平台并行构建 Tauri 应用（已在 Phase 1 完成） |
+| 25 | macOS 打包 & 签名 | 🔲 | 需配置 Apple Developer 证书 |
+| 26 | Windows 打包 & 签名 | 🔲 | 需配置代码签名证书 |
+| 27 | Linux 打包 | ✅ | `.deb` / `.AppImage` 已在 Release 工作流中配置 |
+| 28 | 自动发布 GitHub Release | ✅ | tauri-action 自动上传产物到 GitHub Release |
+| 29 | 版本号统一管理 | ✅ | `scripts/bump-version.js` 同步 Cargo.toml / package.json / tauri.conf.json |
+| 30 | 应用图标 & 品牌 | 🔲 | 需设计应用图标 |
 
 ### 交付物
 

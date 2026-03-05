@@ -9,13 +9,19 @@ import { DataBrowser } from "@/components/browser/data-browser";
 import { CliConsole } from "@/components/cli/cli-console";
 import { MonitorPage } from "@/components/monitor/monitor-page";
 import { PubSubPage } from "@/components/pubsub/pubsub-page";
+import { SettingsPage } from "@/components/layout/settings-page";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { useConnectionStore } from "@/stores/connection-store";
 import { useAppStore } from "@/stores/app-store";
+import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
 
 /** 应用主页 — 三栏布局 */
 export default function Home() {
   const { activeConnectionId, connectionStatus } = useConnectionStore();
   const { mainView } = useAppStore();
+
+  // 注册全局快捷键
+  useGlobalShortcuts();
 
   // 判断当前是否有已连接的连接
   const isConnected =
@@ -24,6 +30,8 @@ export default function Home() {
 
   /** 根据视图模式和连接状态渲染主内容区 */
   const renderMainContent = () => {
+    // 设置页面无需连接
+    if (mainView === "settings") return <SettingsPage />;
     if (!isConnected) return <WelcomePage />;
     switch (mainView) {
       case "cli":
@@ -43,7 +51,7 @@ export default function Home() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <main className="flex-1 flex overflow-hidden">
-          {renderMainContent()}
+          <ErrorBoundary>{renderMainContent()}</ErrorBoundary>
         </main>
       </div>
       <StatusBar />

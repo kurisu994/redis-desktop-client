@@ -32,6 +32,29 @@ pub struct ImportResult {
     pub overwritten: usize,
 }
 
+/// 从导出连接构建存储连接（附加默认高级字段）
+fn build_stored(
+    id: String,
+    name: String,
+    conn: &ExportedConnection,
+) -> crate::config::store::StoredConnection {
+    crate::config::store::StoredConnection {
+        id,
+        name,
+        host: conn.host.clone(),
+        port: conn.port,
+        username: conn.username.clone(),
+        password: conn.password.clone(),
+        db: conn.db,
+        group: conn.group.clone(),
+        connection_type: "standalone".to_string(),
+        ssh: None,
+        tls: None,
+        sentinel: None,
+        cluster: None,
+    }
+}
+
 /// 导出连接配置 — 返回 JSON 字符串
 #[tauri::command]
 pub async fn export_connections(
@@ -100,16 +123,7 @@ pub async fn import_connections(
                     continue;
                 }
                 "overwrite" => {
-                    let stored = crate::config::store::StoredConnection {
-                        id: conn.id.clone(),
-                        name: conn.name.clone(),
-                        host: conn.host.clone(),
-                        port: conn.port,
-                        username: conn.username.clone(),
-                        password: conn.password.clone(),
-                        db: conn.db,
-                        group: conn.group.clone(),
-                    };
+                    let stored = build_stored(conn.id.clone(), conn.name.clone(), conn);
                     store.upsert_connection(stored)?;
                     overwritten += 1;
                 }
@@ -122,31 +136,13 @@ pub async fn import_connections(
                         new_name = format!("{} ({})", conn.name, counter);
                         counter += 1;
                     }
-                    let stored = crate::config::store::StoredConnection {
-                        id: new_id,
-                        name: new_name,
-                        host: conn.host.clone(),
-                        port: conn.port,
-                        username: conn.username.clone(),
-                        password: conn.password.clone(),
-                        db: conn.db,
-                        group: conn.group.clone(),
-                    };
+                    let stored = build_stored(new_id, new_name, conn);
                     store.upsert_connection(stored)?;
                     imported += 1;
                 }
             }
         } else {
-            let stored = crate::config::store::StoredConnection {
-                id: conn.id.clone(),
-                name: conn.name.clone(),
-                host: conn.host.clone(),
-                port: conn.port,
-                username: conn.username.clone(),
-                password: conn.password.clone(),
-                db: conn.db,
-                group: conn.group.clone(),
-            };
+            let stored = build_stored(conn.id.clone(), conn.name.clone(), conn);
             store.upsert_connection(stored)?;
             imported += 1;
         }

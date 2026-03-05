@@ -7,6 +7,8 @@ import { addToast } from "@heroui/toast";
 import { useAppStore } from "@/stores/app-store";
 import { useConnectionStore, type ConnectionConfig } from "@/stores/connection-store";
 import { useBrowserStore, type DbSize } from "@/stores/browser-store";
+import { ExportConnectionsDialog } from "@/components/connection/export-connections-dialog";
+import { ImportConnectionsDialog } from "@/components/connection/import-connections-dialog";
 import {
   listConnections,
   connectRedis,
@@ -61,6 +63,25 @@ function RadioIcon() {
       <path d="M5 19.5A14 14 0 0 1 2 12.95" />
       <circle cx="12" cy="17" r="1" />
       <path d="M9 15a3 3 0 0 1 6 0" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function ImportExportIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
     </svg>
   );
 }
@@ -332,10 +353,13 @@ function SidebarNavButton({
   icon,
   label,
   view,
+  alwaysEnabled,
 }: {
   icon: React.ReactNode;
   label: string;
-  view: "browser" | "cli" | "monitor" | "pubsub";
+  view: "browser" | "cli" | "monitor" | "pubsub" | "settings";
+  /** 无需连接即可使用 */
+  alwaysEnabled?: boolean;
 }) {
   const { mainView, setMainView } = useAppStore();
   const { activeConnectionId, connectionStatus } = useConnectionStore();
@@ -343,18 +367,19 @@ function SidebarNavButton({
     activeConnectionId !== null &&
     connectionStatus[activeConnectionId] === "connected";
   const isActive = mainView === view;
+  const enabled = alwaysEnabled || isConnected;
 
   return (
     <button
       className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors ${
-        isActive && isConnected
+        isActive && enabled
           ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
           : "text-default-500 hover:bg-default-100"
-      } ${!isConnected ? "opacity-50 cursor-not-allowed" : ""}`}
+      } ${!enabled ? "opacity-50 cursor-not-allowed" : ""}`}
       onClick={() => {
-        if (isConnected) setMainView(view);
+        if (enabled) setMainView(view);
       }}
-      disabled={!isConnected}
+      disabled={!enabled}
     >
       {icon}
       <span>{label}</span>
@@ -367,6 +392,8 @@ export function Sidebar() {
   const { t } = useTranslation();
   const { sidebarCollapsed, toggleSidebar } = useAppStore();
   const { connections, setConnections, openDialog } = useConnectionStore();
+  const [showExport, setShowExport] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   /** 初始化加载连接列表 */
   useEffect(() => {
@@ -400,12 +427,21 @@ export function Sidebar() {
           <DatabaseIcon />
           <span>{t("connection.title")}</span>
         </button>
-        <button
-          onClick={toggleSidebar}
-          className="p-1 rounded-md hover:bg-default-100 transition-colors"
-        >
-          <ChevronIcon collapsed={false} />
-        </button>
+        <div className="flex items-center gap-0.5">
+          <button
+            onClick={() => setShowImport(true)}
+            className="p-1 rounded-md hover:bg-default-100 transition-colors text-default-500"
+            title={t("connection.importConnections")}
+          >
+            <ImportExportIcon />
+          </button>
+          <button
+            onClick={toggleSidebar}
+            className="p-1 rounded-md hover:bg-default-100 transition-colors"
+          >
+            <ChevronIcon collapsed={false} />
+          </button>
+        </div>
       </div>
 
       {/* 新建连接按钮 */}
@@ -438,7 +474,7 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* 底部导航 — CLI / Monitor / Pub/Sub */}
+      {/* 底部导航 */}
       <div className="border-t border-divider shrink-0">
         <SidebarNavButton
           icon={<TerminalIcon />}
@@ -455,7 +491,17 @@ export function Sidebar() {
           label={t("pubsub.title")}
           view="pubsub"
         />
+        <SidebarNavButton
+          icon={<SettingsIcon />}
+          label={t("actions.settings")}
+          view="settings"
+          alwaysEnabled
+        />
       </div>
+
+      {/* 导出/导入对话框 */}
+      <ExportConnectionsDialog isOpen={showExport} onClose={() => setShowExport(false)} />
+      <ImportConnectionsDialog isOpen={showImport} onClose={() => setShowImport(false)} />
     </aside>
   );
 }
