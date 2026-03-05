@@ -50,8 +50,8 @@ export function KeyList({ keys, selectedKey, onSelectKey }: KeyListProps) {
           <button
             className={`flex items-center gap-2 w-full py-1.5 px-3 text-sm transition-colors ${
               isSelected
-                ? "bg-indigo-500/15 text-indigo-300"
-                : "hover:bg-white/5 text-zinc-400"
+                ? "bg-primary/15 text-primary"
+                : "hover:bg-white/5 text-foreground/70"
             }`}
             onClick={() => onSelectKey(entry.key)}
           >

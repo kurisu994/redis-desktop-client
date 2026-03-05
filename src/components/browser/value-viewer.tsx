@@ -204,6 +204,7 @@ function HashViewer({
   const { connectionId, selectedDb } = useBrowserStore();
   const [fields, setFields] = useState<{ field: string; value: string }[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [editData, setEditData] = useState<{ field: string; value: string } | null>(null);
 
   const loadData = useCallback(async () => {
     if (!connectionId) return;
@@ -220,39 +221,41 @@ function HashViewer({
     onValueChanged();
   };
 
+  /** 保存（新增或编辑）*/
+  const handleSave = async (data: { field?: string; value: string }) => {
+    if (!connectionId) return;
+    await setHashField(connectionId, selectedDb, keyName, data.field!, data.value);
+    setShowAdd(false);
+    setEditData(null);
+    loadData();
+    onValueChanged();
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <TableView
         headers={[t("valueEditor.field"), t("valueEditor.value"), ""]}
         rows={fields.map((f) => [
-          <span key="f" className="text-indigo-300 font-medium">{f.field}</span>,
-          <span key="v" className="break-all text-zinc-300">{f.value}</span>,
+          <span key="f" className="text-primary font-medium">{f.field}</span>,
+          <span key="v" className="break-all text-foreground/80">{f.value}</span>,
           <RowActions
             key="a"
-            onEdit={() => {
-              /* 可扩展为编辑模式 */
-            }}
+            onEdit={() => setEditData(f)}
             onDelete={() => handleDelete(f.field)}
           />,
         ])}
         widths={["w-1/3", "", "w-20"]}
-      />
-      <TableFooter
-        label={t("valueEditor.addField")}
+        onRowClick={(idx) => setEditData(fields[idx])}
+        addLabel={t("valueEditor.addField")}
         onAdd={() => setShowAdd(true)}
       />
-      {showAdd && (
+      {(showAdd || editData) && (
         <AddFieldDialog
-          isOpen={showAdd}
+          isOpen={showAdd || !!editData}
           mode="hash"
-          onClose={() => setShowAdd(false)}
-          onSave={async (data) => {
-            if (!connectionId) return;
-            await setHashField(connectionId, selectedDb, keyName, data.field!, data.value);
-            setShowAdd(false);
-            loadData();
-            onValueChanged();
-          }}
+          initialData={editData ? { field: editData.field, value: editData.value } : undefined}
+          onClose={() => { setShowAdd(false); setEditData(null); }}
+          onSave={handleSave}
         />
       )}
     </div>
@@ -272,6 +275,7 @@ function ListViewer({
   const { connectionId, selectedDb } = useBrowserStore();
   const [items, setItems] = useState<string[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
 
   const loadData = useCallback(async () => {
     if (!connectionId) return;
@@ -293,31 +297,38 @@ function ListViewer({
       <TableView
         headers={[t("valueEditor.index"), t("valueEditor.value"), ""]}
         rows={items.map((item, i) => [
-          <span key="i" className="text-indigo-300 font-medium">{i}</span>,
-          <span key="v" className="break-all text-zinc-300">{item}</span>,
-          <RowActions key="a" onDelete={() => handleDelete(i)} />,
+          <span key="i" className="text-primary font-medium">{i}</span>,
+          <span key="v" className="break-all text-foreground/80">{item}</span>,
+          <RowActions key="a" onEdit={() => setEditIdx(i)} onDelete={() => handleDelete(i)} />,
         ])}
         widths={["w-20", "", "w-20"]}
-      />
-      <TableFooter
-        label={t("valueEditor.addElement")}
+        onRowClick={(idx) => setEditIdx(idx)}
+        addLabel={t("valueEditor.addElement")}
         onAdd={() => setShowAdd(true)}
       />
-      {showAdd && (
+      {(showAdd || editIdx !== null) && (
         <AddFieldDialog
-          isOpen={showAdd}
+          isOpen={showAdd || editIdx !== null}
           mode="list"
-          onClose={() => setShowAdd(false)}
+          initialData={editIdx !== null ? { value: items[editIdx] } : undefined}
+          onClose={() => { setShowAdd(false); setEditIdx(null); }}
           onSave={async (data) => {
             if (!connectionId) return;
-            await addListElement(
-              connectionId,
-              selectedDb,
-              keyName,
-              data.value,
-              data.position || "tail"
-            );
+            if (editIdx !== null) {
+              // 编辑：先删再加（List 无原生 SET by index 的封装，用 delete + add）
+              await deleteListElement(connectionId, selectedDb, keyName, editIdx);
+              await addListElement(connectionId, selectedDb, keyName, data.value, "tail");
+            } else {
+              await addListElement(
+                connectionId,
+                selectedDb,
+                keyName,
+                data.value,
+                data.position || "tail"
+              );
+            }
             setShowAdd(false);
+            setEditIdx(null);
             loadData();
             onValueChanged();
           }}
@@ -340,6 +351,7 @@ function SetViewer({
   const { connectionId, selectedDb } = useBrowserStore();
   const [members, setMembers] = useState<string[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [editMember, setEditMember] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!connectionId) return;
@@ -361,24 +373,28 @@ function SetViewer({
       <TableView
         headers={[t("valueEditor.member"), ""]}
         rows={members.map((m) => [
-          <span key="m" className="break-all text-zinc-300">{m}</span>,
-          <RowActions key="a" onDelete={() => handleDelete(m)} />,
+          <span key="m" className="break-all text-foreground/80">{m}</span>,
+          <RowActions key="a" onEdit={() => setEditMember(m)} onDelete={() => handleDelete(m)} />,
         ])}
         widths={["", "w-20"]}
-      />
-      <TableFooter
-        label={t("valueEditor.addMember")}
+        onRowClick={(idx) => setEditMember(members[idx])}
+        addLabel={t("valueEditor.addMember")}
         onAdd={() => setShowAdd(true)}
       />
-      {showAdd && (
+      {(showAdd || editMember !== null) && (
         <AddFieldDialog
-          isOpen={showAdd}
+          isOpen={showAdd || editMember !== null}
           mode="set"
-          onClose={() => setShowAdd(false)}
+          initialData={editMember !== null ? { value: editMember } : undefined}
+          onClose={() => { setShowAdd(false); setEditMember(null); }}
           onSave={async (data) => {
             if (!connectionId) return;
+            if (editMember !== null) {
+              await deleteSetMember(connectionId, selectedDb, keyName, editMember);
+            }
             await addSetMember(connectionId, selectedDb, keyName, data.value);
             setShowAdd(false);
+            setEditMember(null);
             loadData();
             onValueChanged();
           }}
@@ -401,6 +417,7 @@ function ZSetViewer({
   const { connectionId, selectedDb } = useBrowserStore();
   const [members, setMembers] = useState<{ member: string; score: number }[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [editData, setEditData] = useState<{ member: string; score: number } | null>(null);
 
   const loadData = useCallback(async () => {
     if (!connectionId) return;
@@ -422,23 +439,26 @@ function ZSetViewer({
       <TableView
         headers={[t("valueEditor.score"), t("valueEditor.member"), ""]}
         rows={members.map((m) => [
-          <span key="s" className="text-indigo-300 font-medium">{m.score}</span>,
-          <span key="m" className="break-all text-zinc-300">{m.member}</span>,
-          <RowActions key="a" onDelete={() => handleDelete(m.member)} />,
+          <span key="s" className="text-primary font-medium">{m.score}</span>,
+          <span key="m" className="break-all text-foreground/80">{m.member}</span>,
+          <RowActions key="a" onEdit={() => setEditData(m)} onDelete={() => handleDelete(m.member)} />,
         ])}
         widths={["w-28", "", "w-20"]}
-      />
-      <TableFooter
-        label={t("valueEditor.addMember")}
+        onRowClick={(idx) => setEditData(members[idx])}
+        addLabel={t("valueEditor.addMember")}
         onAdd={() => setShowAdd(true)}
       />
-      {showAdd && (
+      {(showAdd || editData) && (
         <AddFieldDialog
-          isOpen={showAdd}
+          isOpen={showAdd || !!editData}
           mode="zset"
-          onClose={() => setShowAdd(false)}
+          initialData={editData ? { value: editData.member, score: editData.score } : undefined}
+          onClose={() => { setShowAdd(false); setEditData(null); }}
           onSave={async (data) => {
             if (!connectionId) return;
+            if (editData) {
+              await deleteZsetMember(connectionId, selectedDb, keyName, editData.member);
+            }
             await addZsetMember(
               connectionId,
               selectedDb,
@@ -447,6 +467,7 @@ function ZSetViewer({
               data.score ?? 0
             );
             setShowAdd(false);
+            setEditData(null);
             loadData();
             onValueChanged();
           }}
@@ -499,11 +520,11 @@ function StreamViewer({
       <TableView
         headers={[t("valueEditor.streamId"), t("valueEditor.streamFields"), ""]}
         rows={entries.map((e) => [
-          <span key="id" className="text-indigo-300 font-medium text-xs">{e.id}</span>,
+          <span key="id" className="text-primary font-medium text-xs">{e.id}</span>,
           <div key="f" className="space-y-0.5">
             {e.fields.map(([k, v], i) => (
-              <span key={i} className="text-xs text-zinc-300">
-                <span className="text-indigo-300">{k}</span>: {v}
+              <span key={i} className="text-xs text-foreground/80">
+                <span className="text-primary">{k}</span>: {v}
                 {i < e.fields.length - 1 && ", "}
               </span>
             ))}
@@ -511,9 +532,7 @@ function StreamViewer({
           <RowActions key="a" onDelete={() => handleDelete(e.id)} />,
         ])}
         widths={["w-44", "", "w-20"]}
-      />
-      <TableFooter
-        label={t("valueEditor.addEntry")}
+        addLabel={t("valueEditor.addEntry")}
         onAdd={() => setShowAdd(true)}
       />
       {showAdd && (
@@ -541,21 +560,27 @@ function TableView({
   headers,
   rows,
   widths,
+  onRowClick,
+  addLabel,
+  onAdd,
 }: {
   headers: string[];
   rows: React.ReactNode[][];
   widths: string[];
+  onRowClick?: (rowIdx: number) => void;
+  addLabel: string;
+  onAdd: () => void;
 }) {
   return (
     <div className="flex-1 overflow-auto p-5">
-      <div className="rounded-lg border border-zinc-800/60 dark:bg-[#0E0E11] shadow-sm overflow-hidden">
+      <div className="rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm text-left">
-          <thead className="text-xs uppercase font-medium tracking-wider dark:bg-zinc-900/80 bg-zinc-50 dark:text-zinc-400 text-zinc-500 sticky top-0">
+          <thead className="text-xs uppercase font-medium tracking-wider bg-muted/50 text-muted-foreground sticky top-0">
             <tr>
               {headers.map((h, i) => (
                 <th
                   key={i}
-                  className={`px-4 py-3 border-b border-zinc-800/60 ${widths[i] || ""}`}
+                  className={`px-4 py-3 border-b border-border ${widths[i] || ""}`}
                 >
                   {h}
                 </th>
@@ -566,7 +591,8 @@ function TableView({
             {rows.map((cells, rowIdx) => (
               <tr
                 key={rowIdx}
-                className="border-b border-zinc-800/60 hover:bg-white/5 group"
+                className={`border-b border-border/50 hover:bg-muted/30 group ${onRowClick ? "cursor-pointer" : ""}`}
+                onClick={() => onRowClick?.(rowIdx)}
               >
                 {cells.map((cell, cellIdx) => (
                   <td key={cellIdx} className="px-4 py-2.5">
@@ -577,28 +603,18 @@ function TableView({
             ))}
           </tbody>
         </table>
-      </div>
-    </div>
-  );
-}
-
-/** 表格底部添加按钮 */
-function TableFooter({
-  label,
-  onAdd,
-}: {
-  label: string;
-  onAdd: () => void;
-}) {
-  return (
-    <div className="px-5 pb-2">
-      <div className="p-2.5 border-t border-zinc-800/60 dark:bg-zinc-900/30 bg-zinc-50 rounded-b-lg">
-        <button
-          onClick={onAdd}
-          className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 font-medium px-2 py-1 rounded hover:bg-indigo-500/10 transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" /> {label}
-        </button>
+        {/* 添加按钮在表格内部底部 */}
+        <div className="px-4 py-2.5 border-t border-border/50">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAdd();
+            }}
+            className="text-xs text-primary hover:text-primary/80 flex items-center gap-1.5 font-medium px-1 py-1 rounded hover:bg-primary/10 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" /> {addLabel}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -616,16 +632,16 @@ function RowActions({
     <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
       {onEdit && (
         <button
-          onClick={onEdit}
-          className="text-zinc-500 hover:text-indigo-400 p-1"
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          className="text-muted-foreground hover:text-primary p-1"
         >
           <Pencil className="w-3.5 h-3.5" />
         </button>
       )}
       {onDelete && (
         <button
-          onClick={onDelete}
-          className="text-zinc-500 hover:text-red-400 p-1"
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="text-muted-foreground hover:text-red-400 p-1"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>

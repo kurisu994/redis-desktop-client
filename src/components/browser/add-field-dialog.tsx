@@ -24,6 +24,12 @@ import { Loader2 } from "lucide-react";
 interface AddFieldDialogProps {
   isOpen: boolean;
   mode: "hash" | "list" | "set" | "zset" | "stream";
+  /** 编辑模式时的初始值 */
+  initialData?: {
+    field?: string;
+    value?: string;
+    score?: number;
+  };
   onClose: () => void;
   onSave: (data: {
     field?: string;
@@ -34,11 +40,12 @@ interface AddFieldDialogProps {
 }
 
 /** 添加/编辑字段对话框 — 根据类型显示不同表单 */
-export function AddFieldDialog({ isOpen, mode, onClose, onSave }: AddFieldDialogProps) {
+export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: AddFieldDialogProps) {
   const { t } = useTranslation();
-  const [field, setField] = useState("");
-  const [value, setValue] = useState("");
-  const [score, setScore] = useState("0");
+  const isEdit = !!initialData;
+  const [field, setField] = useState(initialData?.field ?? "");
+  const [value, setValue] = useState(initialData?.value ?? "");
+  const [score, setScore] = useState(String(initialData?.score ?? 0));
   const [position, setPosition] = useState<"head" | "tail">("tail");
   const [saving, setSaving] = useState(false);
 
@@ -56,13 +63,15 @@ export function AddFieldDialog({ isOpen, mode, onClose, onSave }: AddFieldDialog
     }
   };
 
-  const title = {
-    hash: t("valueEditor.addField"),
-    list: t("valueEditor.addElement"),
-    set: t("valueEditor.addMember"),
-    zset: t("valueEditor.addMember"),
-    stream: t("valueEditor.addEntry"),
-  }[mode];
+  const title = isEdit
+    ? t("actions.edit")
+    : {
+        hash: t("valueEditor.addField"),
+        list: t("valueEditor.addElement"),
+        set: t("valueEditor.addMember"),
+        zset: t("valueEditor.addMember"),
+        stream: t("valueEditor.addEntry"),
+      }[mode];
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -78,7 +87,8 @@ export function AddFieldDialog({ isOpen, mode, onClose, onSave }: AddFieldDialog
               <Input
                 value={field}
                 onChange={(e) => setField(e.target.value)}
-                autoFocus
+                autoFocus={!isEdit}
+                readOnly={isEdit && mode === "hash"}
               />
             </div>
           )}
@@ -132,7 +142,7 @@ export function AddFieldDialog({ isOpen, mode, onClose, onSave }: AddFieldDialog
             disabled={saving || !value.trim()}
           >
             {saving && <Loader2 className="animate-spin" size={14} />}
-            {t("actions.add")}
+            {isEdit ? t("actions.save") : t("actions.add")}
           </Button>
         </DialogFooter>
       </DialogContent>

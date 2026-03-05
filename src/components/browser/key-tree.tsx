@@ -100,19 +100,19 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
           onClick={() => toggleFolder(node.fullPath)}
         >
           {isExpanded ? (
-            <ChevronDown className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
           ) : (
-            <ChevronRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
           )}
           <Folder className="w-4 h-4 text-yellow-500/80 shrink-0" />
-          <span className="truncate text-zinc-300">{node.name}</span>
-          <span className="text-zinc-500 text-xs ml-auto shrink-0">
+          <span className="truncate text-foreground/80">{node.name}</span>
+          <span className="text-muted-foreground text-xs ml-auto shrink-0">
             {childCount}
           </span>
         </button>
 
         {isExpanded && (
-          <div className="ml-4 border-l border-zinc-800/50 pl-0.5" style={{ marginLeft: `${depth * 16 + 20}px` }}>
+          <div className="ml-4 border-l border-border/50 pl-0.5" style={{ marginLeft: `${depth * 16 + 20}px` }}>
             {/* 子文件夹 */}
             {Array.from(node.children.values())
               .sort((a, b) => a.name.localeCompare(b.name))
@@ -138,8 +138,8 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
         key={entry.key}
         className={`flex items-center gap-2 w-full py-1.5 px-2 rounded-md cursor-pointer text-sm transition-colors ${
           isSelected
-            ? "bg-indigo-500/15 text-indigo-300"
-            : "hover:bg-white/5 text-zinc-400"
+            ? "bg-primary/15 text-primary"
+            : "hover:bg-white/5 text-foreground/70"
         }`}
         style={{ paddingLeft: `${depth * 16 + 28}px` }}
         onClick={() => onSelectKey(entry.key)}
