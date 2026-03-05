@@ -151,11 +151,61 @@
     "title": "监控",
     "serverInfo": "服务器信息",
     "slowLog": "慢查询日志",
-    "realtime": "实时监控"
+    "realtime": "实时监控",
+    "interval": "刷新间隔",
+    "pause": "暂停",
+    "resume": "恢复",
+    "loading": "加载中...",
+    "noData": "暂无数据",
+    "version": "版本",
+    "uptime": "运行时间",
+    "days": "天",
+    "hours": "小时",
+    "usedMemory": "已用内存",
+    "clients": "客户端",
+    "totalKeys": "总键数",
+    "opsPerSec": "操作/秒",
+    "memoryMB": "内存 (MB)",
+    "connectedClients": "连接客户端数",
+    "hitRate": "命中率 (%)",
+    "waitingData": "等待数据...",
+    "resetSlowLog": "清空",
+    "noSlowLog": "暂无慢查询记录",
+    "timestamp": "时间",
+    "duration": "耗时 (µs)",
+    "command": "命令",
+    "clientAddr": "客户端地址",
+    "sectionServer": "服务器",
+    "sectionClients": "客户端",
+    "sectionMemory": "内存",
+    "sectionStats": "统计",
+    "sectionReplication": "主从复制",
+    "sectionKeyspace": "键空间"
   },
   "pubsub": {
     "title": "发布/订阅",
     "subscribe": "订阅",
-    "publish": "发布"
+    "publish": "发布",
+    "channelPlaceholder": "输入频道名称（支持 * 通配符）",
+    "publishChannelPlaceholder": "发布目标频道",
+    "messagePlaceholder": "输入消息内容",
+    "noMessages": "暂无消息",
+    "subscribedChannels": "已订阅",
+    "subscribeSuccess": "已订阅频道 {{channel}}",
+    "publishSuccess": "消息已发送，{{receivers}} 个接收者",
+    "clearMessages": "清空消息",
+    "filterPlaceholder": "过滤消息（频道或内容）"
+  },
+  "dataExport": {
+    "title": "导出 Key 数据",
+    "pattern": "匹配模式",
+    "matchCount": "匹配 {{count}} 个键",
+    "exportSuccess": "导出成功"
+  },
+  "dataImport": {
+    "title": "导入 Key 数据",
+    "selectFile": "选择文件",
+    "keys": "个键",
+    "importSuccess": "导入完成：导入 {{imported}} 个，跳过 {{skipped}} 个，共 {{total}} 个"
   }
 }

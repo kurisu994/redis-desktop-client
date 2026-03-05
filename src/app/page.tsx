@@ -7,6 +7,8 @@ import { WelcomePage } from "@/components/layout/welcome-page";
 import { ConnectionDialog } from "@/components/connection/connection-dialog";
 import { DataBrowser } from "@/components/browser/data-browser";
 import { CliConsole } from "@/components/cli/cli-console";
+import { MonitorPage } from "@/components/monitor/monitor-page";
+import { PubSubPage } from "@/components/pubsub/pubsub-page";
 import { useConnectionStore } from "@/stores/connection-store";
 import { useAppStore } from "@/stores/app-store";
 
@@ -23,8 +25,16 @@ export default function Home() {
   /** 根据视图模式和连接状态渲染主内容区 */
   const renderMainContent = () => {
     if (!isConnected) return <WelcomePage />;
-    if (mainView === "cli") return <CliConsole />;
-    return <DataBrowser />;
+    switch (mainView) {
+      case "cli":
+        return <CliConsole />;
+      case "monitor":
+        return <MonitorPage />;
+      case "pubsub":
+        return <PubSubPage />;
+      default:
+        return <DataBrowser />;
+    }
   };
 
   return (

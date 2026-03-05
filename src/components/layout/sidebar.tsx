@@ -335,7 +335,7 @@ function SidebarNavButton({
 }: {
   icon: React.ReactNode;
   label: string;
-  view: "browser" | "cli";
+  view: "browser" | "cli" | "monitor" | "pubsub";
 }) {
   const { mainView, setMainView } = useAppStore();
   const { activeConnectionId, connectionStatus } = useConnectionStore();
@@ -445,14 +445,16 @@ export function Sidebar() {
           label={t("cli.title")}
           view="cli"
         />
-        <button className="flex items-center gap-2 w-full px-3 py-2 text-xs text-default-500 hover:bg-default-100 transition-colors">
-          <ActivityIcon />
-          <span>{t("monitor.title")}</span>
-        </button>
-        <button className="flex items-center gap-2 w-full px-3 py-2 text-xs text-default-500 hover:bg-default-100 transition-colors">
-          <RadioIcon />
-          <span>{t("pubsub.title")}</span>
-        </button>
+        <SidebarNavButton
+          icon={<ActivityIcon />}
+          label={t("monitor.title")}
+          view="monitor"
+        />
+        <SidebarNavButton
+          icon={<RadioIcon />}
+          label={t("pubsub.title")}
+          view="pubsub"
+        />
       </div>
     </aside>
   );

@@ -4,8 +4,10 @@ import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { Button, Input, Select, SelectItem } from "@heroui/react";
 import { useBrowserStore } from "@/stores/browser-store";
-import { Search, RefreshCw, Plus, List, FolderTree } from "lucide-react";
+import { Search, RefreshCw, Plus, List, FolderTree, Download, Upload } from "lucide-react";
 import { KeyDialog } from "./key-dialog";
+import { ExportDialog } from "./export-dialog";
+import { ImportDialog } from "./import-dialog";
 
 interface KeyToolbarProps {
   onRefresh: () => void;
@@ -28,6 +30,8 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
     resetBrowser,
   } = useBrowserStore();
   const [showNewKey, setShowNewKey] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   /** 切换数据库 */
   const handleDbChange = (keys: Set<string> | string) => {
@@ -144,6 +148,28 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
         >
           {t("browser.newKey")}
         </Button>
+
+        {/* 导入导出 */}
+        <Button
+          isIconOnly
+          size="sm"
+          variant="bordered"
+          onPress={() => setShowExport(true)}
+          aria-label={t("actions.export")}
+          title={t("actions.export")}
+        >
+          <Download className="w-4 h-4" />
+        </Button>
+        <Button
+          isIconOnly
+          size="sm"
+          variant="bordered"
+          onPress={() => setShowImport(true)}
+          aria-label={t("actions.import")}
+          title={t("actions.import")}
+        >
+          <Upload className="w-4 h-4" />
+        </Button>
       </div>
 
       {/* 新建 Key 对话框 */}
@@ -157,6 +183,19 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
           }}
         />
       )}
+
+      {/* 导出对话框 */}
+      <ExportDialog
+        isOpen={showExport}
+        onClose={() => setShowExport(false)}
+      />
+
+      {/* 导入对话框 */}
+      <ImportDialog
+        isOpen={showImport}
+        onClose={() => setShowImport(false)}
+        onImportComplete={onRefresh}
+      />
     </>
   );
 }

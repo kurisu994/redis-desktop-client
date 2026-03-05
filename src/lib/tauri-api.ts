@@ -198,6 +198,76 @@ function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
       } as T;
     }
 
+    // 服务器信息 mock
+    case "get_server_info":
+      return {
+        server: {
+          redis_version: "7.2.4",
+          redis_mode: "standalone",
+          os: "Darwin 23.4.0 arm64",
+          uptime_in_seconds: "86400",
+          uptime_in_days: "1",
+          tcp_port: "6379",
+        },
+        clients: {
+          connected_clients: "5",
+          blocked_clients: "0",
+          maxclients: "10000",
+        },
+        memory: {
+          used_memory_human: "2.50M",
+          used_memory_peak_human: "3.10M",
+          maxmemory_human: "0B",
+          mem_fragmentation_ratio: "1.05",
+          used_memory: "2621440",
+          used_memory_peak: "3250585",
+        },
+        stats: {
+          total_connections_received: "120",
+          total_commands_processed: "5430",
+          instantaneous_ops_per_sec: "12",
+          keyspace_hits: "3200",
+          keyspace_misses: "450",
+        },
+        replication: {
+          role: "master",
+          connected_slaves: "0",
+        },
+        keyspace: {
+          db0: "keys=10,expires=2,avg_ttl=300000",
+          db1: "keys=3,expires=0,avg_ttl=0",
+        },
+      } as T;
+
+    // 慢查询 mock
+    case "get_slowlog":
+      return [
+        { id: 1, timestamp: 1709550000, duration_us: 15000, command: "KEYS *", client_addr: "127.0.0.1:52340" },
+        { id: 2, timestamp: 1709549900, duration_us: 8500, command: "SORT mylist", client_addr: "127.0.0.1:52341" },
+      ] as T;
+    case "reset_slowlog":
+    case "set_slowlog_threshold":
+      return undefined as T;
+
+    // Pub/Sub mock
+    case "publish_message":
+      return { receivers: 1 } as T;
+    case "subscribe_channels":
+      return undefined as T;
+
+    // Key 数据导入导出 mock
+    case "export_keys":
+      return JSON.stringify({
+        version: 1,
+        exported_at: new Date().toISOString(),
+        db: 0,
+        keys: [
+          { key: "test:key", key_type: "string", ttl: -1, value: "hello" },
+        ],
+      }) as T;
+    case "import_keys":
+      return { total: 1, imported: 1, skipped: 0, errors: [] } as T;
+
     default:
       throw new Error(`未知的 IPC 命令: ${cmd}`);
   }
@@ -573,4 +643,110 @@ export async function executeCommand(
   command: string
 ): Promise<CommandResult> {
   return invoke<CommandResult>("execute_command", { id, db, command });
+}
+
+// ============ 服务器信息与监控 API ============
+
+/** 服务器信息 — 分区结构化数据 */
+export type ServerInfo = Record<string, Record<string, string>>;
+
+/** 慢查询日志条目 */
+export interface SlowLogEntry {
+  id: number;
+  timestamp: number;
+  duration_us: number;
+  command: string;
+  client_addr: string;
+}
+
+/** 获取服务器 INFO 信息 */
+export async function getServerInfo(id: string): Promise<ServerInfo> {
+  return invoke<ServerInfo>("get_server_info", { id });
+}
+
+/** 获取慢查询日志 */
+export async function getSlowLog(
+  id: string,
+  count?: number
+): Promise<SlowLogEntry[]> {
+  return invoke<SlowLogEntry[]>("get_slowlog", { id, count: count ?? null });
+}
+
+/** 清空慢查询日志 */
+export async function resetSlowLog(id: string): Promise<void> {
+  return invoke("reset_slowlog", { id });
+}
+
+/** 设置慢查询阈值 (microseconds) */
+export async function setSlowLogThreshold(
+  id: string,
+  threshold: number
+): Promise<void> {
+  return invoke("set_slowlog_threshold", { id, threshold });
+}
+
+// ============ Pub/Sub API ============
+
+/** 发布消息结果 */
+export interface PublishResult {
+  receivers: number;
+}
+
+/** Pub/Sub 消息事件 */
+export interface PubSubMessage {
+  connection_id: string;
+  channel: string;
+  message: string;
+  timestamp: number;
+}
+
+/** 订阅频道 */
+export async function subscribeChannels(
+  id: string,
+  channels: string[]
+): Promise<void> {
+  return invoke("subscribe_channels", { id, channels });
+}
+
+/** 发布消息 */
+export async function publishMessage(
+  id: string,
+  channel: string,
+  message: string
+): Promise<PublishResult> {
+  return invoke<PublishResult>("publish_message", { id, channel, message });
+}
+
+// ============ Key 数据导入导出 API ============
+
+/** Key 导入结果 */
+export interface KeyImportResult {
+  total: number;
+  imported: number;
+  skipped: number;
+  errors: string[];
+}
+
+/** 导出 Key 数据为 JSON 字符串 */
+export async function exportKeys(
+  id: string,
+  db: number,
+  keys: string[]
+): Promise<string> {
+  return invoke<string>("export_keys", { id, db, keys });
+}
+
+/** 从 JSON 导入 Key 数据 */
+export async function importKeys(
+  id: string,
+  db: number,
+  json: string,
+  conflictStrategy: "skip" | "overwrite" | "rename"
+): Promise<KeyImportResult> {
+  return invoke<KeyImportResult>("import_keys", {
+    id,
+    db,
+    json,
+    conflict_strategy: conflictStrategy,
+  });
 }

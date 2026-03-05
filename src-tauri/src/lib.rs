@@ -10,6 +10,8 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -74,6 +76,17 @@ pub fn run() {
             commands::export::import_connections,
             // CLI 命令执行
             commands::cli::execute_command,
+            // 服务器信息与慢查询
+            commands::server::get_server_info,
+            commands::server::get_slowlog,
+            commands::server::reset_slowlog,
+            commands::server::set_slowlog_threshold,
+            // Pub/Sub
+            commands::pubsub::publish_message,
+            commands::pubsub::subscribe_channels,
+            // Key 数据导入导出
+            commands::data::export_keys,
+            commands::data::import_keys,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

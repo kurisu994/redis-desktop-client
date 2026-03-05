@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 /** 主内容区视图模式 */
-export type MainView = "browser" | "cli";
+export type MainView = "browser" | "cli" | "monitor" | "pubsub";
 
 interface AppState {
   /** 侧边栏是否折叠 */

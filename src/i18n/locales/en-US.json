@@ -151,11 +151,61 @@
     "title": "Monitor",
     "serverInfo": "Server Info",
     "slowLog": "Slow Log",
-    "realtime": "Realtime"
+    "realtime": "Realtime",
+    "interval": "Refresh Interval",
+    "pause": "Pause",
+    "resume": "Resume",
+    "loading": "Loading...",
+    "noData": "No data available",
+    "version": "Version",
+    "uptime": "Uptime",
+    "days": "days",
+    "hours": "hours",
+    "usedMemory": "Used Memory",
+    "clients": "Clients",
+    "totalKeys": "Total Keys",
+    "opsPerSec": "Ops/sec",
+    "memoryMB": "Memory (MB)",
+    "connectedClients": "Connected Clients",
+    "hitRate": "Hit Rate (%)",
+    "waitingData": "Waiting for data...",
+    "resetSlowLog": "Reset",
+    "noSlowLog": "No slow queries found",
+    "timestamp": "Time",
+    "duration": "Duration (µs)",
+    "command": "Command",
+    "clientAddr": "Client Address",
+    "sectionServer": "Server",
+    "sectionClients": "Clients",
+    "sectionMemory": "Memory",
+    "sectionStats": "Stats",
+    "sectionReplication": "Replication",
+    "sectionKeyspace": "Keyspace"
   },
   "pubsub": {
     "title": "Pub/Sub",
     "subscribe": "Subscribe",
-    "publish": "Publish"
+    "publish": "Publish",
+    "channelPlaceholder": "Enter channel name (supports * wildcard)",
+    "publishChannelPlaceholder": "Target channel",
+    "messagePlaceholder": "Enter message content",
+    "noMessages": "No messages yet",
+    "subscribedChannels": "Subscribed",
+    "subscribeSuccess": "Subscribed to channel {{channel}}",
+    "publishSuccess": "Message sent, {{receivers}} receiver(s)",
+    "clearMessages": "Clear Messages",
+    "filterPlaceholder": "Filter messages (channel or content)"
+  },
+  "dataExport": {
+    "title": "Export Key Data",
+    "pattern": "Pattern",
+    "matchCount": "{{count}} keys matched",
+    "exportSuccess": "Export successful"
+  },
+  "dataImport": {
+    "title": "Import Key Data",
+    "selectFile": "Select File",
+    "keys": "keys",
+    "importSuccess": "Import complete: {{imported}} imported, {{skipped}} skipped, {{total}} total"
   }
 }
