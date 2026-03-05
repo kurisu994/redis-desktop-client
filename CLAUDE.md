@@ -41,7 +41,11 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 所有 Tauri 后端调用都通过此文件封装。在浏览器（`just dev-web`）环境中自动走 mock 实现，Tauri 环境中调用真实后端。新增后端命令时需同步在此文件添加函数和 mock 实现。
 
 **组件（`src/components/`）**
-按功能模块组织：`browser/`（数据浏览器相关）、`cli/`（CLI 终端）、`connection/`（连接对话框）、`layout/`（布局组件，含 `tab-bar.tsx` Tab 页签栏）、`monitor/`（服务器监控）、`pubsub/`（发布订阅）。
+按功能模块组织：`browser/`（数据浏览器：key-list、key-tree、key-detail、value-viewer、export-dialog、import-dialog 等 11 个文件）、`cli/`（CLI 终端）、`connection/`（连接对话框）、`layout/`（布局组件：title-bar、sidebar、tab-bar、settings-page、welcome-page、language-switcher）、`monitor/`（服务器监控：server-info、realtime-charts、slow-log、monitor-page）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件，17 个）。
+全局组件：`providers.tsx`（NextThemes + TooltipProvider + Toaster）、`error-boundary.tsx`、`confirm-danger-dialog.tsx`。
+
+**Hooks（`src/hooks/`）**
+- `use-global-shortcuts.ts`：注册全局快捷键（⌘N/T/F/R/,）
 
 **国际化（`src/i18n/`）**
 翻译文件：`src/i18n/locales/en-US.json` 和 `zh-CN.json`，按功能模块分 key（两层嵌套）。修改 UI 文案后运行 `just i18n-check` 确认 key 同步。
@@ -51,6 +55,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 - `lib.rs`：Tauri 入口，注册所有 Tauri Commands 和全局状态（`ConnectionStore`、`RedisClientManager`）
 - `commands/`：Tauri Command 处理器，按功能分文件（`connection.rs`、`keys.rs`、`values.rs`、`export.rs`、`cli.rs`、`server.rs`、`pubsub.rs`、`data.rs`）
 - `redis/client.rs`：`RedisClientManager`，基于 `HashMap<String, MultiplexedConnection>` + `Mutex` 管理多连接生命周期，支持 TLS（`rediss://`）
+- `redis/types.rs`：数据类型定义（`RedisValueType` 枚举、`IpcResponse<T>` 统一响应结构）
 - `config/store.rs`：`ConnectionStore`，负责连接配置的持久化（`connections.json`），密码使用 AES-256-GCM 加密。`StoredConnection` 含 SSH/TLS/Sentinel/Cluster 高级连接字段
 - `config/encryption.rs`：加密工具，Master Key 自动生成并持久化到 `app_data_dir/master-key`
 
@@ -63,5 +68,6 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 - Phase 1-4（基础框架、连接管理、数据浏览、CLI 控制台）✅ 已完成
 - Phase 5（高级功能：服务器监控、慢查询、Pub/Sub、数据导入导出）✅ 已完成
 - Phase 6（高级连接 & 完善：SSH/TLS/Sentinel/Cluster UI、连接导入导出、设置页、快捷键、错误边界）✅ 已完成
+  - 🔲 待办：SSH 隧道后端（Rust russh 库）、自动更新集成、macOS/Windows 签名
 
 详见 `docs/DEVELOPMENT_PLAN.md`。

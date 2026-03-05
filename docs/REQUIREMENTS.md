@@ -269,28 +269,29 @@
 ```
 src/
 ├── app/                    # Next.js App Router
-│   ├── layout.tsx          # 根布局
-│   ├── page.tsx            # 主页（连接管理）
-│   ├── connection/
-│   │   └── [id]/           # 连接详情页
-│   │       ├── browser/    # 数据浏览器
-│   │       ├── cli/        # CLI 控制台
-│   │       ├── monitor/    # 服务器监控
-│   │       └── pubsub/     # 发布订阅
-│   └── settings/           # 设置页面
-├── components/             # 通用组件
-│   ├── connection/         # 连接相关组件
+│   ├── layout.tsx          # 根布局（Geist 字体、Metadata）
+│   ├── page.tsx            # 主页面（TitleBar + Sidebar + TabBar + Main）
+│   └── globals.css         # Tailwind v4 + shadcn/ui 主题变量
+├── components/             # React 组件
+│   ├── providers.tsx       # 全局 Provider（主题 + Tooltip + Toast + i18n）
+│   ├── error-boundary.tsx  # 错误边界组件
+│   ├── confirm-danger-dialog.tsx # 敏感操作确认对话框
+│   ├── ui/                 # shadcn/ui 基础组件
+│   ├── layout/             # 布局组件（TitleBar, Sidebar, TabBar, Settings 等）
 │   ├── browser/            # 数据浏览器组件
-│   ├── editor/             # 值编辑器组件
-│   ├── cli/                # CLI 组件
-│   └── common/             # 公共组件
-├── hooks/                  # 自定义 Hooks
-├── stores/                 # Zustand Store
+│   ├── cli/                # CLI 终端组件
+│   ├── connection/         # 连接对话框组件
+│   ├── monitor/            # 服务器监控组件
+│   └── pubsub/             # 发布订阅组件
+├── hooks/                  # 自定义 Hooks（全局快捷键等）
 ├── lib/                    # 工具函数
-│   ├── tauri.ts            # Tauri IPC 封装
-│   └── redis-types.ts      # 类型定义
+│   ├── tauri-api.ts        # Tauri IPC 封装（含浏览器环境 mock）
+│   └── utils.ts            # 通用工具（cn 函数等）
+├── stores/                 # Zustand Store（按功能领域拆分）
 ├── i18n/                   # 国际化资源
-└── styles/                 # 全局样式
+│   ├── index.ts            # i18next 配置
+│   └── locales/            # 翻译文件（en-US.json, zh-CN.json）
+└── types/                  # 类型定义（预留）
 ```
 
 ### 4.2 后端目录结构 (Rust)
@@ -299,21 +300,22 @@ src/
 src-tauri/
 ├── src/
 │   ├── main.rs             # 应用入口
-│   ├── lib.rs              # 库入口
+│   ├── lib.rs              # 库入口（插件注册、Command 注册）
 │   ├── commands/           # Tauri 命令
 │   │   ├── connection.rs   # 连接管理命令
 │   │   ├── keys.rs         # Key 操作命令
 │   │   ├── values.rs       # 值操作命令
 │   │   ├── server.rs       # 服务器信息命令
 │   │   ├── cli.rs          # CLI 命令
-│   │   └── pubsub.rs       # Pub/Sub 命令
+│   │   ├── pubsub.rs       # Pub/Sub 命令
+│   │   ├── data.rs         # Key 数据导入/导出命令
+│   │   └── export.rs       # 连接配置导入/导出命令
 │   ├── redis/              # Redis 操作封装
-│   │   ├── client.rs       # Redis 客户端管理
-│   │   ├── pool.rs         # 连接池
+│   │   ├── client.rs       # Redis 客户端管理（连接池）
 │   │   └── types.rs        # 数据类型定义
-│   ├── ssh/                # SSH 隧道
-│   ├── crypto/             # 加密模块
 │   └── config/             # 配置管理
+│       ├── store.rs        # 连接配置持久化（AES-256-GCM 加密）
+│       └── encryption.rs   # 加密模块
 ├── Cargo.toml
 └── tauri.conf.json
 ```

@@ -449,13 +449,14 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 ### 交付物
 
-- ✅ SSH 隧道 / SSL/TLS / Sentinel / Cluster 全连接方式支持
+- ✅ SSH/TLS/Sentinel/Cluster UI 配置表单 + TLS 后端支持（`rediss://`）
+- 🔲 SSH 隧道后端实现（Rust `russh` 库）
 - ✅ 连接配置导入/导出
 - ✅ 中英文国际化
 - ✅ 全局快捷键 + Toast + 错误边界 + 设置页面
-- ✅ 应用内自动更新（检查 + 下载 + 安装）
-- ✅ GitHub Actions Release 流水线（Tag → 三平台构建 → 签名 → 发布）
-- ✅ 三平台安装包（macOS `.dmg` / Windows `.msi` / Linux `.deb` `.AppImage`）
+- 🔲 应用内自动更新（Tauri Updater Plugin 未集成）
+- ✅ GitHub Actions Release 流水线（Tag → 三平台构建 → 发布）
+- 🔲 macOS / Windows 代码签名（需配置证书）
 - ✅ 自动生成 Changelog + 版本号统一管理
 
 ---

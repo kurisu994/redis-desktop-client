@@ -66,19 +66,28 @@ just build-web
 
 ```
 src/                        # 前端源码
-├── app/                    # Next.js App Router
+├── app/                    # Next.js App Router（layout, page, globals.css）
 ├── components/             # React 组件
-│   ├── providers.tsx       # 全局 Provider
-│   └── layout/             # 布局组件（含 Tab 页签栏）
-├── stores/                 # Zustand 状态仓库
+│   ├── providers.tsx       # 全局 Provider（主题 + Tooltip + Toast + i18n）
+│   ├── error-boundary.tsx  # 错误边界
+│   ├── ui/                 # shadcn/ui 基础组件（17 个）
+│   ├── layout/             # 布局组件（TitleBar, Sidebar, TabBar, Settings 等）
+│   ├── browser/            # 数据浏览器（key-list, key-tree, value-viewer 等）
+│   ├── cli/                # CLI 终端
+│   ├── connection/         # 连接对话框
+│   ├── monitor/            # 服务器监控（INFO, 实时图表, 慢查询）
+│   └── pubsub/             # 发布订阅
+├── hooks/                  # 自定义 Hooks（全局快捷键等）
+├── lib/                    # 工具函数（Tauri IPC 封装 + cn 工具）
+├── stores/                 # Zustand 状态仓库（app, connection, browser, cli, monitor, pubsub）
 └── i18n/                   # 国际化配置与翻译文件
 
 src-tauri/                  # Rust 后端
 ├── src/
 │   ├── lib.rs              # Tauri 入口
-│   ├── commands/           # Tauri Command 处理器
-│   ├── redis/              # Redis 客户端封装
-│   └── config/             # 配置管理
+│   ├── commands/           # Tauri Command（connection, keys, values, cli, server, pubsub, data, export）
+│   ├── redis/              # Redis 客户端封装（client, types）
+│   └── config/             # 配置管理（store, encryption）
 └── tauri.conf.json         # Tauri 配置
 
 docs/                       # 项目文档
