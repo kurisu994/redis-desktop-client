@@ -21,7 +21,6 @@ export function PubSubPage() {
     filterKeyword,
     addChannel,
     removeChannel,
-    addMessage,
     clearMessages,
     setPaused,
     setFilterKeyword,
