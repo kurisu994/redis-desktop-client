@@ -30,19 +30,20 @@ trigger: always_on
 src/
 ├── app/                    # Next.js App Router
 │   ├── layout.tsx         # 根布局（Geist 字体、Metadata）
-│   ├── page.tsx           # 主页面（TitleBar + Sidebar + Main + StatusBar）
+│   ├── page.tsx           # 主页面（TitleBar + Sidebar + TabBar + Main + StatusBar）
 │   ├── globals.css        # Tailwind v4 + HeroUI 插件入口
 │   └── hero.ts            # HeroUI Tailwind v4 插件导出
 ├── components/
 │   ├── providers.tsx      # 全局 Provider（HeroUI + 主题 + i18n）
 │   └── layout/            # 布局组件
 │       ├── title-bar.tsx       # 顶部标题栏（Logo + 主题切换 + 语言切换 + 设置）
-│       ├── sidebar.tsx         # 左侧边栏（连接列表）
+│       ├── sidebar.tsx         # 左侧边栏（连接列表 + 底部导航按钮）
+│       ├── tab-bar.tsx         # Tab 页签栏（切换/关闭 Tab）
 │       ├── status-bar.tsx      # 底部状态栏
 │       ├── welcome-page.tsx    # 欢迎页（空状态）
 │       └── language-switcher.tsx # 语言切换组件
 ├── stores/                # Zustand 状态仓库
-│   ├── app-store.ts      # 应用 UI 状态（侧边栏折叠等）
+│   ├── app-store.ts      # 应用 UI 状态（侧边栏折叠、Tab 页签管理）
 │   └── connection-store.ts # Redis 连接管理
 └── i18n/
     ├── index.ts           # i18next 配置

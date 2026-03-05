@@ -69,7 +69,7 @@ src/                        # 前端源码
 ├── app/                    # Next.js App Router
 ├── components/             # React 组件
 │   ├── providers.tsx       # 全局 Provider
-│   └── layout/             # 布局组件
+│   └── layout/             # 布局组件（含 Tab 页签栏）
 ├── stores/                 # Zustand 状态仓库
 └── i18n/                   # 国际化配置与翻译文件
 

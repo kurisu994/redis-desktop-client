@@ -27,10 +27,10 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 
 ### 前端结构
 
-应用为单页面（`src/app/page.tsx`），布局为：`TitleBar` + `Sidebar` + 主内容区（`DataBrowser` / `CliConsole` / `MonitorPage` / `PubSubPage` / `SettingsPage` / `WelcomePage`）+ `StatusBar`，加上全局浮层 `ConnectionDialog`、`ErrorBoundary` 错误边界包裹主内容区。
+应用为单页面（`src/app/page.tsx`），布局为：`TitleBar` + `Sidebar` + `TabBar` + 主内容区（`DataBrowser` / `CliConsole` / `MonitorPage` / `PubSubPage` / `SettingsPage` / `WelcomePage`）+ `StatusBar`，加上全局浮层 `ConnectionDialog`、`ErrorBoundary` 错误边界包裹主内容区。主内容区采用 Tab 页签管理，browser Tab 始终存在不可关闭，其余 Tab 可通过侧边栏按钮打开、通过 × 按钮关闭。
 
 **State（`src/stores/`）**
-- `app-store.ts`：全局 UI 状态（侧边栏折叠、主视图模式 browser/cli/monitor/pubsub/settings、键分隔符）
+- `app-store.ts`：全局 UI 状态（侧边栏折叠、Tab 页签管理 — tabs/activeTabId/openTab/closeTab/activateTab、键分隔符）
 - `connection-store.ts`：连接配置列表（含 SSH/TLS/Sentinel/Cluster 字段）、活跃连接、连接状态、对话框状态
 - `browser-store.ts`：数据浏览器状态（Key 列表、SCAN 游标、选中 Key、DB 切换、视图模式、刷新版本号）
 - `cli-store.ts`：CLI 控制台状态（多 Tab 管理、命令历史、输出日志）
@@ -41,7 +41,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 所有 Tauri 后端调用都通过此文件封装。在浏览器（`just dev-web`）环境中自动走 mock 实现，Tauri 环境中调用真实后端。新增后端命令时需同步在此文件添加函数和 mock 实现。
 
 **组件（`src/components/`）**
-按功能模块组织：`browser/`（数据浏览器相关）、`cli/`（CLI 终端）、`connection/`（连接对话框）、`layout/`（布局组件）、`monitor/`（服务器监控）、`pubsub/`（发布订阅）。
+按功能模块组织：`browser/`（数据浏览器相关）、`cli/`（CLI 终端）、`connection/`（连接对话框）、`layout/`（布局组件，含 `tab-bar.tsx` Tab 页签栏）、`monitor/`（服务器监控）、`pubsub/`（发布订阅）。
 
 **国际化（`src/i18n/`）**
 翻译文件：`src/i18n/locales/en-US.json` 和 `zh-CN.json`，按功能模块分 key（两层嵌套）。修改 UI 文案后运行 `just i18n-check` 确认 key 同步。
