@@ -60,7 +60,6 @@ export function ConnectionDialog() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [db, setDb] = useState("0");
-  const [group, setGroup] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [testState, setTestState] = useState<TestState>({ status: "idle" });
   const [saving, setSaving] = useState(false);
@@ -99,7 +98,6 @@ export function ConnectionDialog() {
       setUsername(editingConnection.username || "");
       setPassword(editingConnection.password || "");
       setDb(String(editingConnection.db));
-      setGroup(editingConnection.group || "");
       setConnectionType(editingConnection.connectionType || "standalone");
       setSsh(editingConnection.ssh ? { ...editingConnection.ssh } : { ...defaultSsh });
       setTls(editingConnection.tls ? { ...editingConnection.tls } : { ...defaultTls });
@@ -124,7 +122,6 @@ export function ConnectionDialog() {
       setUsername("");
       setPassword("");
       setDb("0");
-      setGroup("");
       setConnectionType("standalone");
       setSsh({ ...defaultSsh });
       setTls({ ...defaultTls });
@@ -152,7 +149,6 @@ export function ConnectionDialog() {
       username: username || undefined,
       password: password || undefined,
       db: parseInt(db, 10),
-      group: group || undefined,
       connectionType,
     };
     if (ssh.enabled) config.ssh = ssh;
@@ -176,7 +172,6 @@ export function ConnectionDialog() {
     username,
     password,
     db,
-    group,
     connectionType,
     ssh,
     tls,
@@ -248,20 +243,13 @@ export function ConnectionDialog() {
             {/* ========== 常规 Tab ========== */}
             <TabsContent value="general">
               <div className="flex flex-col gap-4 pt-2">
-                <div className="flex gap-3">
-                  <div className="space-y-2 flex-[2]">
-                    <Label>{t("connection.name")}</Label>
-                    <Input
-                      placeholder={t("connection.namePlaceholder")}
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </div>
-                  {/* 分组选择 */}
-                  <div className="space-y-2 flex-1">
-                    <Label>{t("connection.group")}</Label>
-                    <GroupInput value={group} onChange={setGroup} />
-                  </div>
+                <div className="space-y-2">
+                  <Label>{t("connection.name")}</Label>
+                  <Input
+                    placeholder={t("connection.namePlaceholder")}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
                 </div>
                 {/* 连接类型选择 */}
                 <div className="space-y-2">
@@ -709,29 +697,6 @@ function ClusterForm({
         <Label>{t("connection.password")}</Label>
         <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" />
       </div>
-    </>
-  );
-}
-
-/** 分组输入组件 — 支持从已有分组选择或新建 */
-function GroupInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const { t } = useTranslation();
-  const { getGroups } = useConnectionStore();
-  const existingGroups = getGroups();
-
-  return (
-    <>
-      <Input
-        list="connection-groups"
-        placeholder={t("connection.groupPlaceholder")}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <datalist id="connection-groups">
-        {existingGroups.map((g) => (
-          <option key={g} value={g} />
-        ))}
-      </datalist>
     </>
   );
 }
