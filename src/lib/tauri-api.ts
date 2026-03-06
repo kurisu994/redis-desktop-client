@@ -60,7 +60,7 @@ function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
       return undefined as T;
     }
     case "reorder_connections": {
-      const orderedIds = args?.ordered_ids as string[];
+      const orderedIds = args?.orderedIds as string[];
       const reordered: ConnectionConfig[] = [];
       for (const id of orderedIds) {
         const conn = mockConnections.find((c) => c.id === id);
