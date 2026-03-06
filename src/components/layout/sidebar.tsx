@@ -388,27 +388,19 @@ export function Sidebar() {
     [dragId, connections, setConnections, handleDragEnd],
   );
 
-  /** 容器级拖放 — 拖到列表空白区域时根据位置移到首/尾 */
+  /** 容器级拖放 — 拖到连接列表下方空白区域时移到末尾 */
   const handleContainerDragOver = useCallback(
     (e: React.DragEvent) => {
       if (!dragId || connections.length === 0) return;
+      // 只在鼠标处于连接项之下的空白区域时触发
+      const target = e.target as HTMLElement;
+      if (target !== e.currentTarget) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
-      // 判断鼠标在容器上半还是下半，决定高亮首/尾
-      const rect = e.currentTarget.getBoundingClientRect();
-      const midY = rect.top + rect.height / 2;
-      if (e.clientY < midY) {
-        const first = connections[0];
-        if (first.id !== dragId) {
-          setDragOverId(first.id);
-          setDragOverPos("above");
-        }
-      } else {
-        const last = connections[connections.length - 1];
-        if (last.id !== dragId) {
-          setDragOverId(last.id);
-          setDragOverPos("below");
-        }
+      const last = connections[connections.length - 1];
+      if (last.id !== dragId) {
+        setDragOverId(last.id);
+        setDragOverPos("below");
       }
     },
     [dragId, connections],
@@ -416,6 +408,8 @@ export function Sidebar() {
 
   const handleContainerDrop = useCallback(
     async (e: React.DragEvent) => {
+      const target = e.target as HTMLElement;
+      if (target !== e.currentTarget) return;
       e.preventDefault();
       if (!dragId) {
         handleDragEnd();
@@ -427,15 +421,46 @@ export function Sidebar() {
         handleDragEnd();
         return;
       }
-      // 判断插入首还是尾
-      const rect = e.currentTarget.getBoundingClientRect();
-      const midY = rect.top + rect.height / 2;
       const [moved] = list.splice(fromIdx, 1);
-      if (e.clientY < midY) {
-        list.unshift(moved);
-      } else {
-        list.push(moved);
+      list.push(moved);
+      setConnections(list);
+      handleDragEnd();
+      const orderedIds = list.map((c) => c.id);
+      await reorderConnections(orderedIds).catch(console.error);
+    },
+    [dragId, connections, setConnections, handleDragEnd],
+  );
+
+  /** 上方区域拖放 — 拖到新建按钮区域时移到首部 */
+  const handleTopDragOver = useCallback(
+    (e: React.DragEvent) => {
+      if (!dragId || connections.length === 0) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const first = connections[0];
+      if (first.id !== dragId) {
+        setDragOverId(first.id);
+        setDragOverPos("above");
       }
+    },
+    [dragId, connections],
+  );
+
+  const handleTopDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!dragId) {
+        handleDragEnd();
+        return;
+      }
+      const list = [...connections];
+      const fromIdx = list.findIndex((c) => c.id === dragId);
+      if (fromIdx < 0 || fromIdx === 0) {
+        handleDragEnd();
+        return;
+      }
+      const [moved] = list.splice(fromIdx, 1);
+      list.unshift(moved);
       setConnections(list);
       handleDragEnd();
       const orderedIds = list.map((c) => c.id);
@@ -495,7 +520,7 @@ export function Sidebar() {
       </div>
 
       {/* 新建连接按钮 */}
-      <div className="p-2">
+      <div className="p-2" onDragOver={handleTopDragOver} onDrop={handleTopDrop}>
         <Button className="w-full" size="sm" onClick={() => openDialog()}>
           <Plus size={14} />
           {t("connection.new")}
