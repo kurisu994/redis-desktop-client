@@ -303,7 +303,7 @@ export async function deleteConnection(id: string): Promise<void> {
 
 /** 重新排序连接列表 */
 export async function reorderConnections(orderedIds: string[]): Promise<void> {
-  return invoke("reorder_connections", { ordered_ids: orderedIds });
+  return invoke("reorder_connections", { orderedIds: orderedIds });
 }
 
 /** 测试连接 */

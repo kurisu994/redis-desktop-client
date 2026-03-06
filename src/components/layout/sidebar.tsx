@@ -388,6 +388,44 @@ export function Sidebar() {
     [dragId, connections, setConnections, handleDragEnd],
   );
 
+  /** 容器级拖放 — 拖到列表空白区域时移到末尾 */
+  const handleContainerDragOver = useCallback(
+    (e: React.DragEvent) => {
+      if (!dragId) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const last = connections[connections.length - 1];
+      if (last && last.id !== dragId) {
+        setDragOverId(last.id);
+        setDragOverPos("below");
+      }
+    },
+    [dragId, connections],
+  );
+
+  const handleContainerDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!dragId) {
+        handleDragEnd();
+        return;
+      }
+      const list = [...connections];
+      const fromIdx = list.findIndex((c) => c.id === dragId);
+      if (fromIdx < 0 || fromIdx === list.length - 1) {
+        handleDragEnd();
+        return;
+      }
+      const [moved] = list.splice(fromIdx, 1);
+      list.push(moved);
+      setConnections(list);
+      handleDragEnd();
+      const orderedIds = list.map((c) => c.id);
+      await reorderConnections(orderedIds).catch(console.error);
+    },
+    [dragId, connections, setConnections, handleDragEnd],
+  );
+
   /** 为每个连接生成拖拽 props */
   const getDragProps = useCallback(
     (connId: string): DragProps => ({
@@ -447,7 +485,11 @@ export function Sidebar() {
       </div>
 
       {/* 连接列表 */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2">
+      <div
+        className="flex-1 overflow-y-auto px-2 pb-2"
+        onDragOver={handleContainerDragOver}
+        onDrop={handleContainerDrop}
+      >
         {connections.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-xs text-center px-4">
             <Database size={16} />
