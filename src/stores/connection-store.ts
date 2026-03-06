@@ -89,6 +89,8 @@ interface ConnectionState {
   isDialogOpen: boolean;
   /** 正在编辑的连接（null 为新建模式） */
   editingConnection: ConnectionConfig | null;
+  /** 折叠的分组集合 */
+  collapsedGroups: Set<string>;
 
   setConnections: (connections: ConnectionConfig[]) => void;
   addConnection: (connection: ConnectionConfig) => void;
@@ -99,16 +101,20 @@ interface ConnectionState {
   setConnectionError: (id: string, error: string | null) => void;
   openDialog: (connection?: ConnectionConfig) => void;
   closeDialog: () => void;
+  toggleGroupCollapse: (group: string) => void;
+  /** 获取所有已使用的分组名 */
+  getGroups: () => string[];
 }
 
 /** 连接管理 Store */
-export const useConnectionStore = create<ConnectionState>((set) => ({
+export const useConnectionStore = create<ConnectionState>((set, get) => ({
   connections: [],
   activeConnectionId: null,
   connectionStatus: {},
   connectionErrors: {},
   isDialogOpen: false,
   editingConnection: null,
+  collapsedGroups: new Set<string>(),
 
   setConnections: (connections) => set({ connections }),
   addConnection: (connection) =>
@@ -141,4 +147,22 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
   openDialog: (connection) =>
     set({ isDialogOpen: true, editingConnection: connection ?? null }),
   closeDialog: () => set({ isDialogOpen: false, editingConnection: null }),
+  toggleGroupCollapse: (group) =>
+    set((state) => {
+      const next = new Set(state.collapsedGroups);
+      if (next.has(group)) {
+        next.delete(group);
+      } else {
+        next.add(group);
+      }
+      return { collapsedGroups: next };
+    }),
+  getGroups: () => {
+    const { connections } = get();
+    const groups = new Set<string>();
+    connections.forEach((c) => {
+      if (c.group) groups.add(c.group);
+    });
+    return Array.from(groups).sort();
+  },
 }));

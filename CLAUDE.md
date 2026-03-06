@@ -31,7 +31,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 
 **State（`src/stores/`）**
 - `app-store.ts`：全局 UI 状态（侧边栏折叠、Tab 页签管理 — tabs/activeTabId/openTab/closeTab/activateTab、键分隔符）
-- `connection-store.ts`：连接配置列表（含 SSH/TLS/Sentinel/Cluster 字段）、活跃连接、连接状态、对话框状态
+- `connection-store.ts`：连接配置列表（含 SSH/TLS/Sentinel/Cluster 字段）、活跃连接、连接状态、对话框状态、分组折叠状态
 - `browser-store.ts`：数据浏览器状态（Key 列表、SCAN 游标、选中 Key、DB 切换、视图模式、刷新版本号）
 - `cli-store.ts`：CLI 控制台状态（多 Tab 管理、命令历史、输出日志）
 - `monitor-store.ts`：服务器监控状态（INFO 数据、实时图表快照、慢查询日志、刷新间隔）
