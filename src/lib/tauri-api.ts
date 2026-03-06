@@ -59,6 +59,17 @@ function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
       if (pos >= 0) mockConnections.splice(pos, 1);
       return undefined as T;
     }
+    case "reorder_connections": {
+      const orderedIds = args?.ordered_ids as string[];
+      const reordered: ConnectionConfig[] = [];
+      for (const id of orderedIds) {
+        const conn = mockConnections.find((c) => c.id === id);
+        if (conn) reordered.push(conn);
+      }
+      mockConnections.length = 0;
+      mockConnections.push(...reordered);
+      return undefined as T;
+    }
     case "test_connection":
       return {
         success: true,
@@ -288,6 +299,11 @@ export async function saveConnection(config: ConnectionConfig): Promise<void> {
 /** 删除连接配置 */
 export async function deleteConnection(id: string): Promise<void> {
   return invoke("delete_connection", { id });
+}
+
+/** 重新排序连接列表 */
+export async function reorderConnections(orderedIds: string[]): Promise<void> {
+  return invoke("reorder_connections", { ordered_ids: orderedIds });
 }
 
 /** 测试连接 */

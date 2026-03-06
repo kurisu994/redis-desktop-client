@@ -169,4 +169,22 @@ impl ConnectionStore {
         connections.retain(|c| c.id != id);
         self.save_connections(&connections)
     }
+
+    /// 重新排序连接 — 按给定的 ID 列表顺序重排持久化
+    pub fn reorder_connections(&self, ordered_ids: &[String]) -> Result<(), String> {
+        let connections = self.load_connections()?;
+        let mut reordered: Vec<StoredConnection> = Vec::with_capacity(connections.len());
+        for id in ordered_ids {
+            if let Some(conn) = connections.iter().find(|c| c.id == *id) {
+                reordered.push(conn.clone());
+            }
+        }
+        // 追加不在列表中的连接（安全兜底）
+        for conn in &connections {
+            if !ordered_ids.contains(&conn.id) {
+                reordered.push(conn.clone());
+            }
+        }
+        self.save_connections(&reordered)
+    }
 }

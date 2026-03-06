@@ -43,6 +43,7 @@ pub fn run() {
             commands::connection::list_connections,
             commands::connection::connect_redis,
             commands::connection::disconnect_redis,
+            commands::connection::reorder_connections,
             // Key 浏览与管理
             commands::keys::scan_keys,
             commands::keys::get_db_info,

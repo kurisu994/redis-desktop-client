@@ -19,6 +19,7 @@ import {
   deleteConnection as deleteConnectionApi,
   saveConnection,
   getDbInfo,
+  reorderConnections,
 } from "@/lib/tauri-api";
 
 /** 右键菜单 */
@@ -29,8 +30,18 @@ interface ContextMenuState {
   connectionId: string | null;
 }
 
+/** 拖拽相关 props */
+interface DragProps {
+  onDragStart: (e: React.DragEvent, id: string) => void;
+  onDragOver: (e: React.DragEvent, id: string) => void;
+  onDragEnd: () => void;
+  onDrop: (e: React.DragEvent, id: string) => void;
+  isDragOver: boolean;
+  dragOverPosition: "above" | "below" | null;
+}
+
 /** 连接列表项组件 */
-function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
+function ConnectionItem({ connection, dragProps }: { connection: ConnectionConfig; dragProps: DragProps }) {
   const { t } = useTranslation();
   const { connectionStatus, activeConnectionId, setActiveConnection, setConnectionStatus, setConnections, openDialog } =
     useConnectionStore();
@@ -148,31 +159,40 @@ function ConnectionItem({ connection }: { connection: ConnectionConfig }) {
 
   return (
     <>
-      <button
-        className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm transition-colors ${
-          isActive
-            ? "bg-primary/10 text-primary"
-            : "hover:bg-accent"
-        }`}
-        onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
-        onContextMenu={handleContextMenu}
+      <div
+        className={`relative ${dragProps.isDragOver && dragProps.dragOverPosition === "above" ? "before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-primary before:rounded-full" : ""} ${dragProps.isDragOver && dragProps.dragOverPosition === "below" ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full" : ""}`}
+        draggable
+        onDragStart={(e) => dragProps.onDragStart(e, connection.id)}
+        onDragOver={(e) => dragProps.onDragOver(e, connection.id)}
+        onDragEnd={dragProps.onDragEnd}
+        onDrop={(e) => dragProps.onDrop(e, connection.id)}
       >
-        {/* 状态指示器 */}
-        <span
-          className={`w-2 h-2 rounded-full shrink-0 ${
-            status === "connected"
-              ? "bg-green-500"
-              : status === "connecting"
-                ? "bg-yellow-500 animate-pulse"
-                : "bg-muted-foreground/30"
+        <button
+          className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm transition-colors ${
+            isActive
+              ? "bg-primary/10 text-primary"
+              : "hover:bg-accent"
           }`}
-        />
-        <span className="truncate flex-1 text-left">{connection.name || `${connection.host}:${connection.port}`}</span>
-        <span className="text-muted-foreground text-xs shrink-0">
-          {connection.host}:{connection.port}
-        </span>
-      </button>
+          onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
+          onContextMenu={handleContextMenu}
+        >
+          {/* 状态指示器 */}
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              status === "connected"
+                ? "bg-green-500"
+                : status === "connecting"
+                  ? "bg-yellow-500 animate-pulse"
+                  : "bg-muted-foreground/30"
+            }`}
+          />
+          <span className="truncate flex-1 text-left">{connection.name || `${connection.host}:${connection.port}`}</span>
+          <span className="text-muted-foreground text-xs shrink-0">
+            {connection.host}:{connection.port}
+          </span>
+        </button>
+      </div>
 
       {/* 已连接时显示 db 子列表 */}
       {isConnected && (
@@ -299,10 +319,87 @@ export function Sidebar() {
   const [showExport, setShowExport] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
+  /** 拖拽状态 */
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dragOverPos, setDragOverPos] = useState<"above" | "below" | null>(null);
+
   /** 初始化加载连接列表 */
   useEffect(() => {
     listConnections().then(setConnections).catch(console.error);
   }, [setConnections]);
+
+  /** 拖拽开始 */
+  const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
+    setDragId(id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", id);
+  }, []);
+
+  /** 拖拽经过 — 判断插入位置（上半部分 = above，下半部分 = below） */
+  const handleDragOver = useCallback((e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    setDragOverId(id);
+    setDragOverPos(e.clientY < midY ? "above" : "below");
+  }, []);
+
+  /** 拖拽结束 */
+  const handleDragEnd = useCallback(() => {
+    setDragId(null);
+    setDragOverId(null);
+    setDragOverPos(null);
+  }, []);
+
+  /** 放下 — 执行排序并持久化 */
+  const handleDrop = useCallback(
+    async (e: React.DragEvent, targetId: string) => {
+      e.preventDefault();
+      if (!dragId || dragId === targetId) {
+        handleDragEnd();
+        return;
+      }
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      const position = e.clientY < midY ? "above" : "below";
+
+      // 计算新顺序
+      const list = [...connections];
+      const fromIdx = list.findIndex((c) => c.id === dragId);
+      const toIdx = list.findIndex((c) => c.id === targetId);
+      if (fromIdx < 0 || toIdx < 0) {
+        handleDragEnd();
+        return;
+      }
+      const [moved] = list.splice(fromIdx, 1);
+      const insertIdx = position === "above" ? toIdx : toIdx + 1;
+      // fromIdx 被移除后 toIdx 可能需要调整
+      const adjustedIdx = fromIdx < toIdx ? insertIdx - 1 : insertIdx;
+      list.splice(adjustedIdx, 0, moved);
+
+      setConnections(list);
+      handleDragEnd();
+      // 持久化到后端
+      const orderedIds = list.map((c) => c.id);
+      await reorderConnections(orderedIds).catch(console.error);
+    },
+    [dragId, connections, setConnections, handleDragEnd],
+  );
+
+  /** 为每个连接生成拖拽 props */
+  const getDragProps = useCallback(
+    (connId: string): DragProps => ({
+      onDragStart: handleDragStart,
+      onDragOver: handleDragOver,
+      onDragEnd: handleDragEnd,
+      onDrop: handleDrop,
+      isDragOver: dragOverId === connId && dragId !== connId,
+      dragOverPosition: dragOverId === connId && dragId !== connId ? dragOverPos : null,
+    }),
+    [handleDragStart, handleDragOver, handleDragEnd, handleDrop, dragOverId, dragId, dragOverPos],
+  );
 
   if (sidebarCollapsed) {
     return (
@@ -360,7 +457,7 @@ export function Sidebar() {
         ) : (
           <div className="flex flex-col gap-0.5">
             {connections.map((conn) => (
-              <ConnectionItem key={conn.id} connection={conn} />
+              <ConnectionItem key={conn.id} connection={conn} dragProps={getDragProps(conn.id)} />
             ))}
           </div>
         )}

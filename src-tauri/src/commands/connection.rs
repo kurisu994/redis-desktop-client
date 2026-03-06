@@ -195,6 +195,15 @@ pub async fn test_connection(config: ConnectionConfig) -> Result<TestResult, Str
     }
 }
 
+/// 重新排序连接列表
+#[tauri::command]
+pub async fn reorder_connections(
+    store: State<'_, ConnectionStore>,
+    ordered_ids: Vec<String>,
+) -> Result<(), String> {
+    store.reorder_connections(&ordered_ids)
+}
+
 /// 构建 Redis URL
 fn build_url(
     scheme: &str,
