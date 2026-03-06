@@ -27,10 +27,10 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 
 ### 前端结构
 
-应用为单页面（`src/app/page.tsx`），布局为：`TitleBar` + `Sidebar` + `TabBar` + 主内容区（`DataBrowser` / `CliConsole` / `MonitorPage` / `PubSubPage` / `SettingsPage` / `WelcomePage`），加上全局浮层 `ConnectionDialog`、`ErrorBoundary` 错误边界包裹主内容区。主内容区采用 Tab 页签管理，browser Tab 始终存在不可关闭，其余 Tab 可通过侧边栏按钮打开、通过 × 按钮关闭。设置入口在顶部 TitleBar 右侧，GitHub 仓库链接也在 TitleBar 中（通过 `tauri-plugin-opener` 打开外部链接）。
+应用为单页面（`src/app/page.tsx`），布局为：`TitleBar` + `Sidebar` + `TabBar` + 主内容区（`DataBrowser` / `CliConsole` / `MonitorPage` / `PubSubPage` / `SettingsPage` / `WelcomePage`），加上全局浮层 `ConnectionDialog`、`ErrorBoundary` 错误边界包裹主内容区。主内容区采用 Tab 页签管理（`browser` / `cli` / `monitor` / `pubsub` / `settings`），browser Tab 始终存在不可关闭，其余 Tab 可通过侧边栏按钮打开、通过 × 按钮关闭。设置入口在顶部 TitleBar 右侧，GitHub 仓库链接也在 TitleBar 中（通过 `tauri-plugin-opener` 打开外部链接）。
 
 **State（`src/stores/`）**
-- `app-store.ts`：全局 UI 状态（侧边栏折叠、Tab 页签管理 — tabs/activeTabId/openTab/closeTab/activateTab、键分隔符）
+- `app-store.ts`：全局 UI 状态（侧边栏折叠、Tab 页签管理 — tabs/activeTabId/openTab/closeTab/activateTab、键分隔符 keySeparator）
 - `connection-store.ts`：连接配置列表（含 SSH/TLS/Sentinel/Cluster 字段）、活跃连接、连接状态、对话框状态
 - `browser-store.ts`：数据浏览器状态（Key 列表、SCAN 游标、选中 Key、DB 切换、视图模式、刷新版本号）
 - `cli-store.ts`：CLI 控制台状态（多 Tab 管理、命令历史、输出日志）
@@ -41,11 +41,11 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 所有 Tauri 后端调用都通过此文件封装。在浏览器（`just dev-web`）环境中自动走 mock 实现，Tauri 环境中调用真实后端。新增后端命令时需同步在此文件添加函数和 mock 实现。
 
 **组件（`src/components/`）**
-按功能模块组织：`browser/`（数据浏览器：key-list、key-tree、key-detail、value-viewer、export-dialog、import-dialog 等 11 个文件）、`cli/`（CLI 终端）、`connection/`（连接对话框）、`layout/`（布局组件：title-bar、sidebar、sidebar-nav-button、connection-item、tab-bar、settings-page、welcome-page、language-switcher）、`monitor/`（服务器监控：server-info、realtime-charts、slow-log、monitor-page）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件，17 个）。
+按功能模块组织：`browser/`（数据浏览器：add-field-dialog、data-browser、export-dialog、import-dialog、key-detail、key-dialog、key-list、key-toolbar、key-tree、ttl-dialog、value-viewer 等 11 个文件）、`cli/`（CLI 终端）、`connection/`（连接对话框）、`layout/`（布局组件：title-bar、sidebar、sidebar-nav-button、connection-item、tab-bar、settings-page、welcome-page、language-switcher）、`monitor/`（服务器监控：server-info、realtime-charts、slow-log、monitor-page）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件，17 个）。
 全局组件：`providers.tsx`（NextThemes + TooltipProvider + Toaster）、`error-boundary.tsx`、`confirm-danger-dialog.tsx`。
 
 **Hooks（`src/hooks/`）**
-- `use-global-shortcuts.ts`：注册全局快捷键（⌘N/T/F/R/,）
+- `use-global-shortcuts.ts`：注册全局快捷键（⌘N/T/F/R/⌫/,）
 - `use-connection-drag.ts`：连接列表拖拽排序逻辑（HTML5 Drag and Drop）
 
 **国际化（`src/i18n/`）**

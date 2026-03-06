@@ -176,7 +176,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 | 6 | Key 搜索与过滤 | 支持通配符模式搜索（后端 `SCAN MATCH`） | ✅ |
 | 7 | 数据库切换 | db0~db15 下拉选择器 + 侧边栏 db 子列表，显示 Key 数量 | ✅ |
 | 8 | Key 数量统计 | 工具栏显示当前 db 的 Key 总数 | ✅ |
-| 9 | 自定义命名空间分隔符 | 设置中配置分隔符，默认 `:` | 🔲 延后 |
+| 9 | 自定义命名空间分隔符 | 设置中配置分隔符，默认 `:` | ✅ |
 
 #### 3.2 数据类型查看 & 编辑
 
@@ -232,7 +232,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 - ✅ Key 管理操作（新建/重命名/复制/删除/TTL）
 - ✅ 值编辑器（Monaco Editor + JSON 语法高亮 + 主题跟随）
 - ✅ 连接导入导出后端命令
-- 🔲 延后：自定义分隔符、大值延迟加载、批量操作、收藏 Key、Diff 对比
+- 🔲 延后：大值延迟加载、批量操作、收藏 Key、Diff 对比
 
 ---
 
@@ -290,7 +290,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 |---------|------|
 | 侧边栏导航 | `sidebar.tsx` 底部 Monitor、Pub/Sub 按钮已绑定 `SidebarNavButton`，支持视图切换 |
 | i18n 完整 key | 所有 monitor、pubsub、dataExport、dataImport 相关翻译 key 已添加（en-US + zh-CN） |
-| MainView 类型 | `app-store.ts` 中 `MainView = "browser" \| "cli" \| "monitor" \| "pubsub"` |
+| MainView 类型 | `app-store.ts` 中 `TabType = "browser" | "cli" | "monitor" | "pubsub" | "settings"` |
 | IPC 封装模式 | `lib/tauri-api.ts` 已添加所有 Phase 5 API 函数 + Mock 实现 |
 | Tauri Event 机制 | Pub/Sub 订阅消息通过 `redis://pubsub` Event 推送 |
 | Tauri 文件插件 | 已安装 `tauri-plugin-dialog` + `tauri-plugin-fs`，用于导入导出文件对话框 |
@@ -336,7 +336,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 | # | 任务 | 说明 | 状态 |
 |---|------|------|------|
-| 21 | 扩展 MainView 类型 | `app-store.ts` 增加 `"pubsub"` 视图模式；侧边栏 Pub/Sub 按钮绑定切换逻辑 | ✅ |
+| 21 | 扩展 MainView 类型 | `app-store.ts` 增加 `"pubsub"` 的 `TabType` 视图模式；侧边栏 Pub/Sub 按钮绑定切换逻辑 | ✅ |
 | 22 | Pub/Sub 后端命令 | 新增 `commands/pubsub.rs`，基于**独立连接**（非复用 MultiplexedConnection）实现 `subscribe_channels` / `unsubscribe_channels` / `publish_message`；订阅消息通过 Tauri Event (`redis://pubsub`) 推送到前端 | ✅ |
 | 23 | Pub/Sub API 封装 | `tauri-api.ts` 添加 `subscribeChannels()` / `unsubscribeChannels()` / `publishMessage()` + Event 监听封装 + Mock | ✅ |
 | 24 | Pub/Sub Store | 新增 `stores/pubsub-store.ts`，管理订阅频道列表、消息列表、暂停状态、过滤条件 | ✅ |
@@ -445,7 +445,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 | 27 | Linux 打包 | ✅ | `.deb` / `.AppImage` 已在 Release 工作流中配置 |
 | 28 | 自动发布 GitHub Release | ✅ | tauri-action 自动上传产物到 GitHub Release |
 | 29 | 版本号统一管理 | ✅ | `scripts/bump-version.js` 同步 Cargo.toml / package.json / tauri.conf.json |
-| 30 | 应用图标 & 品牌 | 🔲 | 需设计应用图标 |
+| 30 | 应用图标 & 品牌 | ✅ | 基础构建已准备好 `logo.png` |
 
 ### 交付物
 
@@ -496,7 +496,6 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 ### 数据浏览（Phase 3）
 
-- [ ] 自定义命名空间分隔符 — 设置中配置分隔符，默认 `:`
 - [ ] 大值延迟加载 — 值 > 1MB 时先显示摘要，点击后完整加载
 - [ ] 批量操作工具栏 — 多选 Key 后显示批量操作按钮
 - [ ] 收藏/标记 Key — 常用 Key 标记，快速访问
@@ -521,4 +520,3 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 - [ ] macOS 打包 & 签名 — 需配置 Apple Developer 证书
 - [ ] Windows 打包 & 签名 — 需配置代码签名证书
-- [ ] 应用图标 & 品牌 — 需设计应用图标

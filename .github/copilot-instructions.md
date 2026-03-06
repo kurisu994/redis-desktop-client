@@ -46,7 +46,8 @@ src/
 │   ├── monitor/           # 服务器监控（server-info, realtime-charts, slow-log, monitor-page）
 │   └── pubsub/            # 发布订阅
 ├── hooks/                 # 自定义 Hooks
-│   └── use-global-shortcuts.ts  # 全局快捷键（⌘N/T/F/R/,）
+│   ├── use-global-shortcuts.ts  # 全局快捷键（⌘N/T/F/R/⌫/,）
+│   └── use-connection-drag.ts   # 连接列表拖拽排序逻辑（HTML5 Drag and Drop）
 ├── lib/                   # 工具函数
 │   ├── tauri-api.ts      # Tauri IPC 封装（含浏览器环境 mock 实现）
 │   └── utils.ts          # 通用工具（cn 函数等）

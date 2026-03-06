@@ -77,7 +77,7 @@ src/                        # 前端源码
 │   ├── connection/         # 连接对话框
 │   ├── monitor/            # 服务器监控（INFO, 实时图表, 慢查询）
 │   └── pubsub/             # 发布订阅
-├── hooks/                  # 自定义 Hooks（全局快捷键等）
+├── hooks/                  # 自定义 Hooks（全局快捷键、拖拽连接排序等）
 ├── lib/                    # 工具函数（Tauri IPC 封装 + cn 工具）
 ├── stores/                 # Zustand 状态仓库（app, connection, browser, cli, monitor, pubsub）
 └── i18n/                   # 国际化配置与翻译文件
