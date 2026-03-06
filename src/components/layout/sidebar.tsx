@@ -388,16 +388,27 @@ export function Sidebar() {
     [dragId, connections, setConnections, handleDragEnd],
   );
 
-  /** 容器级拖放 — 拖到列表空白区域时移到末尾 */
+  /** 容器级拖放 — 拖到列表空白区域时根据位置移到首/尾 */
   const handleContainerDragOver = useCallback(
     (e: React.DragEvent) => {
-      if (!dragId) return;
+      if (!dragId || connections.length === 0) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
-      const last = connections[connections.length - 1];
-      if (last && last.id !== dragId) {
-        setDragOverId(last.id);
-        setDragOverPos("below");
+      // 判断鼠标在容器上半还是下半，决定高亮首/尾
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      if (e.clientY < midY) {
+        const first = connections[0];
+        if (first.id !== dragId) {
+          setDragOverId(first.id);
+          setDragOverPos("above");
+        }
+      } else {
+        const last = connections[connections.length - 1];
+        if (last.id !== dragId) {
+          setDragOverId(last.id);
+          setDragOverPos("below");
+        }
       }
     },
     [dragId, connections],
@@ -412,12 +423,19 @@ export function Sidebar() {
       }
       const list = [...connections];
       const fromIdx = list.findIndex((c) => c.id === dragId);
-      if (fromIdx < 0 || fromIdx === list.length - 1) {
+      if (fromIdx < 0) {
         handleDragEnd();
         return;
       }
+      // 判断插入首还是尾
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
       const [moved] = list.splice(fromIdx, 1);
-      list.push(moved);
+      if (e.clientY < midY) {
+        list.unshift(moved);
+      } else {
+        list.push(moved);
+      }
       setConnections(list);
       handleDragEnd();
       const orderedIds = list.map((c) => c.id);
