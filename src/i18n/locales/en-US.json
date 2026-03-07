@@ -110,7 +110,17 @@
     "noKeysDesc": "This database is empty",
     "scanMore": "Load more",
     "selectKey": "Select a key to view its contents",
-    "db": "db{{num}}"
+    "db": "db{{num}}",
+    "favorites": "Favorites",
+    "showFavorites": "Show Favorites Only",
+    "showAll": "Show All",
+    "batchDelete": "Delete ({{count}})",
+    "batchExport": "Export ({{count}})",
+    "batchSelected": "{{count}} keys selected",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "batchDeleteConfirm": "Are you sure you want to delete {{count}} keys? This action cannot be undone.",
+    "batchDeleteTitle": "Batch Delete Keys"
   },
   "keyDetail": {
     "type": "Type",
@@ -129,7 +139,9 @@
     "copyKey": "Copy Key",
     "renameKey": "Rename Key",
     "newKeyName": "New key name",
-    "destinationKey": "Destination key name"
+    "destinationKey": "Destination key name",
+    "addFavorite": "Add to Favorites",
+    "removeFavorite": "Remove from Favorites"
   },
   "valueEditor": {
     "field": "Field",
@@ -152,7 +164,14 @@
     "json": "JSON",
     "hex": "Hex",
     "streamId": "ID",
-    "streamFields": "Fields"
+    "streamFields": "Fields",
+    "largeValue": "Large Value",
+    "largeValueHint": "Value size exceeds {{size}}. Showing preview only.",
+    "loadFull": "Load Full Value",
+    "loadingFull": "Loading...",
+    "preview": "Preview",
+    "diff": "Diff",
+    "editor": "Editor"
   },
   "keyDialog": {
     "createKey": "Create New Key",

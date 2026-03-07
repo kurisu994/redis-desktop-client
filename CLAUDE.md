@@ -32,7 +32,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 **State（`src/stores/`）**
 - `app-store.ts`：全局 UI 状态（侧边栏折叠、Tab 页签管理 — tabs/activeTabId/openTab/closeTab/activateTab、键分隔符 keySeparator）
 - `connection-store.ts`：连接配置列表（含 SSH/TLS/Sentinel/Cluster 字段）、活跃连接、连接状态、对话框状态
-- `browser-store.ts`：数据浏览器状态（Key 列表、SCAN 游标、选中 Key、DB 切换、视图模式、刷新版本号）
+- `browser-store.ts`：数据浏览器状态（Key 列表、SCAN 游标、选中 Key、DB 切换、视图模式、刷新版本号、多选 checkedKeys、收藏 favorites、收藏筛选 showFavoritesOnly）
 - `cli-store.ts`：CLI 控制台状态（多 Tab 管理、命令历史、输出日志）
 - `monitor-store.ts`：服务器监控状态（INFO 数据、实时图表快照、慢查询日志、刷新间隔）
 - `pubsub-store.ts`：Pub/Sub 状态（订阅频道、消息列表、暂停/过滤）
@@ -67,6 +67,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 ## 开发进度
 
 - Phase 1-4（基础框架、连接管理、数据浏览、CLI 控制台）✅ 已完成
+  - Phase 3 延后功能已补完：大值延迟加载、批量操作工具栏、收藏/标记 Key、Diff 对比视图
 - Phase 5（高级功能：服务器监控、慢查询、Pub/Sub、数据导入导出）✅ 已完成
 - Phase 6（高级连接 & 完善：SSH/TLS/Sentinel/Cluster UI、连接导入导出、设置页、快捷键、错误边界）✅ 已完成
   - 🔲 待办：SSH 隧道后端（Rust russh 库）、自动更新集成、macOS/Windows 签名

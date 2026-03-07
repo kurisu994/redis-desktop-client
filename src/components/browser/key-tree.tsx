@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { KeyEntry } from "@/stores/browser-store";
-import { ChevronRight, ChevronDown, Folder } from "lucide-react";
+import { useBrowserStore } from "@/stores/browser-store";
+import { ChevronRight, ChevronDown, Folder, Star } from "lucide-react";
 
 /** Key 类型对应的颜色 */
 const TYPE_COLORS: Record<string, string> = {
@@ -37,9 +38,10 @@ interface KeyTreeProps {
   onSelectKey: (key: string) => void;
 }
 
-/** 树形 Key 浏览器 — 按 : 分隔符构建命名空间层级 */
+/** 树形 Key 浏览器 — 按 : 分隔符构建命名空间层级，支持多选和收藏 */
 export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } = useBrowserStore();
 
   /** 构建树结构 */
   const tree = useMemo(() => {
@@ -127,30 +129,60 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
     );
   };
 
-  /** 渲染叶子节点（Key） */
+  /** 渲染叶子节点（Key），含 checkbox 和收藏 */
   const renderLeaf = (entry: KeyEntry, depth: number) => {
     const isSelected = selectedKey === entry.key;
+    const isChecked = checkedKeys.has(entry.key);
+    const isFavorite = favorites.has(entry.key);
     const parts = entry.key.split(":");
     const displayName = parts[parts.length - 1];
 
     return (
-      <button
+      <div
         key={entry.key}
-        className={`flex items-center gap-2 w-full py-1.5 px-2 rounded-md cursor-pointer text-sm transition-colors ${
+        className={`flex items-center gap-1 w-full py-1.5 px-2 rounded-md cursor-pointer text-sm transition-colors group ${
           isSelected
             ? "bg-primary/15 text-primary"
             : "hover:bg-white/5 text-foreground/70"
         }`}
-        style={{ paddingLeft: `${depth * 16 + 28}px` }}
-        onClick={() => onSelectKey(entry.key)}
+        style={{ paddingLeft: `${depth * 16 + 12}px` }}
       >
-        <span
-          className={`w-2 h-2 rounded-full shrink-0 ${
-            TYPE_COLORS[entry.key_type] || "bg-muted-foreground"
-          } ${isSelected ? TYPE_GLOW[entry.key_type] || "" : ""}`}
+        {/* 多选 Checkbox */}
+        <input
+          type="checkbox"
+          checked={isChecked}
+          onChange={(e) => {
+            e.stopPropagation();
+            toggleCheckedKey(entry.key);
+          }}
+          className="w-3.5 h-3.5 shrink-0 accent-primary cursor-pointer"
         />
-        <span className="truncate font-mono text-xs">{displayName}</span>
-      </button>
+        <button
+          className="flex items-center gap-2 flex-1 min-w-0"
+          onClick={() => onSelectKey(entry.key)}
+        >
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              TYPE_COLORS[entry.key_type] || "bg-muted-foreground"
+            } ${isSelected ? TYPE_GLOW[entry.key_type] || "" : ""}`}
+          />
+          <span className="truncate font-mono text-xs">{displayName}</span>
+        </button>
+        {/* 收藏按钮 */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleFavorite(entry.key);
+          }}
+          className={`shrink-0 p-0.5 transition-opacity ${
+            isFavorite
+              ? "text-yellow-500 opacity-100"
+              : "text-muted-foreground opacity-0 group-hover:opacity-60 hover:!opacity-100"
+          }`}
+        >
+          <Star className={`w-3 h-3 ${isFavorite ? "fill-yellow-500" : ""}`} />
+        </button>
+      </div>
     );
   };
 

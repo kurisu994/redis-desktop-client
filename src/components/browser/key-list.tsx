@@ -1,7 +1,9 @@
 "use client";
 
 import type { KeyEntry } from "@/stores/browser-store";
+import { useBrowserStore } from "@/stores/browser-store";
 import { Virtuoso } from "react-virtuoso";
+import { Star } from "lucide-react";
 
 /** Key 类型对应的颜色 */
 const TYPE_COLORS: Record<string, string> = {
@@ -39,30 +41,64 @@ interface KeyListProps {
   onSelectKey: (key: string) => void;
 }
 
-/** 平铺 Key 列表 — 虚拟滚动 */
+/** 平铺 Key 列表 — 虚拟滚动，支持多选和收藏 */
 export function KeyList({ keys, selectedKey, onSelectKey }: KeyListProps) {
+  const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } = useBrowserStore();
+
   return (
     <Virtuoso
       data={keys}
       itemContent={(_, entry) => {
         const isSelected = selectedKey === entry.key;
+        const isChecked = checkedKeys.has(entry.key);
+        const isFavorite = favorites.has(entry.key);
         return (
-          <button
-            className={`flex items-center gap-2 w-full py-1.5 px-3 text-sm transition-colors ${
+          <div
+            className={`flex items-center gap-1 w-full py-1.5 px-1.5 text-sm transition-colors group ${
               isSelected
                 ? "bg-primary/15 text-primary"
                 : "hover:bg-white/5 text-foreground/70"
             }`}
-            onClick={() => onSelectKey(entry.key)}
           >
-            <span
-              className={`w-2 h-2 rounded-full shrink-0 ${
-                TYPE_COLORS[entry.key_type] || "bg-muted-foreground"
-              } ${isSelected ? TYPE_GLOW[entry.key_type] || "" : ""}`}
+            {/* 多选 Checkbox */}
+            <input
+              type="checkbox"
+              checked={isChecked}
+              onChange={(e) => {
+                e.stopPropagation();
+                toggleCheckedKey(entry.key);
+              }}
+              className="w-3.5 h-3.5 shrink-0 accent-primary cursor-pointer"
             />
-            <span className="truncate font-mono text-xs flex-1 text-left">
-              {entry.key}
-            </span>
+            {/* 可点击区域 */}
+            <button
+              className="flex items-center gap-2 flex-1 min-w-0"
+              onClick={() => onSelectKey(entry.key)}
+            >
+              <span
+                className={`w-2 h-2 rounded-full shrink-0 ${
+                  TYPE_COLORS[entry.key_type] || "bg-muted-foreground"
+                } ${isSelected ? TYPE_GLOW[entry.key_type] || "" : ""}`}
+              />
+              <span className="truncate font-mono text-xs flex-1 text-left">
+                {entry.key}
+              </span>
+            </button>
+            {/* 收藏按钮 */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFavorite(entry.key);
+              }}
+              className={`shrink-0 p-0.5 transition-opacity ${
+                isFavorite
+                  ? "text-yellow-500 opacity-100"
+                  : "text-muted-foreground opacity-0 group-hover:opacity-60 hover:!opacity-100"
+              }`}
+            >
+              <Star className={`w-3 h-3 ${isFavorite ? "fill-yellow-500" : ""}`} />
+            </button>
+            {/* 类型标签 */}
             <span
               className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 uppercase font-medium ${
                 TYPE_LABEL_COLORS[entry.key_type] || "text-muted-foreground bg-accent"
@@ -70,7 +106,7 @@ export function KeyList({ keys, selectedKey, onSelectKey }: KeyListProps) {
             >
               {entry.key_type}
             </span>
-          </button>
+          </div>
         );
       }}
     />

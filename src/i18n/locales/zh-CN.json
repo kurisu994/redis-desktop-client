@@ -110,7 +110,17 @@
     "noKeysDesc": "该数据库为空",
     "scanMore": "加载更多",
     "selectKey": "选择一个键查看内容",
-    "db": "db{{num}}"
+    "db": "db{{num}}",
+    "favorites": "收藏",
+    "showFavorites": "仅显示收藏",
+    "showAll": "显示全部",
+    "batchDelete": "删除 ({{count}})",
+    "batchExport": "导出 ({{count}})",
+    "batchSelected": "已选择 {{count}} 个 Key",
+    "selectAll": "全选",
+    "deselectAll": "取消全选",
+    "batchDeleteConfirm": "确定要删除 {{count}} 个 Key 吗？此操作无法撤销。",
+    "batchDeleteTitle": "批量删除 Key"
   },
   "keyDetail": {
     "type": "类型",
@@ -129,7 +139,9 @@
     "copyKey": "复制键",
     "renameKey": "重命名键",
     "newKeyName": "新键名",
-    "destinationKey": "目标键名"
+    "destinationKey": "目标键名",
+    "addFavorite": "添加收藏",
+    "removeFavorite": "取消收藏"
   },
   "valueEditor": {
     "field": "字段",
@@ -152,7 +164,14 @@
     "json": "JSON",
     "hex": "十六进制",
     "streamId": "ID",
-    "streamFields": "字段"
+    "streamFields": "字段",
+    "largeValue": "大值",
+    "largeValueHint": "值大小超过 {{size}}，仅显示预览。",
+    "loadFull": "加载完整值",
+    "loadingFull": "加载中...",
+    "preview": "预览",
+    "diff": "差异对比",
+    "editor": "编辑器"
   },
   "keyDialog": {
     "createKey": "新建键",

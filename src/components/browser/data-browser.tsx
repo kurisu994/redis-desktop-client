@@ -1,16 +1,18 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useBrowserStore } from "@/stores/browser-store";
 import { useConnectionStore } from "@/stores/connection-store";
-import { scanKeys, getDbInfo, getKeyInfo } from "@/lib/tauri-api";
+import { scanKeys, getDbInfo, getKeyInfo, deleteKeys, exportKeys } from "@/lib/tauri-api";
 import { KeyToolbar } from "./key-toolbar";
 import { KeyTree } from "./key-tree";
 import { KeyList } from "./key-list";
 import { KeyDetail } from "./key-detail";
 import { ValueViewer } from "./value-viewer";
-import { Database } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Database, Trash2, Download, X, CheckSquare, Square } from "lucide-react";
+import { ConfirmDangerDialog } from "@/components/confirm-danger-dialog";
 
 /** 数据浏览器主容器 — 工具栏 + 左右分栏（Key 列表 + 值编辑器） */
 export function DataBrowser() {
@@ -27,6 +29,12 @@ export function DataBrowser() {
     viewMode,
     filterPattern,
     loading,
+    checkedKeys,
+    clearCheckedKeys,
+    setCheckedKeys,
+    showFavoritesOnly,
+    favorites,
+    setFavorites,
     setConnectionId,
     setKeys,
     appendKeys,
@@ -39,10 +47,53 @@ export function DataBrowser() {
     resetBrowser,
   } = useBrowserStore();
 
+  const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
+
   const connectedId =
     activeConnectionId && connectionStatus[activeConnectionId] === "connected"
       ? activeConnectionId
       : null;
+
+  /** 收藏持久化 — 加载（tauri-plugin-store 或 localStorage） */
+  useEffect(() => {
+    if (!connectedId) return;
+    const storageKey = `favorites:${connectedId}:${selectedDb}`;
+    (async () => {
+      try {
+        if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+          const { load } = await import("@tauri-apps/plugin-store");
+          const store = await load("favorites.json", { autoSave: true, defaults: {} });
+          const saved = await store.get<string[]>(storageKey);
+          if (saved) setFavorites(new Set(saved));
+        } else {
+          const saved = localStorage.getItem(storageKey);
+          if (saved) setFavorites(new Set(JSON.parse(saved)));
+        }
+      } catch {
+        // 无持久化数据时忽略
+      }
+    })();
+  }, [connectedId, selectedDb, setFavorites]);
+
+  /** 收藏持久化 — 保存 */
+  useEffect(() => {
+    if (!connectedId) return;
+    const storageKey = `favorites:${connectedId}:${selectedDb}`;
+    const favArray = Array.from(favorites);
+    (async () => {
+      try {
+        if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+          const { load } = await import("@tauri-apps/plugin-store");
+          const store = await load("favorites.json", { autoSave: true, defaults: {} });
+          await store.set(storageKey, favArray);
+        } else {
+          localStorage.setItem(storageKey, JSON.stringify(favArray));
+        }
+      } catch {
+        // 保存失败时静默
+      }
+    })();
+  }, [favorites, connectedId, selectedDb]);
 
   /** 初始化：切换连接时重置并加载 db 信息 */
   useEffect(() => {
@@ -156,6 +207,65 @@ export function DataBrowser() {
     loadKeys(true);
   }, [setSelectedKey, setKeyInfo, loadKeys]);
 
+  /** 按收藏过滤后的 Key 列表 */
+  const displayKeys = useMemo(() => {
+    if (!showFavoritesOnly) return keys;
+    return keys.filter((k) => favorites.has(k.key));
+  }, [keys, showFavoritesOnly, favorites]);
+
+  /** 批量删除 */
+  const handleBatchDelete = useCallback(async () => {
+    if (!connectedId || checkedKeys.size === 0) return;
+    await deleteKeys(connectedId, selectedDb, Array.from(checkedKeys));
+    clearCheckedKeys();
+    setSelectedKey(null);
+    setKeyInfo(null);
+    loadKeys(true);
+    if (connectedId) {
+      getDbInfo(connectedId)
+        .then((info) => setDbList(info.db_sizes, info.db_count))
+        .catch(console.error);
+    }
+  }, [connectedId, selectedDb, checkedKeys, clearCheckedKeys, setSelectedKey, setKeyInfo, loadKeys, setDbList]);
+
+  /** 批量导出 */
+  const handleBatchExport = useCallback(async () => {
+    if (!connectedId || checkedKeys.size === 0) return;
+    try {
+      const json = await exportKeys(connectedId, selectedDb, Array.from(checkedKeys));
+      // 使用 tauri-plugin-dialog 保存文件
+      if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+        const { save } = await import("@tauri-apps/plugin-dialog");
+        const { writeTextFile } = await import("@tauri-apps/plugin-fs");
+        const path = await save({
+          filters: [{ name: "JSON", extensions: ["json"] }],
+          defaultPath: `redis-export-${Date.now()}.json`,
+        });
+        if (path) await writeTextFile(path, json);
+      } else {
+        // 浏览器环境 fallback
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `redis-export-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error("批量导出失败:", err);
+    }
+  }, [connectedId, selectedDb, checkedKeys]);
+
+  /** 全选 / 取消全选 */
+  const handleToggleSelectAll = useCallback(() => {
+    if (checkedKeys.size === displayKeys.length) {
+      clearCheckedKeys();
+    } else {
+      setCheckedKeys(new Set(displayKeys.map((k) => k.key)));
+    }
+  }, [checkedKeys.size, displayKeys, clearCheckedKeys, setCheckedKeys]);
+
   return (
     <div className="flex-1 flex flex-col min-w-0">
       {/* 工具栏 */}
@@ -168,13 +278,13 @@ export function DataBrowser() {
           <div className="flex-1 overflow-y-auto">
             {viewMode === "tree" ? (
               <KeyTree
-                keys={keys}
+                keys={displayKeys}
                 selectedKey={selectedKey}
                 onSelectKey={setSelectedKey}
               />
             ) : (
               <KeyList
-                keys={keys}
+                keys={displayKeys}
                 selectedKey={selectedKey}
                 onSelectKey={setSelectedKey}
               />
@@ -183,7 +293,7 @@ export function DataBrowser() {
 
           {/* Key 列表底部状态 */}
           <div className="px-4 py-2 text-xs border-t border-border flex justify-between items-center text-zinc-500">
-            <span>{t("browser.totalKeys", { count: keys.length })}</span>
+            <span>{t("browser.totalKeys", { count: displayKeys.length })}</span>
             {!scanComplete && (
               <button
                 onClick={handleLoadMore}
@@ -220,6 +330,48 @@ export function DataBrowser() {
           )}
         </div>
       </div>
+
+      {/* 批量操作浮动工具栏 */}
+      {checkedKeys.size > 0 && (
+        <div className="flex items-center gap-3 px-4 py-2.5 border-t border-border bg-card/95 backdrop-blur-sm">
+          <span className="text-sm font-medium">
+            {t("browser.batchSelected", { count: checkedKeys.size })}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleToggleSelectAll}
+          >
+            {checkedKeys.size === displayKeys.length ? (
+              <><Square className="w-3.5 h-3.5" /> {t("browser.deselectAll")}</>
+            ) : (
+              <><CheckSquare className="w-3.5 h-3.5" /> {t("browser.selectAll")}</>
+            )}
+          </Button>
+          <div className="flex-1" />
+          <Button size="sm" variant="outline" onClick={handleBatchExport}>
+            <Download className="w-3.5 h-3.5" />
+            {t("browser.batchExport", { count: checkedKeys.size })}
+          </Button>
+          <Button size="sm" variant="destructive" onClick={() => setShowBatchDeleteConfirm(true)}>
+            <Trash2 className="w-3.5 h-3.5" />
+            {t("browser.batchDelete", { count: checkedKeys.size })}
+          </Button>
+          <Button size="icon" variant="ghost" onClick={clearCheckedKeys} className="h-8 w-8">
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* 批量删除确认对话框 */}
+      <ConfirmDangerDialog
+        isOpen={showBatchDeleteConfirm}
+        onClose={() => setShowBatchDeleteConfirm(false)}
+        onConfirm={handleBatchDelete}
+        title={t("browser.batchDeleteTitle")}
+        message={t("browser.batchDeleteConfirm", { count: checkedKeys.size })}
+        confirmText="DELETE"
+      />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { KeyInfo } from "@/stores/browser-store";
 import { useBrowserStore } from "@/stores/browser-store";
 import { deleteKeys, setKeyTtl, copyKey, renameKey } from "@/lib/tauri-api";
-import { Clock, Trash2, MoreVertical, Copy, Pencil } from "lucide-react";
+import { Clock, Trash2, MoreVertical, Copy, Pencil, Star } from "lucide-react";
 import { TtlDialog } from "./ttl-dialog";
 
 /** 类型标签配色 */
@@ -39,6 +39,9 @@ interface KeyDetailProps {
 export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailProps) {
   const { t } = useTranslation();
   const { connectionId, selectedDb } = useBrowserStore();
+  const favorites = useBrowserStore((s) => s.favorites);
+  const toggleFavorite = useBrowserStore((s) => s.toggleFavorite);
+  const isFavorite = favorites.has(keyName);
   const [showTtl, setShowTtl] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -152,6 +155,15 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
 
           {/* 操作按钮 */}
           <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => toggleFavorite(keyName)}
+              title={isFavorite ? t("keyDetail.removeFavorite") : t("keyDetail.addFavorite")}
+              className="h-8 w-8"
+            >
+              <Star className={`w-4 h-4 ${isFavorite ? "fill-yellow-500 text-yellow-500" : ""}`} />
+            </Button>
             <Button
               size="sm"
               variant="outline"

@@ -6,6 +6,7 @@ import type { KeyInfo } from "@/stores/browser-store";
 import { useBrowserStore } from "@/stores/browser-store";
 import {
   getStringValue,
+  getStringValuePartial,
   getHashValue,
   getListValue,
   getSetValue,
@@ -25,9 +26,9 @@ import {
   deleteStreamEntry,
 } from "@/lib/tauri-api";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2, Save } from "lucide-react";
+import { Plus, Pencil, Trash2, Save, AlertTriangle, Download } from "lucide-react";
 import { AddFieldDialog } from "./add-field-dialog";
-import Editor from "@monaco-editor/react";
+import Editor, { DiffEditor } from "@monaco-editor/react";
 
 /** 在 useEffect 中安全调用数据加载函数，避免 react-hooks/set-state-in-effect */
 function useLoadEffect(loadFn: () => Promise<void>, deps: React.DependencyList) {
@@ -39,6 +40,11 @@ function useLoadEffect(loadFn: () => Promise<void>, deps: React.DependencyList) 
   }, deps);
 }
 import { useTheme } from "next-themes";
+
+/** 大值阈值：1MB */
+const LARGE_VALUE_THRESHOLD = 1024 * 1024;
+/** 预览大小：前 1KB */
+const PREVIEW_SIZE = 1024;
 
 interface ValueViewerProps {
   keyName: string;
@@ -53,6 +59,7 @@ export function ValueViewer({ keyName, keyInfo, onValueChanged }: ValueViewerPro
       return (
         <StringViewer
           keyName={keyName}
+          keyInfo={keyInfo}
           onValueChanged={onValueChanged}
         />
       );
@@ -100,13 +107,15 @@ export function ValueViewer({ keyName, keyInfo, onValueChanged }: ValueViewerPro
   }
 }
 
-// ============ String 查看器 ============
+// ============ String 查看器（含大值延迟加载 + Diff 对比） ============
 
 function StringViewer({
   keyName,
+  keyInfo,
   onValueChanged,
 }: {
   keyName: string;
+  keyInfo: KeyInfo;
   onValueChanged: () => void;
 }) {
   const { t } = useTranslation();
@@ -115,23 +124,69 @@ function StringViewer({
   const [value, setValue] = useState("");
   const [originalValue, setOriginalValue] = useState("");
   const [format, setFormat] = useState<"text" | "json">("text");
+  /** 是否为大值且仅加载了预览 */
+  const [isLargePreview, setIsLargePreview] = useState(false);
+  /** 完整加载中 */
+  const [loadingFull, setLoadingFull] = useState(false);
+  /** 编辑器 / Diff 视图切换 */
+  const [showDiff, setShowDiff] = useState(false);
+
+  /** 判断是否为大值（使用 keyInfo.length —— String 的 STRLEN 字节长度） */
+  const isLargeValue = keyInfo.length > LARGE_VALUE_THRESHOLD;
 
   useEffect(() => {
     if (!connectionId) return;
-    getStringValue(connectionId, selectedDb, keyName)
-      .then((v) => {
-        setValue(v);
-        setOriginalValue(v);
-        // 自动检测 JSON
-        try {
-          JSON.parse(v);
-          setFormat("json");
-        } catch {
+    setShowDiff(false);
+
+    if (isLargeValue) {
+      // 大值：先加载预览（前 PREVIEW_SIZE 字节）
+      getStringValuePartial(connectionId, selectedDb, keyName, 0, PREVIEW_SIZE - 1)
+        .then((v) => {
+          setValue(v);
+          setOriginalValue(v);
+          setIsLargePreview(true);
           setFormat("text");
-        }
-      })
-      .catch(console.error);
-  }, [connectionId, selectedDb, keyName]);
+        })
+        .catch(console.error);
+    } else {
+      // 正常加载
+      getStringValue(connectionId, selectedDb, keyName)
+        .then((v) => {
+          setValue(v);
+          setOriginalValue(v);
+          setIsLargePreview(false);
+          try {
+            JSON.parse(v);
+            setFormat("json");
+          } catch {
+            setFormat("text");
+          }
+        })
+        .catch(console.error);
+    }
+  }, [connectionId, selectedDb, keyName, isLargeValue]);
+
+  /** 加载完整值 */
+  const handleLoadFull = async () => {
+    if (!connectionId) return;
+    setLoadingFull(true);
+    try {
+      const v = await getStringValue(connectionId, selectedDb, keyName);
+      setValue(v);
+      setOriginalValue(v);
+      setIsLargePreview(false);
+      try {
+        JSON.parse(v);
+        setFormat("json");
+      } catch {
+        setFormat("text");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingFull(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!connectionId) return;
@@ -143,49 +198,116 @@ function StringViewer({
   const isDirty = value !== originalValue;
   const language = format === "json" ? "json" : "plaintext";
 
+  /** 格式化字节大小 */
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* 大值预览提示 */}
+      {isLargePreview && (
+        <div className="flex items-center gap-3 px-4 py-2 bg-yellow-500/10 border-b border-yellow-500/20 text-sm">
+          <AlertTriangle className="w-4 h-4 text-yellow-500 shrink-0" />
+          <span className="text-yellow-600 dark:text-yellow-400">
+            {t("valueEditor.largeValueHint", { size: formatSize(LARGE_VALUE_THRESHOLD) })}
+          </span>
+          <span className="text-muted-foreground text-xs">
+            ({formatSize(keyInfo.length)})
+          </span>
+          <div className="flex-1" />
+          <Button size="sm" variant="outline" onClick={handleLoadFull} disabled={loadingFull}>
+            <Download className="w-3.5 h-3.5" />
+            {loadingFull ? t("valueEditor.loadingFull") : t("valueEditor.loadFull")}
+          </Button>
+        </div>
+      )}
+
       {/* 格式切换栏 */}
       <div className="flex items-center gap-4 px-4 py-1.5 border-b border-border text-xs font-medium">
-        {(["text", "json"] as const).map((f) => (
-          <button
-            key={f}
-            className={`transition-colors ${
-              format === f ? "text-primary" : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setFormat(f)}
-          >
-            {t(`valueEditor.${f}`)}
-          </button>
-        ))}
+        {!isLargePreview &&
+          (["text", "json"] as const).map((f) => (
+            <button
+              key={f}
+              className={`transition-colors ${
+                format === f ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setFormat(f)}
+            >
+              {t(`valueEditor.${f}`)}
+            </button>
+          ))}
+        {isLargePreview && (
+          <span className="text-muted-foreground">{t("valueEditor.preview")}</span>
+        )}
+
+        {/* Diff 切换（仅非预览 & 有改动时显示） */}
+        {!isLargePreview && isDirty && (
+          <>
+            <span className="text-border">|</span>
+            <button
+              className={`transition-colors ${
+                showDiff ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setShowDiff(!showDiff)}
+            >
+              {showDiff ? t("valueEditor.editor") : t("valueEditor.diff")}
+            </button>
+          </>
+        )}
+
         <div className="flex-1" />
-        {isDirty && (
-          <Button
-            size="sm"
-            onClick={handleSave}
-          >
+        {isDirty && !isLargePreview && (
+          <Button size="sm" onClick={handleSave}>
             <Save className="w-3.5 h-3.5" />
             {t("actions.save")}
           </Button>
         )}
       </div>
 
-      {/* Monaco Editor */}
+      {/* 编辑器 / Diff 视图 */}
       <div className="flex-1">
-        <Editor
-          language={language}
-          value={value}
-          onChange={(v) => setValue(v || "")}
-          theme={theme === "dark" ? "vs-dark" : "light"}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 13,
-            lineNumbers: "on",
-            wordWrap: "on",
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-          }}
-        />
+        {showDiff ? (
+          <DiffEditor
+            original={originalValue}
+            modified={value}
+            language={language}
+            theme={theme === "dark" ? "vs-dark" : "light"}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 13,
+              readOnly: false,
+              renderSideBySide: true,
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+            }}
+            onMount={(editor) => {
+              // 监听修改后的内容变化
+              const modifiedEditor = editor.getModifiedEditor();
+              modifiedEditor.onDidChangeModelContent(() => {
+                setValue(modifiedEditor.getValue());
+              });
+            }}
+          />
+        ) : (
+          <Editor
+            language={language}
+            value={value}
+            onChange={(v) => setValue(v || "")}
+            theme={theme === "dark" ? "vs-dark" : "light"}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 13,
+              lineNumbers: "on",
+              wordWrap: "on",
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              readOnly: isLargePreview,
+            }}
+          />
+        )}
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useBrowserStore } from "@/stores/browser-store";
-import { Search, RefreshCw, Plus, List, FolderTree, Download, Upload, X, Loader2 } from "lucide-react";
+import { Search, RefreshCw, Plus, List, FolderTree, Download, Upload, X, Loader2, Star } from "lucide-react";
 import { KeyDialog } from "./key-dialog";
 import { ExportDialog } from "./export-dialog";
 import { ImportDialog } from "./import-dialog";
@@ -36,6 +36,8 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
     setFilterPattern,
     loading,
     resetBrowser,
+    showFavoritesOnly,
+    setShowFavoritesOnly,
   } = useBrowserStore();
   const [showNewKey, setShowNewKey] = useState(false);
   const [showExport, setShowExport] = useState(false);
@@ -151,6 +153,19 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
             <List className="w-4 h-4" />
           </button>
         </div>
+
+        {/* 收藏筛选 */}
+        <button
+          className={`p-1.5 rounded-lg border border-border transition-colors ${
+            showFavoritesOnly
+              ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/30"
+              : "hover:bg-accent text-muted-foreground"
+          }`}
+          onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+          title={showFavoritesOnly ? t("browser.showAll") : t("browser.showFavorites")}
+        >
+          <Star className={`w-4 h-4 ${showFavoritesOnly ? "fill-yellow-500" : ""}`} />
+        </button>
 
         {/* 新建 Key */}
         <Button size="sm" onClick={() => setShowNewKey(true)}>

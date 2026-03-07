@@ -121,6 +121,8 @@ function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
     // 值操作 mock
     case "get_string_value":
       return '{"message": "Hello, Redis!"}' as T;
+    case "get_string_value_partial":
+      return '{"message": "Hello, Redis!"}' as T;
     case "get_hash_value":
       return {
         cursor: 0,
@@ -405,6 +407,17 @@ export async function getStringValue(
   key: string
 ): Promise<string> {
   return invoke("get_string_value", { id, db, key });
+}
+
+/** 部分读取 String 值 — 用于大值延迟加载 */
+export async function getStringValuePartial(
+  id: string,
+  db: number,
+  key: string,
+  start: number,
+  end: number
+): Promise<string> {
+  return invoke("get_string_value_partial", { id, db, key, start, end });
 }
 
 /** 获取 Hash 值 */

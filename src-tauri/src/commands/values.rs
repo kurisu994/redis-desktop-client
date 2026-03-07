@@ -68,6 +68,27 @@ pub async fn get_string_value(
     conn.get(&key).await.map_err(|e| e.to_string())
 }
 
+/// 部分读取 String 值 — 使用 GETRANGE 分块读取大值
+#[tauri::command]
+pub async fn get_string_value_partial(
+    pool: State<'_, RedisClientManager>,
+    id: String,
+    db: u32,
+    key: String,
+    start: i64,
+    end: i64,
+) -> Result<String, String> {
+    let mut conn = pool.get_connection(&id).await?;
+    select_db(&mut conn, db).await?;
+    redis::cmd("GETRANGE")
+        .arg(&key)
+        .arg(start)
+        .arg(end)
+        .query_async::<String>(&mut conn)
+        .await
+        .map_err(|e| e.to_string())
+}
+
 /// 获取 Hash 类型的值 — HSCAN 分页
 #[tauri::command]
 pub async fn get_hash_value(

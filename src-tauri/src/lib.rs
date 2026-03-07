@@ -55,6 +55,7 @@ pub fn run() {
             commands::keys::copy_key,
             // 值操作
             commands::values::get_string_value,
+            commands::values::get_string_value_partial,
             commands::values::get_hash_value,
             commands::values::get_list_value,
             commands::values::get_set_value,
