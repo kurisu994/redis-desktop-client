@@ -50,9 +50,7 @@ export function DataBrowser() {
   const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
 
   const connectedId =
-    activeConnectionId && connectionStatus[activeConnectionId] === "connected"
-      ? activeConnectionId
-      : null;
+    activeConnectionId && connectionStatus[activeConnectionId] === "connected" ? activeConnectionId : null;
 
   /** 收藏持久化 — 加载（tauri-plugin-store 或 localStorage） */
   useEffect(() => {
@@ -116,13 +114,7 @@ export function DataBrowser() {
       setLoading(true);
       try {
         const cursor = reset ? 0 : scanCursor;
-        const result = await scanKeys(
-          connectedId,
-          selectedDb,
-          cursor,
-          filterPattern || "*",
-          200
-        );
+        const result = await scanKeys(connectedId, selectedDb, cursor, filterPattern || "*", 200);
         if (reset) {
           setKeys(result.keys);
         } else {
@@ -146,7 +138,7 @@ export function DataBrowser() {
       setScanCursor,
       setScanComplete,
       setLoading,
-    ]
+    ],
   );
 
   /** db 切换或连接初始化后自动加载 Key */
@@ -159,12 +151,10 @@ export function DataBrowser() {
 
   /** 选中 Key 时加载详细信息 */
   useEffect(() => {
+    // 先清空旧 keyInfo，避免旧类型信息导致 ValueViewer 用错误命令访问新 Key（WRONGTYPE）
+    setKeyInfo(null);
     if (connectedId && selectedKey) {
-      getKeyInfo(connectedId, selectedDb, selectedKey)
-        .then(setKeyInfo)
-        .catch(console.error);
-    } else {
-      setKeyInfo(null);
+      getKeyInfo(connectedId, selectedDb, selectedKey).then(setKeyInfo).catch(console.error);
     }
   }, [connectedId, selectedDb, selectedKey, setKeyInfo]);
 
@@ -194,9 +184,7 @@ export function DataBrowser() {
   /** 刷新当前 Key 的值（编辑后回调） */
   const handleValueChanged = useCallback(() => {
     if (connectedId && selectedKey) {
-      getKeyInfo(connectedId, selectedDb, selectedKey)
-        .then(setKeyInfo)
-        .catch(console.error);
+      getKeyInfo(connectedId, selectedDb, selectedKey).then(setKeyInfo).catch(console.error);
     }
   }, [connectedId, selectedDb, selectedKey, setKeyInfo]);
 
@@ -277,17 +265,9 @@ export function DataBrowser() {
         <div className="w-72 flex flex-col border-r border-border dark:bg-[#0E0E11]">
           <div className="flex-1 overflow-y-auto">
             {viewMode === "tree" ? (
-              <KeyTree
-                keys={displayKeys}
-                selectedKey={selectedKey}
-                onSelectKey={setSelectedKey}
-              />
+              <KeyTree keys={displayKeys} selectedKey={selectedKey} onSelectKey={setSelectedKey} />
             ) : (
-              <KeyList
-                keys={displayKeys}
-                selectedKey={selectedKey}
-                onSelectKey={setSelectedKey}
-              />
+              <KeyList keys={displayKeys} selectedKey={selectedKey} onSelectKey={setSelectedKey} />
             )}
           </div>
 
@@ -295,11 +275,7 @@ export function DataBrowser() {
           <div className="px-4 py-2 text-xs border-t border-border flex justify-between items-center text-zinc-500">
             <span>{t("browser.totalKeys", { count: displayKeys.length })}</span>
             {!scanComplete && (
-              <button
-                onClick={handleLoadMore}
-                className="text-primary hover:underline"
-                disabled={loading}
-              >
+              <button onClick={handleLoadMore} className="text-primary hover:underline" disabled={loading}>
                 {loading ? "..." : t("browser.scanMore")}
               </button>
             )}
@@ -316,11 +292,7 @@ export function DataBrowser() {
                 onDeleted={handleKeyDeleted}
                 onRefresh={handleValueChanged}
               />
-              <ValueViewer
-                keyName={selectedKey}
-                keyInfo={keyInfo}
-                onValueChanged={handleValueChanged}
-              />
+              <ValueViewer keyName={selectedKey} keyInfo={keyInfo} onValueChanged={handleValueChanged} />
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
@@ -334,18 +306,16 @@ export function DataBrowser() {
       {/* 批量操作浮动工具栏 */}
       {checkedKeys.size > 0 && (
         <div className="flex items-center gap-3 px-4 py-2.5 border-t border-border bg-card/95 backdrop-blur-sm">
-          <span className="text-sm font-medium">
-            {t("browser.batchSelected", { count: checkedKeys.size })}
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleToggleSelectAll}
-          >
+          <span className="text-sm font-medium">{t("browser.batchSelected", { count: checkedKeys.size })}</span>
+          <Button size="sm" variant="outline" onClick={handleToggleSelectAll}>
             {checkedKeys.size === displayKeys.length ? (
-              <><Square className="w-3.5 h-3.5" /> {t("browser.deselectAll")}</>
+              <>
+                <Square className="w-3.5 h-3.5" /> {t("browser.deselectAll")}
+              </>
             ) : (
-              <><CheckSquare className="w-3.5 h-3.5" /> {t("browser.selectAll")}</>
+              <>
+                <CheckSquare className="w-3.5 h-3.5" /> {t("browser.selectAll")}
+              </>
             )}
           </Button>
           <div className="flex-1" />
