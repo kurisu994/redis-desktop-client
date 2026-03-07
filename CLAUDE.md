@@ -67,7 +67,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 ## 开发进度
 
 - Phase 1-4（基础框架、连接管理、数据浏览、CLI 控制台）✅ 已完成
-  - Phase 3 延后功能已补完：大值延迟加载、批量操作工具栏、收藏/标记 Key、Diff 对比视图
+  - Phase 3 延后功能已全部补完：大值延迟加载、批量操作工具栏、收藏/标记 Key、Diff 对比视图、Monaco 多格式语法高亮、RedisJSON 数据类型支持
 - Phase 5（高级功能：服务器监控、慢查询、Pub/Sub、数据导入导出）✅ 已完成
 - Phase 6（高级连接 & 完善：SSH/TLS/Sentinel/Cluster UI、连接导入导出、设置页、快捷键、错误边界）✅ 已完成
   - 🔲 待办：SSH 隧道后端（Rust russh 库）、自动更新集成、macOS/Windows 签名

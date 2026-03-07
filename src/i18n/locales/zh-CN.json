@@ -171,7 +171,11 @@
     "loadingFull": "加载中...",
     "preview": "预览",
     "diff": "差异对比",
-    "editor": "编辑器"
+    "editor": "编辑器",
+    "moreFormats": "更多 ▾",
+    "jsonPath": "路径",
+    "formatJson": "格式化",
+    "rawJsonView": "原始 JSON"
   },
   "keyDialog": {
     "createKey": "新建键",

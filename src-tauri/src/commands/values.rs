@@ -562,6 +562,16 @@ pub async fn create_key(
                 .await
                 .map_err(|e| e.to_string())?;
         }
+        "ReJSON-RL" | "rejson" => {
+            // RedisJSON: 使用 JSON.SET 创建
+            redis::cmd("JSON.SET")
+                .arg(&key)
+                .arg("$")
+                .arg(&value)
+                .query_async::<String>(&mut conn)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
         _ => return Err(format!("不支持的 Key 类型: {}", key_type)),
     }
 
@@ -576,3 +586,51 @@ pub async fn create_key(
 
     Ok(())
 }
+
+// ============ RedisJSON 命令 ============
+
+/// 获取 RedisJSON 类型的值 — JSON.GET key [path]
+#[tauri::command]
+pub async fn get_json_value(
+    pool: State<'_, RedisClientManager>,
+    id: String,
+    db: u32,
+    key: String,
+    path: Option<String>,
+) -> Result<String, String> {
+    let mut conn = pool.get_connection(&id).await?;
+    select_db(&mut conn, db).await?;
+
+    let json_path = path.unwrap_or_else(|| "$".to_string());
+    let result: String = redis::cmd("JSON.GET")
+        .arg(&key)
+        .arg(&json_path)
+        .query_async(&mut conn)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(result)
+}
+
+/// 设置 RedisJSON 类型的值 — JSON.SET key path value
+#[tauri::command]
+pub async fn set_json_value(
+    pool: State<'_, RedisClientManager>,
+    id: String,
+    db: u32,
+    key: String,
+    path: String,
+    value: String,
+) -> Result<(), String> {
+    let mut conn = pool.get_connection(&id).await?;
+    select_db(&mut conn, db).await?;
+
+    redis::cmd("JSON.SET")
+        .arg(&key)
+        .arg(&path)
+        .arg(&value)
+        .query_async::<String>(&mut conn)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+

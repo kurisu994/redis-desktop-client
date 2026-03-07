@@ -74,6 +74,8 @@ pub fn run() {
             commands::values::add_stream_entry,
             commands::values::delete_stream_entry,
             commands::values::create_key,
+            commands::values::get_json_value,
+            commands::values::set_json_value,
             // 导入导出
             commands::export::export_connections,
             commands::export::import_connections,

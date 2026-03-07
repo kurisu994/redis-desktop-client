@@ -171,7 +171,11 @@
     "loadingFull": "Loading...",
     "preview": "Preview",
     "diff": "Diff",
-    "editor": "Editor"
+    "editor": "Editor",
+    "moreFormats": "More ▾",
+    "jsonPath": "Path",
+    "formatJson": "Format",
+    "rawJsonView": "Raw JSON"
   },
   "keyDialog": {
     "createKey": "Create New Key",

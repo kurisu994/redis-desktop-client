@@ -17,6 +17,7 @@ const TYPE_BADGE: Record<string, string> = {
   set: "text-purple-400 bg-purple-500/10",
   zset: "text-red-400 bg-red-500/10",
   stream: "text-cyan-400 bg-cyan-500/10",
+  rejson: "text-amber-400 bg-amber-500/10",
 };
 
 const TYPE_DOT: Record<string, string> = {
@@ -26,6 +27,7 @@ const TYPE_DOT: Record<string, string> = {
   set: "bg-purple-500",
   zset: "bg-red-500",
   stream: "bg-cyan-500",
+  rejson: "bg-amber-500",
 };
 
 interface KeyDetailProps {
@@ -98,18 +100,12 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
                 <Button size="sm" onClick={handleRename}>
                   {t("actions.confirm")}
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setRenaming(false)}
-                >
+                <Button size="sm" variant="ghost" onClick={() => setRenaming(false)}>
                   {t("actions.cancel")}
                 </Button>
               </div>
             ) : (
-              <h2 className="text-xl font-mono font-medium break-all tracking-tight">
-                {keyName}
-              </h2>
+              <h2 className="text-xl font-mono font-medium break-all tracking-tight">{keyName}</h2>
             )}
 
             {/* 元信息标签 */}
@@ -120,20 +116,14 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
                   TYPE_BADGE[keyInfo.key_type] || "text-muted-foreground bg-muted"
                 }`}
               >
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    TYPE_DOT[keyInfo.key_type] || "bg-muted-foreground"
-                  }`}
-                />
+                <span className={`w-2 h-2 rounded-full ${TYPE_DOT[keyInfo.key_type] || "bg-muted-foreground"}`} />
                 {keyInfo.key_type.toUpperCase()}
               </span>
 
               {/* TTL */}
               <span className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="w-3.5 h-3.5" />
-                {keyInfo.ttl < 0
-                  ? t("keyDetail.ttlNone")
-                  : t("keyDetail.ttlSeconds", { seconds: keyInfo.ttl })}
+                {keyInfo.ttl < 0 ? t("keyDetail.ttlNone") : t("keyDetail.ttlSeconds", { seconds: keyInfo.ttl })}
               </span>
 
               {/* 大小 */}
@@ -164,11 +154,7 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
             >
               <Star className={`w-4 h-4 ${isFavorite ? "fill-yellow-500 text-yellow-500" : ""}`} />
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowTtl(true)}
-            >
+            <Button size="sm" variant="outline" onClick={() => setShowTtl(true)}>
               <Clock className="w-3.5 h-3.5" />
               TTL
             </Button>
@@ -182,12 +168,7 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
               {t("actions.delete")}
             </Button>
             <div className="relative">
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => setShowMore(!showMore)}
-                className="h-8 w-8"
-              >
+              <Button size="icon" variant="outline" onClick={() => setShowMore(!showMore)} className="h-8 w-8">
                 <MoreVertical className="w-4 h-4" />
               </Button>
               {showMore && (

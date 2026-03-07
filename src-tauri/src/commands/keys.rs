@@ -85,9 +85,11 @@ pub async fn scan_keys(
             .map_err(|e| e.to_string())?;
 
         for (k, t) in raw_keys.into_iter().zip(types.into_iter()) {
+            // 规范化 RedisJSON 类型名
+            let key_type = if t == "ReJSON-RL" { "rejson".to_string() } else { t };
             keys.push(KeyEntry {
                 key: k,
-                key_type: t,
+                key_type,
             });
         }
     }
@@ -201,8 +203,11 @@ pub async fn get_key_info(
         _ => "unknown".to_string(),
     };
 
+    // 规范化 RedisJSON 类型名
+    let key_type = if results.0 == "ReJSON-RL" { "rejson".to_string() } else { results.0 };
+
     // 获取集合长度
-    let length: i64 = match results.0.as_str() {
+    let length: i64 = match key_type.as_str() {
         "string" => conn.strlen(&key).await.unwrap_or(0) as i64,
         "hash" => conn.hlen(&key).await.unwrap_or(0) as i64,
         "list" => conn.llen(&key).await.unwrap_or(0) as i64,
@@ -215,11 +220,28 @@ pub async fn get_key_info(
                 .await
                 .unwrap_or(0)
         }
+        "rejson" => {
+            // 尝试 JSON.OBJLEN（对象），失败则尝试 JSON.ARRLEN（数组），再失败返回 0
+            match redis::cmd("JSON.OBJLEN")
+                .arg(&key)
+                .arg("$")
+                .query_async::<i64>(&mut conn)
+                .await
+            {
+                Ok(n) => n,
+                Err(_) => redis::cmd("JSON.ARRLEN")
+                    .arg(&key)
+                    .arg("$")
+                    .query_async::<i64>(&mut conn)
+                    .await
+                    .unwrap_or(0),
+            }
+        }
         _ => 0,
     };
 
     Ok(KeyInfo {
-        key_type: results.0,
+        key_type,
         ttl: results.1,
         size,
         encoding,

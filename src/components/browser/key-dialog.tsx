@@ -2,23 +2,11 @@
 
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useBrowserStore } from "@/stores/browser-store";
 import { createKey } from "@/lib/tauri-api";
@@ -29,7 +17,7 @@ interface KeyDialogProps {
   onCreated: () => void;
 }
 
-const KEY_TYPES = ["string", "hash", "list", "set", "zset", "stream"];
+const KEY_TYPES = ["string", "hash", "list", "set", "zset", "stream", "ReJSON-RL"];
 
 /** 新建 Key 对话框 */
 export function KeyDialog({ isOpen, onClose, onCreated }: KeyDialogProps) {
@@ -51,7 +39,7 @@ export function KeyDialog({ isOpen, onClose, onCreated }: KeyDialogProps) {
         keyName.trim(),
         keyType,
         value || "",
-        ttl ? parseInt(ttl, 10) : undefined
+        ttl ? parseInt(ttl, 10) : undefined,
       );
       onCreated();
     } catch (err) {
@@ -94,29 +82,18 @@ export function KeyDialog({ isOpen, onClose, onCreated }: KeyDialogProps) {
           </div>
           <div className="space-y-2">
             <Label>{t("keyDialog.initialValue")}</Label>
-            <Input
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-            />
+            <Input value={value} onChange={(e) => setValue(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label>{t("keyDialog.ttlOptional")}</Label>
-            <Input
-              type="number"
-              value={ttl}
-              onChange={(e) => setTtl(e.target.value)}
-              placeholder="-1"
-            />
+            <Input type="number" value={ttl} onChange={(e) => setTtl(e.target.value)} placeholder="-1" />
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
             {t("actions.cancel")}
           </Button>
-          <Button
-            onClick={handleCreate}
-            disabled={saving || !keyName.trim()}
-          >
+          <Button onClick={handleCreate} disabled={saving || !keyName.trim()}>
             {saving && <Loader2 className="animate-spin" size={14} />}
             {t("actions.create")}
           </Button>

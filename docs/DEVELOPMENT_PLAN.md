@@ -197,11 +197,11 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 | # | 任务 | 说明 | 状态 |
 |---|------|------|------|
-| 20 | Key 信息面板 | 展示类型、TTL；内存占用、编码方式待实现 | ✅ 部分 |
+| 20 | Key 信息面板 | 展示类型、TTL、内存占用（`MEMORY USAGE`）、编码方式（`OBJECT ENCODING`）、长度 | ✅ |
 | 21 | TTL 管理 | 设置/修改/移除 TTL 的 UI 和后端命令 | ✅ |
 | 22 | 新建 Key | 对话框选择类型并输入初始值 | ✅ |
 | 23 | 重命名 Key | 后端命令 + 详情面板操作按钮 | ✅ |
-| 24 | 复制 Key | 后端 `copy_key` 已实现，前端 UI 未对接 | 🔲 |
+| 24 | 复制 Key | 后端 `copy_key` + 前端详情面板“更多”菜单入口 | ✅ |
 | 25 | 删除 Key | 单个删除 + 批量删除，二次确认 | ✅ |
 | 26 | 批量操作工具栏 | 多选 Key（Checkbox）+ 浮动工具栏（批量删除/批量导出/全选/取消） | ✅ |
 | 27 | 收藏/标记 Key | Zustand Store 已实现 favorites 状态，UI 已集成 | ✅ |
@@ -212,7 +212,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 |---|------|------|------|
 | 28 | 集成 Monaco Editor | 使用 `@monaco-editor/react` 作为核心值编辑器 | ✅ |
 | 29 | 多格式语法高亮 | 已支持 JSON / XML / 纯文本，自动检测 | ✅ |
-| 30 | 扩展语法高亮 | 需求要求 YAML / HTML / CSS / JS / TS / SQL / Markdown / Hex | 🔲 |
+| 30 | 扩展语法高亮 | YAML / HTML / CSS / JS / TS / SQL / Markdown / Hex + 自动检测 + 下拉选择器 | ✅ |
 | 31 | 格式自动检测 | 自动检测值的格式并切换对应语言模式 | ✅ |
 | 32 | Diff 对比 | 使用 Monaco Diff Editor 展示编辑前后差异 | ✅ |
 | 33 | 值内搜索 | 大文本中支持 Ctrl+F 搜索（Monaco 内置） | ✅ |
@@ -238,10 +238,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 - ✅ 批量操作工具栏（多选 Checkbox + 浮动工具栏：批量删除/导出/全选）
 - ✅ 收藏 Key（⭐标记 + 仅显示收藏筛选）
 - ✅ Diff 对比（Monaco Diff Editor 编辑前后差异视图）
-- 🔲 JSON 数据类型 (RedisJSON) 支持
-- 🔲 复制 Key 前端 UI（后端已实现）
-- 🔲 Key 信息面板完善（内存占用、编码方式展示）
-- 🔲 扩展 Monaco 语法高亮（YAML/HTML/CSS/JS/TS/SQL/Markdown/Hex）
+- ✅ JSON 数据类型 (RedisJSON) 支持（JSON.GET/SET + 前端 JsonViewer + path 查询）
 
 ---
 
@@ -501,11 +498,6 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 > 以下为全文中标记为 🔲 的待办项汇总，按功能模块分组。
 
 ### 数据浏览（Phase 3）
-
-- [ ] JSON 数据类型 (RedisJSON) — 需要 RedisJSON 模块的树形/原始 JSON 查看与编辑支持
-- [ ] 复制 Key 前端 UI — 后端 `copy_key` 已实现，前端详情面板未对接
-- [ ] Key 信息面板完善 — 展示内存占用（`MEMORY USAGE`）和编码方式（`OBJECT ENCODING`）
-- [ ] 扩展 Monaco 语法高亮 — 需求要求 YAML / HTML / CSS / JS / TS / SQL / Markdown / Hex
 
 ### CLI 控制台（Phase 4）
 

@@ -73,7 +73,7 @@ src-tauri/
 │   ├── commands/          # Tauri Command 处理器
 │   │   ├── connection.rs  # 连接管理（CRUD + connect/disconnect + test）
 │   │   ├── keys.rs        # Key 浏览与管理（scan, delete, rename, ttl, copy）
-│   │   ├── values.rs      # 值操作（全 6 种数据类型的读写）
+│   │   ├── values.rs      # 值操作（全 7 种数据类型的读写，含 RedisJSON）
 │   │   ├── cli.rs         # CLI 命令执行
 │   │   ├── server.rs      # 服务器信息与慢查询
 │   │   ├── pubsub.rs      # 发布/订阅

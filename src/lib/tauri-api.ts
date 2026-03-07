@@ -37,6 +37,7 @@ const mockKeys: KeyEntry[] = [
   { key: "cache:api:users", key_type: "string" },
   { key: "config:app", key_type: "hash" },
   { key: "events:stream", key_type: "stream" },
+  { key: "doc:user:profile", key_type: "rejson" },
 ];
 
 function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
@@ -84,10 +85,7 @@ function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
     // Key 浏览 mock
     case "scan_keys": {
       const pattern = (args?.pattern as string) || "*";
-      const filtered =
-        pattern === "*"
-          ? mockKeys
-          : mockKeys.filter((k) => k.key.includes(pattern.replace(/\*/g, "")));
+      const filtered = pattern === "*" ? mockKeys : mockKeys.filter((k) => k.key.includes(pattern.replace(/\*/g, "")));
       return { cursor: 0, keys: filtered } as T;
     }
     case "get_db_info":
@@ -162,6 +160,12 @@ function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
           ],
         },
       ] as T;
+
+    // RedisJSON mock
+    case "get_json_value":
+      return '[{"name":"Kurisu","age":25,"skills":["Rust","TypeScript"],"address":{"city":"Tokyo"}}]' as T;
+    case "set_json_value":
+      return undefined as T;
 
     // 写入命令 mock
     case "set_string_value":
@@ -274,9 +278,7 @@ function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
         version: 1,
         exported_at: new Date().toISOString(),
         db: 0,
-        keys: [
-          { key: "test:key", key_type: "string", ttl: -1, value: "hello" },
-        ],
+        keys: [{ key: "test:key", key_type: "string", ttl: -1, value: "hello" }],
       }) as T;
     case "import_keys":
       return { total: 1, imported: 1, skipped: 0, errors: [] } as T;
@@ -309,9 +311,7 @@ export async function reorderConnections(orderedIds: string[]): Promise<void> {
 }
 
 /** 测试连接 */
-export async function testConnection(
-  config: ConnectionConfig
-): Promise<TestResult> {
+export async function testConnection(config: ConnectionConfig): Promise<TestResult> {
   return invoke<TestResult>("test_connection", { config });
 }
 
@@ -333,15 +333,13 @@ export async function scanKeys(
   db: number,
   cursor: number,
   pattern: string,
-  count: number
+  count: number,
 ): Promise<{ cursor: number; keys: KeyEntry[] }> {
   return invoke("scan_keys", { id, db, cursor, pattern, count });
 }
 
 /** 获取数据库信息 */
-export async function getDbInfo(
-  id: string
-): Promise<{ db_count: number; db_sizes: DbSize[] }> {
+export async function getDbInfo(id: string): Promise<{ db_count: number; db_sizes: DbSize[] }> {
   return invoke("get_db_info", { id });
 }
 
@@ -351,61 +349,34 @@ export async function selectDatabase(id: string, db: number): Promise<void> {
 }
 
 /** 获取 Key 详细信息 */
-export async function getKeyInfo(
-  id: string,
-  db: number,
-  key: string
-): Promise<KeyInfo> {
+export async function getKeyInfo(id: string, db: number, key: string): Promise<KeyInfo> {
   return invoke("get_key_info", { id, db, key });
 }
 
 /** 批量删除 Key */
-export async function deleteKeys(
-  id: string,
-  db: number,
-  keys: string[]
-): Promise<number> {
+export async function deleteKeys(id: string, db: number, keys: string[]): Promise<number> {
   return invoke("delete_keys", { id, db, keys });
 }
 
 /** 重命名 Key */
-export async function renameKey(
-  id: string,
-  db: number,
-  oldKey: string,
-  newKey: string
-): Promise<void> {
+export async function renameKey(id: string, db: number, oldKey: string, newKey: string): Promise<void> {
   return invoke("rename_key", { id, db, old_key: oldKey, new_key: newKey });
 }
 
 /** 设置 Key TTL */
-export async function setKeyTtl(
-  id: string,
-  db: number,
-  key: string,
-  ttl: number
-): Promise<void> {
+export async function setKeyTtl(id: string, db: number, key: string, ttl: number): Promise<void> {
   return invoke("set_key_ttl", { id, db, key, ttl });
 }
 
 /** 复制 Key */
-export async function copyKey(
-  id: string,
-  db: number,
-  src: string,
-  dst: string
-): Promise<void> {
+export async function copyKey(id: string, db: number, src: string, dst: string): Promise<void> {
   return invoke("copy_key", { id, db, src, dst });
 }
 
 // ============ 值操作 API ============
 
 /** 获取 String 值 */
-export async function getStringValue(
-  id: string,
-  db: number,
-  key: string
-): Promise<string> {
+export async function getStringValue(id: string, db: number, key: string): Promise<string> {
   return invoke("get_string_value", { id, db, key });
 }
 
@@ -415,7 +386,7 @@ export async function getStringValuePartial(
   db: number,
   key: string,
   start: number,
-  end: number
+  end: number,
 ): Promise<string> {
   return invoke("get_string_value_partial", { id, db, key, start, end });
 }
@@ -427,7 +398,7 @@ export async function getHashValue(
   key: string,
   cursor: number,
   pattern: string,
-  count: number
+  count: number,
 ): Promise<{ cursor: number; fields: { field: string; value: string }[] }> {
   return invoke("get_hash_value", { id, db, key, cursor, pattern, count });
 }
@@ -438,7 +409,7 @@ export async function getListValue(
   db: number,
   key: string,
   start: number,
-  stop: number
+  stop: number,
 ): Promise<string[]> {
   return invoke("get_list_value", { id, db, key, start, stop });
 }
@@ -450,7 +421,7 @@ export async function getSetValue(
   key: string,
   cursor: number,
   pattern: string,
-  count: number
+  count: number,
 ): Promise<{ cursor: number; members: string[] }> {
   return invoke("get_set_value", { id, db, key, cursor, pattern, count });
 }
@@ -461,7 +432,7 @@ export async function getZsetValue(
   db: number,
   key: string,
   start: number,
-  stop: number
+  stop: number,
 ): Promise<{ member: string; score: number }[]> {
   return invoke("get_zset_value", { id, db, key, start, stop });
 }
@@ -473,40 +444,23 @@ export async function getStreamValue(
   key: string,
   start: string,
   end: string,
-  count: number
+  count: number,
 ): Promise<{ id: string; fields: [string, string][] }[]> {
   return invoke("get_stream_value", { id, db, key, start, end, count });
 }
 
 /** 设置 String 值 */
-export async function setStringValue(
-  id: string,
-  db: number,
-  key: string,
-  value: string,
-  ttl?: number
-): Promise<void> {
+export async function setStringValue(id: string, db: number, key: string, value: string, ttl?: number): Promise<void> {
   return invoke("set_string_value", { id, db, key, value, ttl: ttl ?? null });
 }
 
 /** 设置 Hash 字段 */
-export async function setHashField(
-  id: string,
-  db: number,
-  key: string,
-  field: string,
-  value: string
-): Promise<void> {
+export async function setHashField(id: string, db: number, key: string, field: string, value: string): Promise<void> {
   return invoke("set_hash_field", { id, db, key, field, value });
 }
 
 /** 删除 Hash 字段 */
-export async function deleteHashField(
-  id: string,
-  db: number,
-  key: string,
-  field: string
-): Promise<void> {
+export async function deleteHashField(id: string, db: number, key: string, field: string): Promise<void> {
   return invoke("delete_hash_field", { id, db, key, field });
 }
 
@@ -516,90 +470,48 @@ export async function addListElement(
   db: number,
   key: string,
   value: string,
-  position: "head" | "tail"
+  position: "head" | "tail",
 ): Promise<void> {
   return invoke("add_list_element", { id, db, key, value, position });
 }
 
 /** 设置 List 元素 */
-export async function setListElement(
-  id: string,
-  db: number,
-  key: string,
-  index: number,
-  value: string
-): Promise<void> {
+export async function setListElement(id: string, db: number, key: string, index: number, value: string): Promise<void> {
   return invoke("set_list_element", { id, db, key, index, value });
 }
 
 /** 删除 List 元素 */
-export async function deleteListElement(
-  id: string,
-  db: number,
-  key: string,
-  index: number
-): Promise<void> {
+export async function deleteListElement(id: string, db: number, key: string, index: number): Promise<void> {
   return invoke("delete_list_element", { id, db, key, index });
 }
 
 /** 添加 Set 成员 */
-export async function addSetMember(
-  id: string,
-  db: number,
-  key: string,
-  member: string
-): Promise<void> {
+export async function addSetMember(id: string, db: number, key: string, member: string): Promise<void> {
   return invoke("add_set_member", { id, db, key, member });
 }
 
 /** 删除 Set 成员 */
-export async function deleteSetMember(
-  id: string,
-  db: number,
-  key: string,
-  member: string
-): Promise<void> {
+export async function deleteSetMember(id: string, db: number, key: string, member: string): Promise<void> {
   return invoke("delete_set_member", { id, db, key, member });
 }
 
 /** 添加 ZSet 成员 */
-export async function addZsetMember(
-  id: string,
-  db: number,
-  key: string,
-  member: string,
-  score: number
-): Promise<void> {
+export async function addZsetMember(id: string, db: number, key: string, member: string, score: number): Promise<void> {
   return invoke("add_zset_member", { id, db, key, member, score });
 }
 
 /** 删除 ZSet 成员 */
-export async function deleteZsetMember(
-  id: string,
-  db: number,
-  key: string,
-  member: string
-): Promise<void> {
+export async function deleteZsetMember(id: string, db: number, key: string, member: string): Promise<void> {
   return invoke("delete_zset_member", { id, db, key, member });
 }
 
 /** 添加 Stream 条目 */
-export async function addStreamEntry(
-  id: string,
-  db: number,
-  key: string,
-  fields: [string, string][]
-): Promise<string> {
+export async function addStreamEntry(id: string, db: number, key: string, fields: [string, string][]): Promise<string> {
   return invoke("add_stream_entry", { id, db, key, fields });
 }
 
 /** 删除 Stream 条目 */
-export async function deleteStreamEntry(
-  id: string,
-  db: number,
-  key: string,
-  entryId: string
-): Promise<void> {
+export async function deleteStreamEntry(id: string, db: number, key: string, entryId: string): Promise<void> {
   return invoke("delete_stream_entry", { id, db, key, entry_id: entryId });
 }
 
@@ -610,7 +522,7 @@ export async function createKey(
   key: string,
   keyType: string,
   value: string,
-  ttl?: number
+  ttl?: number,
 ): Promise<void> {
   return invoke("create_key", {
     id,
@@ -625,10 +537,7 @@ export async function createKey(
 // ============ 导入导出 API ============
 
 /** 导出连接配置 */
-export async function exportConnections(
-  ids?: string[],
-  includePassword: boolean = false
-): Promise<string> {
+export async function exportConnections(ids?: string[], includePassword: boolean = false): Promise<string> {
   return invoke("export_connections", {
     ids: ids ?? null,
     include_password: includePassword,
@@ -638,7 +547,7 @@ export async function exportConnections(
 /** 导入连接配置 */
 export async function importConnections(
   json: string,
-  conflictStrategy: "skip" | "overwrite" | "rename"
+  conflictStrategy: "skip" | "overwrite" | "rename",
 ): Promise<{ total: number; imported: number; skipped: number; overwritten: number }> {
   return invoke("import_connections", {
     json,
@@ -656,11 +565,7 @@ export interface CommandResult {
 }
 
 /** 执行 Redis 命令 */
-export async function executeCommand(
-  id: string,
-  db: number,
-  command: string
-): Promise<CommandResult> {
+export async function executeCommand(id: string, db: number, command: string): Promise<CommandResult> {
   return invoke<CommandResult>("execute_command", { id, db, command });
 }
 
@@ -684,10 +589,7 @@ export async function getServerInfo(id: string): Promise<ServerInfo> {
 }
 
 /** 获取慢查询日志 */
-export async function getSlowLog(
-  id: string,
-  count?: number
-): Promise<SlowLogEntry[]> {
+export async function getSlowLog(id: string, count?: number): Promise<SlowLogEntry[]> {
   return invoke<SlowLogEntry[]>("get_slowlog", { id, count: count ?? null });
 }
 
@@ -697,10 +599,7 @@ export async function resetSlowLog(id: string): Promise<void> {
 }
 
 /** 设置慢查询阈值 (microseconds) */
-export async function setSlowLogThreshold(
-  id: string,
-  threshold: number
-): Promise<void> {
+export async function setSlowLogThreshold(id: string, threshold: number): Promise<void> {
   return invoke("set_slowlog_threshold", { id, threshold });
 }
 
@@ -720,19 +619,12 @@ export interface PubSubMessage {
 }
 
 /** 订阅频道 */
-export async function subscribeChannels(
-  id: string,
-  channels: string[]
-): Promise<void> {
+export async function subscribeChannels(id: string, channels: string[]): Promise<void> {
   return invoke("subscribe_channels", { id, channels });
 }
 
 /** 发布消息 */
-export async function publishMessage(
-  id: string,
-  channel: string,
-  message: string
-): Promise<PublishResult> {
+export async function publishMessage(id: string, channel: string, message: string): Promise<PublishResult> {
   return invoke<PublishResult>("publish_message", { id, channel, message });
 }
 
@@ -747,11 +639,7 @@ export interface KeyImportResult {
 }
 
 /** 导出 Key 数据为 JSON 字符串 */
-export async function exportKeys(
-  id: string,
-  db: number,
-  keys: string[]
-): Promise<string> {
+export async function exportKeys(id: string, db: number, keys: string[]): Promise<string> {
   return invoke<string>("export_keys", { id, db, keys });
 }
 
@@ -760,7 +648,7 @@ export async function importKeys(
   id: string,
   db: number,
   json: string,
-  conflictStrategy: "skip" | "overwrite" | "rename"
+  conflictStrategy: "skip" | "overwrite" | "rename",
 ): Promise<KeyImportResult> {
   return invoke<KeyImportResult>("import_keys", {
     id,
@@ -768,4 +656,16 @@ export async function importKeys(
     json,
     conflict_strategy: conflictStrategy,
   });
+}
+
+// ============ RedisJSON API ============
+
+/** 获取 RedisJSON 值 */
+export async function getJsonValue(id: string, db: number, key: string, path?: string): Promise<string> {
+  return invoke("get_json_value", { id, db, key, path: path ?? null });
+}
+
+/** 设置 RedisJSON 值 */
+export async function setJsonValue(id: string, db: number, key: string, path: string, value: string): Promise<void> {
+  return invoke("set_json_value", { id, db, key, path, value });
 }

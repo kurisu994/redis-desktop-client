@@ -24,14 +24,14 @@
 
 #### 数据浏览器
 - Key 浏览器：树形视图（按 `:` 分隔符命名空间分组）+ 平铺视图，一键切换
-- 支持全部 6 种 Redis 数据类型的查看与编辑：String、Hash、List、Set、Sorted Set、Stream
+- 支持全部 7 种 Redis 数据类型的查看与编辑：String、Hash、List、Set、Sorted Set、Stream、RedisJSON（JSON.GET/SET + JSONPath 子路径查询）
 - 基于 SCAN 的分页 Key 扫描 + 通配符模式搜索
 - 虚拟滚动（react-virtuoso），支持大量 Key 流畅浏览
 - 数据库切换（db0 ~ db15），显示各 db 的 Key 数量
 - 支持自定义命名空间分隔符（默认 `:`）
 - Key 管理操作：新建 / 重命名 / 复制 / 删除（含批量） / TTL 设置与移除
 - Key 信息面板：类型、TTL、大小、编码方式
-- Monaco Editor 值编辑器：JSON / XML / 纯文本语法高亮，自动格式检测，主题跟随
+- Monaco Editor 值编辑器：11 种语法高亮（JSON / XML / YAML / HTML / CSS / JS / TS / SQL / Markdown / Hex / 纯文本），自动格式检测，主题跟随
 - 一键复制 Key 名称或值到剪贴板
 - Key 数据导入/导出（JSON 格式，含冲突策略 + 进度条）
 - 大值延迟加载：String 值 > 1MB 时先预览前 1KB，按需完整加载
@@ -88,9 +88,5 @@
 - SSH 隧道后端实现（Rust `russh` 库）
 - 自动更新集成（Tauri Updater Plugin）
 - macOS / Windows 代码签名
-- 大值延迟加载（> 1MB）
-- 批量操作工具栏
-- 收藏/标记 Key
-- Monaco Diff 对比
 - 常用命令面板
 - 连接分组（文件夹拖拽排序）
