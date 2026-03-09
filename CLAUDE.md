@@ -42,10 +42,10 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 
 **组件（`src/components/`）**
 按功能模块组织：`browser/`（数据浏览器：add-field-dialog、data-browser、export-dialog、import-dialog、key-detail、key-dialog、key-list、key-toolbar、key-tree、ttl-dialog、value-viewer 等 11 个文件）、`cli/`（CLI 终端）、`connection/`（连接对话框）、`layout/`（布局组件：title-bar、sidebar、sidebar-nav-button、connection-item、tab-bar、settings-page、welcome-page、language-switcher）、`monitor/`（服务器监控：server-info、realtime-charts、slow-log、monitor-page）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件，17 个）。
-全局组件：`providers.tsx`（NextThemes + TooltipProvider + Toaster）、`error-boundary.tsx`、`confirm-danger-dialog.tsx`。
+全局组件：`providers.tsx`（NextThemes + TooltipProvider + Toaster）、`error-boundary.tsx`、`confirm-danger-dialog.tsx`、`command-palette.tsx`（⌘K 命令面板）。
 
 **Hooks（`src/hooks/`）**
-- `use-global-shortcuts.ts`：注册全局快捷键（⌘N/T/F/R/⌫/,）
+- `use-global-shortcuts.ts`：注册全局快捷键（⌘N/T/F/R/K/D/S/,/F5/Delete）
 - `use-connection-drag.ts`：连接列表拖拽排序逻辑（HTML5 Drag and Drop）
 
 **国际化（`src/i18n/`）**
@@ -70,6 +70,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
   - Phase 3 延后功能已全部补完：大值延迟加载、批量操作工具栏、收藏/标记 Key、Diff 对比视图、Monaco 多格式语法高亮、RedisJSON 数据类型支持
 - Phase 5（高级功能：服务器监控、慢查询、Pub/Sub、数据导入导出）✅ 已完成
 - Phase 6（高级连接 & 完善：SSH/TLS/Sentinel/Cluster UI、连接导入导出、设置页、快捷键、错误边界）✅ 已完成
+  - ✅ v0.2.0：常用命令面板（⌘K）、补充快捷键（⌘D/⌘S/F5/Delete）
   - 🔲 待办：SSH 隧道后端（Rust russh 库）、自动更新集成、macOS/Windows 签名
 
 详见 `docs/DEVELOPMENT_PLAN.md`。

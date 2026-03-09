@@ -13,6 +13,7 @@ import { ValueViewer } from "./value-viewer";
 import { Button } from "@/components/ui/button";
 import { Database, Trash2, Download, X, CheckSquare, Square } from "lucide-react";
 import { ConfirmDangerDialog } from "@/components/confirm-danger-dialog";
+import { toast } from "sonner";
 
 /** 数据浏览器主容器 — 工具栏 + 左右分栏（Key 列表 + 值编辑器） */
 export function DataBrowser() {
@@ -48,6 +49,7 @@ export function DataBrowser() {
   } = useBrowserStore();
 
   const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
+  const [showDeleteKeyConfirm, setShowDeleteKeyConfirm] = useState(false);
 
   const connectedId =
     activeConnectionId && connectionStatus[activeConnectionId] === "connected" ? activeConnectionId : null;
@@ -195,6 +197,33 @@ export function DataBrowser() {
     loadKeys(true);
   }, [setSelectedKey, setKeyInfo, loadKeys]);
 
+  /** 快捷键删除选中 Key（⌘D / Delete） */
+  const handleDeleteSelectedKey = useCallback(async () => {
+    if (!connectedId || !selectedKey) return;
+    try {
+      await deleteKeys(connectedId, selectedDb, [selectedKey]);
+      toast.success(t("keyDetail.deleteConfirmTitle"));
+      handleKeyDeleted();
+      // 刷新 db 信息
+      getDbInfo(connectedId)
+        .then((info) => setDbList(info.db_sizes, info.db_count))
+        .catch(console.error);
+    } catch (err) {
+      console.error("删除 Key 失败:", err);
+    }
+  }, [connectedId, selectedDb, selectedKey, handleKeyDeleted, setDbList, t]);
+
+  /** 监听 redis:delete-key 自定义事件（由全局快捷键或命令面板触发） */
+  useEffect(() => {
+    const handler = () => {
+      if (selectedKey) {
+        setShowDeleteKeyConfirm(true);
+      }
+    };
+    window.addEventListener("redis:delete-key", handler);
+    return () => window.removeEventListener("redis:delete-key", handler);
+  }, [selectedKey]);
+
   /** 按收藏过滤后的 Key 列表 */
   const displayKeys = useMemo(() => {
     if (!showFavoritesOnly) return keys;
@@ -340,6 +369,16 @@ export function DataBrowser() {
         onConfirm={handleBatchDelete}
         title={t("browser.batchDeleteTitle")}
         message={t("browser.batchDeleteConfirm", { count: checkedKeys.size })}
+        confirmText="DELETE"
+      />
+
+      {/* 快捷键删除选中 Key 确认对话框 */}
+      <ConfirmDangerDialog
+        isOpen={showDeleteKeyConfirm}
+        onClose={() => setShowDeleteKeyConfirm(false)}
+        onConfirm={handleDeleteSelectedKey}
+        title={t("keyDetail.deleteConfirmTitle")}
+        message={t("keyDetail.deleteConfirm", { key: selectedKey ?? "" })}
         confirmText="DELETE"
       />
     </div>

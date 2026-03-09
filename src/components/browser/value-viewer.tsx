@@ -269,6 +269,20 @@ function StringViewer({
     onValueChanged();
   };
 
+  /** 监听 redis:save 自定义事件（由 ⌘S 快捷键触发） */
+  useEffect(() => {
+    const handler = () => {
+      if (value !== originalValue && connectionId) {
+        setStringValue(connectionId, selectedDb, keyName, value).then(() => {
+          setOriginalValue(value);
+          onValueChanged();
+        });
+      }
+    };
+    window.addEventListener("redis:save", handler);
+    return () => window.removeEventListener("redis:save", handler);
+  }, [connectionId, selectedDb, keyName, value, originalValue, onValueChanged]);
+
   const isDirty = value !== originalValue;
   const language = FORMAT_LANGUAGE[format];
   const isHex = format === "hex";
@@ -963,6 +977,25 @@ function JsonViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
       console.error("保存 JSON 值失败:", err);
     }
   };
+
+  /** 监听 redis:save 自定义事件（由 ⌘S 快捷键触发） */
+  useEffect(() => {
+    const handler = () => {
+      if (value !== originalValue && connectionId) {
+        try {
+          JSON.parse(value);
+          setJsonValue(connectionId, selectedDb, keyName, path, value).then(() => {
+            setOriginalValue(value);
+            onValueChanged();
+          });
+        } catch {
+          // 非法 JSON 不保存
+        }
+      }
+    };
+    window.addEventListener("redis:save", handler);
+    return () => window.removeEventListener("redis:save", handler);
+  }, [connectionId, selectedDb, keyName, path, value, originalValue, onValueChanged]);
 
   const isDirty = value !== originalValue;
 

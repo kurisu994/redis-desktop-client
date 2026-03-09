@@ -278,13 +278,40 @@
     "search": "Search Keys",
     "refreshKeys": "Refresh Keys",
     "deleteKey": "Delete Selected Key",
-    "settings": "Open Settings"
+    "settings": "Open Settings",
+    "commandPalette": "Command Palette",
+    "saveEdit": "Save Edit",
+    "refreshKeysF5": "Refresh Keys"
   },
   "errorBoundary": {
     "title": "Something went wrong",
     "description": "The application encountered an unexpected error. Please try refreshing or restarting.",
     "reload": "Reload",
     "details": "Error Details"
+  },
+  "commandPalette": {
+    "title": "Command Palette",
+    "description": "Search for a command to run...",
+    "placeholder": "Type a command...",
+    "noResults": "No results found.",
+    "groupConnection": "Connection",
+    "groupBrowser": "Browser",
+    "groupNavigation": "Navigation",
+    "groupGeneral": "General",
+    "newConnection": "New Connection",
+    "searchKeys": "Search Keys",
+    "refreshKeys": "Refresh Keys",
+    "deleteKey": "Delete Selected Key",
+    "saveEdit": "Save Current Edit",
+    "openCli": "Open CLI Console",
+    "openMonitor": "Open Server Monitor",
+    "openPubsub": "Open Pub/Sub",
+    "openSettings": "Open Settings",
+    "lightTheme": "Switch to Light Theme",
+    "darkTheme": "Switch to Dark Theme",
+    "showSidebar": "Show Sidebar",
+    "hideSidebar": "Hide Sidebar",
+    "showShortcuts": "Show Keyboard Shortcuts"
   },
   "confirm": {
     "flushDb": "Are you sure you want to flush database db{{db}}? This action cannot be undone!",

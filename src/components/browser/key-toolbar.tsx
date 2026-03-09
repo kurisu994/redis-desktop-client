@@ -112,6 +112,7 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
             value={filterPattern}
             onChange={(e) => setFilterPattern(e.target.value)}
             onKeyDown={handleSearchSubmit}
+            data-search-input="true"
           />
           {filterPattern && (
             <button

@@ -29,6 +29,8 @@ interface AppState {
   activeTabId: string;
   /** Key 分隔符（用于树形视图） */
   keySeparator: string;
+  /** 命令面板是否打开 */
+  commandPaletteOpen: boolean;
 
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
@@ -39,6 +41,7 @@ interface AppState {
   /** 激活指定 Tab */
   activateTab: (id: string) => void;
   setKeySeparator: (sep: string) => void;
+  setCommandPaletteOpen: (open: boolean) => void;
 }
 
 /** 应用全局状态 Store */
@@ -47,6 +50,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   tabs: [BROWSER_TAB],
   activeTabId: "browser",
   keySeparator: ":",
+  commandPaletteOpen: false,
 
   toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
@@ -93,4 +97,5 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setKeySeparator: (sep) => set({ keySeparator: sep }),
+  setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
 }));

@@ -75,11 +75,15 @@ export function SettingsPage() {
         {/* 快捷键说明 */}
         <SectionHeader icon={<Keyboard size={16} />} title={t("shortcuts.title")} />
         <div className="flex flex-col gap-2 mb-6">
+          <ShortcutRow label={t("shortcuts.commandPalette")} keys={["⌘", "K"]} />
           <ShortcutRow label={t("shortcuts.newConnection")} keys={["⌘", "N"]} />
           <ShortcutRow label={t("shortcuts.newCliTab")} keys={["⌘", "T"]} />
           <ShortcutRow label={t("shortcuts.search")} keys={["⌘", "F"]} />
           <ShortcutRow label={t("shortcuts.refreshKeys")} keys={["⌘", "R"]} />
-          <ShortcutRow label={t("shortcuts.deleteKey")} keys={["⌘", "⌫"]} />
+          <ShortcutRow label={t("shortcuts.refreshKeysF5")} keys={["F5"]} />
+          <ShortcutRow label={t("shortcuts.deleteKey")} keys={["⌘", "D"]} />
+          <ShortcutRow label={t("shortcuts.deleteKey")} keys={["Delete"]} />
+          <ShortcutRow label={t("shortcuts.saveEdit")} keys={["⌘", "S"]} />
           <ShortcutRow label={t("shortcuts.settings")} keys={["⌘", ","]} />
         </div>
 
@@ -88,7 +92,7 @@ export function SettingsPage() {
         {/* 关于 */}
         <SectionHeader icon={<Settings size={16} />} title={t("settings.about")} />
         <div className="text-sm text-muted-foreground">
-          <p>{t("settings.currentVersion")}: 0.1.0</p>
+          <p>{t("settings.currentVersion")}: 0.2.0</p>
         </div>
       </div>
     </div>

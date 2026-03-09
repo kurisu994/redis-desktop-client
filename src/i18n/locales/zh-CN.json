@@ -278,13 +278,40 @@
     "search": "搜索键",
     "refreshKeys": "刷新键列表",
     "deleteKey": "删除选中键",
-    "settings": "打开设置"
+    "settings": "打开设置",
+    "commandPalette": "命令面板",
+    "saveEdit": "保存编辑",
+    "refreshKeysF5": "刷新键列表"
   },
   "errorBoundary": {
     "title": "出现了一些问题",
     "description": "应用遇到了意外错误，请尝试刷新页面或重启应用。",
     "reload": "重新加载",
     "details": "错误详情"
+  },
+  "commandPalette": {
+    "title": "命令面板",
+    "description": "搜索并执行命令...",
+    "placeholder": "输入命令...",
+    "noResults": "未找到匹配命令",
+    "groupConnection": "连接",
+    "groupBrowser": "浏览器",
+    "groupNavigation": "导航",
+    "groupGeneral": "通用",
+    "newConnection": "新建连接",
+    "searchKeys": "搜索键",
+    "refreshKeys": "刷新键列表",
+    "deleteKey": "删除选中键",
+    "saveEdit": "保存当前编辑",
+    "openCli": "打开命令行终端",
+    "openMonitor": "打开服务器监控",
+    "openPubsub": "打开发布/订阅",
+    "openSettings": "打开设置",
+    "lightTheme": "切换为浅色主题",
+    "darkTheme": "切换为深色主题",
+    "showSidebar": "显示侧边栏",
+    "hideSidebar": "隐藏侧边栏",
+    "showShortcuts": "查看快捷键说明"
   },
   "confirm": {
     "flushDb": "确定要清空数据库 db{{db}} 吗？此操作不可撤销！",

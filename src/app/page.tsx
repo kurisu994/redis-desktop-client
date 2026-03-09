@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { TabBar } from "@/components/layout/tab-bar";
 import { WelcomePage } from "@/components/layout/welcome-page";
 import { ConnectionDialog } from "@/components/connection/connection-dialog";
+import { CommandPalette } from "@/components/command-palette";
 import { DataBrowser } from "@/components/browser/data-browser";
 import { CliConsole } from "@/components/cli/cli-console";
 import { MonitorPage } from "@/components/monitor/monitor-page";
@@ -60,6 +61,7 @@ export default function Home() {
         </div>
       </div>
       <ConnectionDialog />
+      <CommandPalette />
     </div>
   );
 }
