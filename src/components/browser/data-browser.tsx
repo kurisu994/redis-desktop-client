@@ -368,7 +368,12 @@ export function DataBrowser() {
                 onDeleted={handleKeyDeleted}
                 onRefresh={handleValueChanged}
               />
-              <ValueViewer key={`${selectedKey}:${keyInfo.key_type}`} keyName={selectedKey} keyInfo={keyInfo} onValueChanged={handleValueChanged} />
+              <ValueViewer
+                key={`${selectedKey}:${keyInfo.key_type}`}
+                keyName={selectedKey}
+                keyInfo={keyInfo}
+                onValueChanged={handleValueChanged}
+              />
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
