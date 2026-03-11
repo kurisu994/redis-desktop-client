@@ -20,6 +20,8 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import Editor from "@monaco-editor/react";
+import { useTheme } from "next-themes";
 
 interface AddFieldDialogProps {
   isOpen: boolean;
@@ -39,9 +41,28 @@ interface AddFieldDialogProps {
   }) => Promise<void>;
 }
 
-/** 添加/编辑字段对话框 — 根据类型显示不同表单 */
+/** 检测内容的语言格式（用于 Monaco 语法高亮） */
+function detectLanguage(text: string): string {
+  const trimmed = text.trim();
+  if (
+    (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+    (trimmed.startsWith("[") && trimmed.endsWith("]"))
+  ) {
+    try {
+      JSON.parse(trimmed);
+      return "json";
+    } catch {
+      // 非合法 JSON
+    }
+  }
+  if (trimmed.startsWith("<") && trimmed.endsWith(">")) return "xml";
+  return "plaintext";
+}
+
+/** 添加/编辑字段对话框 — 根据类型显示不同表单，value 使用 Monaco Editor */
 export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: AddFieldDialogProps) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const isEdit = !!initialData;
   const [field, setField] = useState(initialData?.field ?? "");
   const [value, setValue] = useState(initialData?.value ?? "");
@@ -73,9 +94,11 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
         stream: t("valueEditor.addEntry"),
       }[mode];
 
+  const language = detectLanguage(value);
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -123,14 +146,26 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
             </div>
           )}
 
-          {/* 所有类型都需要 value */}
+          {/* 所有类型都需要 value — 使用 Monaco Editor 替代 Input */}
           <div className="space-y-2">
             <Label>{t("valueEditor.value")}</Label>
-            <Input
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              autoFocus={mode !== "hash" && mode !== "stream"}
-            />
+            <div className="h-56 border border-border rounded-md overflow-hidden">
+              <Editor
+                language={language}
+                value={value}
+                onChange={(v) => setValue(v || "")}
+                theme={theme === "dark" ? "vs-dark" : "light"}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                  lineNumbers: "on",
+                  wordWrap: "on",
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  tabSize: 2,
+                }}
+              />
+            </div>
           </div>
         </div>
         <DialogFooter>

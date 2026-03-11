@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBrowserStore } from "@/stores/browser-store";
 import { useConnectionStore } from "@/stores/connection-store";
 import { scanKeys, getDbInfo, getKeyInfo, deleteKeys, exportKeys } from "@/lib/tauri-api";
@@ -50,6 +50,33 @@ export function DataBrowser() {
 
   const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
   const [showDeleteKeyConfirm, setShowDeleteKeyConfirm] = useState(false);
+
+  /** 左栏宽度（可拖拽调节） */
+  const [panelWidth, setPanelWidth] = useState(288);
+  const isDragging = useRef(false);
+
+  /** 拖拽调整左栏宽度 */
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      // 限制最小 200px，最大 600px
+      const newWidth = Math.max(200, Math.min(600, e.clientX));
+      setPanelWidth(newWidth);
+    };
+    const handleMouseUp = () => {
+      if (isDragging.current) {
+        isDragging.current = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
 
   const connectedId =
     activeConnectionId && connectionStatus[activeConnectionId] === "connected" ? activeConnectionId : null;
@@ -290,8 +317,11 @@ export function DataBrowser() {
 
       {/* 左右分栏 */}
       <div className="flex-1 flex overflow-hidden">
-        {/* 左栏：Key 列表 */}
-        <div className="w-72 flex flex-col border-r border-border dark:bg-[#0E0E11]">
+        {/* 左栏：Key 列表（可拖拽调宽） */}
+        <div
+          className="flex flex-col border-r border-border dark:bg-[#0E0E11] shrink-0"
+          style={{ width: `${panelWidth}px` }}
+        >
           <div className="flex-1 overflow-y-auto">
             {viewMode === "tree" ? (
               <KeyTree keys={displayKeys} selectedKey={selectedKey} onSelectKey={setSelectedKey} />
@@ -310,6 +340,16 @@ export function DataBrowser() {
             )}
           </div>
         </div>
+
+        {/* 拖拽分隔条 */}
+        <div
+          className="w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors shrink-0"
+          onMouseDown={() => {
+            isDragging.current = true;
+            document.body.style.cursor = "col-resize";
+            document.body.style.userSelect = "none";
+          }}
+        />
 
         {/* 右栏：值编辑器 */}
         <div className="flex-1 flex flex-col min-w-0 dark:bg-[#151619]">
