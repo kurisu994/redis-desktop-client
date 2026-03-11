@@ -54,13 +54,18 @@ export function DataBrowser() {
   /** 左栏宽度（可拖拽调节） */
   const [panelWidth, setPanelWidth] = useState(288);
   const isDragging = useRef(false);
+  /** 拖拽起始时的鼠标 X 坐标 */
+  const dragStartX = useRef(0);
+  /** 拖拽起始时的面板宽度 */
+  const dragStartWidth = useRef(0);
 
   /** 拖拽调整左栏宽度 */
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging.current) return;
-      // 限制最小 200px，最大 600px
-      const newWidth = Math.max(200, Math.min(600, e.clientX));
+      // 用鼠标移动差值计算新宽度，避免 clientX 包含侧边栏偏移导致跳变
+      const delta = e.clientX - dragStartX.current;
+      const newWidth = Math.max(200, Math.min(600, dragStartWidth.current + delta));
       setPanelWidth(newWidth);
     };
     const handleMouseUp = () => {
@@ -344,8 +349,10 @@ export function DataBrowser() {
         {/* 拖拽分隔条 */}
         <div
           className="w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors shrink-0"
-          onMouseDown={() => {
+          onMouseDown={(e) => {
             isDragging.current = true;
+            dragStartX.current = e.clientX;
+            dragStartWidth.current = panelWidth;
             document.body.style.cursor = "col-resize";
             document.body.style.userSelect = "none";
           }}
