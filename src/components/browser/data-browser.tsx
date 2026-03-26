@@ -141,21 +141,35 @@ export function DataBrowser() {
     }
   }, [connectedId, connectionId, setConnectionId, resetBrowser, setDbList]);
 
-  /** 加载 Key 列表 */
+  /** 加载 Key 列表 — 自动分片加载全部 Key */
   const loadKeys = useCallback(
     async (reset = false) => {
       if (!connectedId) return;
       setLoading(true);
       try {
-        const cursor = reset ? 0 : scanCursor;
-        const result = await scanKeys(connectedId, selectedDb, cursor, filterPattern || "*", 200);
+        let cursor = reset ? 0 : scanCursor;
         if (reset) {
+          // 重置时先清空并加载第一批
+          const result = await scanKeys(connectedId, selectedDb, 0, filterPattern || "*", 200);
           setKeys(result.keys);
-        } else {
+          cursor = result.cursor;
+          setScanCursor(cursor);
+          setScanComplete(cursor === 0);
+          // 自动继续加载剩余批次
+          while (cursor !== 0) {
+            const next = await scanKeys(connectedId, selectedDb, cursor, filterPattern || "*", 200);
+            appendKeys(next.keys);
+            cursor = next.cursor;
+            setScanCursor(cursor);
+            setScanComplete(cursor === 0);
+          }
+        } else if (!scanComplete) {
+          // 手动触发继续加载（兜底，正常不会用到）
+          const result = await scanKeys(connectedId, selectedDb, cursor, filterPattern || "*", 200);
           appendKeys(result.keys);
+          setScanCursor(result.cursor);
+          setScanComplete(result.cursor === 0);
         }
-        setScanCursor(result.cursor);
-        setScanComplete(result.cursor === 0);
       } catch (err) {
         console.error("扫描 Key 失败:", err);
       } finally {
@@ -166,6 +180,7 @@ export function DataBrowser() {
       connectedId,
       selectedDb,
       scanCursor,
+      scanComplete,
       filterPattern,
       setKeys,
       appendKeys,
@@ -185,8 +200,7 @@ export function DataBrowser() {
 
   /** 选中 Key 时加载详细信息 */
   useEffect(() => {
-    // 先清空旧 keyInfo，避免旧类型信息导致 ValueViewer 用错误命令访问新 Key（WRONGTYPE）
-    setKeyInfo(null);
+    // keyInfo 已在 setSelectedKey 中同步清空，避免旧类型导致 WRONGTYPE
     if (connectedId && selectedKey) {
       getKeyInfo(connectedId, selectedDb, selectedKey).then(setKeyInfo).catch(console.error);
     }
@@ -207,13 +221,6 @@ export function DataBrowser() {
   const handleSearch = useCallback(() => {
     loadKeys(true);
   }, [loadKeys]);
-
-  /** 加载更多 */
-  const handleLoadMore = useCallback(() => {
-    if (!scanComplete && !loading) {
-      loadKeys(false);
-    }
-  }, [scanComplete, loading, loadKeys]);
 
   /** 刷新当前 Key 的值（编辑后回调） */
   const handleValueChanged = useCallback(() => {
@@ -329,20 +336,16 @@ export function DataBrowser() {
         >
           <div className="flex-1 overflow-y-auto">
             {viewMode === "tree" ? (
-              <KeyTree keys={displayKeys} selectedKey={selectedKey} onSelectKey={setSelectedKey} />
+              <KeyTree keys={displayKeys} selectedKey={selectedKey} onSelectKey={setSelectedKey} loading={loading} />
             ) : (
-              <KeyList keys={displayKeys} selectedKey={selectedKey} onSelectKey={setSelectedKey} />
+              <KeyList keys={displayKeys} selectedKey={selectedKey} onSelectKey={setSelectedKey} loading={loading} />
             )}
           </div>
 
           {/* Key 列表底部状态 */}
           <div className="px-4 py-2 text-xs border-t border-border flex justify-between items-center text-zinc-500">
             <span>{t("browser.totalKeys", { count: displayKeys.length })}</span>
-            {!scanComplete && (
-              <button onClick={handleLoadMore} className="text-primary hover:underline" disabled={loading}>
-                {loading ? "..." : t("browser.scanMore")}
-              </button>
-            )}
+            {loading && <span className="text-primary animate-pulse">{t("browser.scanning")}</span>}
           </div>
         </div>
 

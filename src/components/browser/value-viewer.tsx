@@ -56,7 +56,7 @@ const HEX_MAX_BYTES = 256 * 1024;
 /** 大字符串阈值（50KB），超过时优化 Monaco 选项以减少渲染开销 */
 const LARGE_STRING_THRESHOLD = 50 * 1024;
 /** 表格每页加载条数 */
-const TABLE_PAGE_SIZE = 200;
+const TABLE_PAGE_SIZE = 100;
 
 interface ValueViewerProps {
   keyName: string;

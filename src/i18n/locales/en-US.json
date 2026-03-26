@@ -109,6 +109,7 @@
     "noKeys": "No keys found",
     "noKeysDesc": "This database is empty",
     "scanMore": "Load more",
+    "scanning": "Scanning...",
     "selectKey": "Select a key to view its contents",
     "db": "db{{num}}",
     "favorites": "Favorites",

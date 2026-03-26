@@ -118,7 +118,7 @@ export const useBrowserStore = create<BrowserState>((set) => ({
     set((state) => ({ keys: [...state.keys, ...keys] })),
   setScanCursor: (cursor) => set({ scanCursor: cursor }),
   setScanComplete: (complete) => set({ scanComplete: complete }),
-  setSelectedKey: (key) => set({ selectedKey: key }),
+  setSelectedKey: (key) => set({ selectedKey: key, keyInfo: null }),
   setKeyInfo: (info) => set({ keyInfo: info }),
   setViewMode: (mode) => set({ viewMode: mode }),
   setFilterPattern: (pattern) => set({ filterPattern: pattern }),

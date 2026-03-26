@@ -3,7 +3,7 @@
 import type { KeyEntry } from "@/stores/browser-store";
 import { useBrowserStore } from "@/stores/browser-store";
 import { Virtuoso } from "react-virtuoso";
-import { Star } from "lucide-react";
+import { Star, Loader2 } from "lucide-react";
 
 /** Key 类型对应的颜色 */
 const TYPE_COLORS: Record<string, string> = {
@@ -39,24 +39,26 @@ interface KeyListProps {
   keys: KeyEntry[];
   selectedKey: string | null;
   onSelectKey: (key: string) => void;
+  loading?: boolean;
 }
 
 /** 平铺 Key 列表 — 虚拟滚动，支持多选和收藏 */
-export function KeyList({ keys, selectedKey, onSelectKey }: KeyListProps) {
+export function KeyList({ keys, selectedKey, onSelectKey, loading }: KeyListProps) {
   const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } = useBrowserStore();
 
   return (
-    <Virtuoso
-      data={keys}
-      itemContent={(_, entry) => {
-        const isSelected = selectedKey === entry.key;
-        const isChecked = checkedKeys.has(entry.key);
-        const isFavorite = favorites.has(entry.key);
-        return (
-          <div
-            className={`flex items-center gap-1 w-full py-1.5 px-1.5 text-sm transition-colors group ${
-              isSelected
-                ? "bg-primary/15 text-primary"
+    <div className="relative h-full">
+      <Virtuoso
+        data={keys}
+        itemContent={(_, entry) => {
+          const isSelected = selectedKey === entry.key;
+          const isChecked = checkedKeys.has(entry.key);
+          const isFavorite = favorites.has(entry.key);
+          return (
+            <div
+              className={`flex items-center gap-1 w-full py-1.5 px-1.5 text-sm transition-colors group ${
+                isSelected
+                  ? "bg-primary/15 text-primary"
                 : "hover:bg-white/5 text-foreground/70"
             }`}
           >
@@ -109,6 +111,12 @@ export function KeyList({ keys, selectedKey, onSelectKey }: KeyListProps) {
           </div>
         );
       }}
-    />
+      />
+      {loading && keys.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+        </div>
+      )}
+    </div>
   );
 }

@@ -109,6 +109,7 @@
     "noKeys": "未找到键",
     "noKeysDesc": "该数据库为空",
     "scanMore": "加载更多",
+    "scanning": "扫描中...",
     "selectKey": "选择一个键查看内容",
     "db": "db{{num}}",
     "favorites": "收藏",

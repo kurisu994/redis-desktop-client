@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { KeyEntry } from "@/stores/browser-store";
 import { useBrowserStore } from "@/stores/browser-store";
-import { ChevronRight, ChevronDown, Folder, Star } from "lucide-react";
+import { ChevronRight, ChevronDown, Folder, Star, Loader2 } from "lucide-react";
 
 /** Key 类型对应的颜色 */
 const TYPE_COLORS: Record<string, string> = {
@@ -36,10 +36,11 @@ interface KeyTreeProps {
   keys: KeyEntry[];
   selectedKey: string | null;
   onSelectKey: (key: string) => void;
+  loading?: boolean;
 }
 
 /** 树形 Key 浏览器 — 按 : 分隔符构建命名空间层级，支持多选和收藏 */
-export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
+export function KeyTree({ keys, selectedKey, onSelectKey, loading }: KeyTreeProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } = useBrowserStore();
 
@@ -196,7 +197,7 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
   }
 
   return (
-    <div className="p-2 text-sm font-mono tracking-tight select-none">
+    <div className="relative p-2 text-sm font-mono tracking-tight select-none">
       {/* 根级文件夹 */}
       {Array.from(tree.children.values())
         .sort((a, b) => a.name.localeCompare(b.name))
@@ -205,6 +206,11 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
       {tree.keys
         .sort((a, b) => a.key.localeCompare(b.key))
         .map((entry) => renderLeaf(entry, 0))}
+      {loading && keys.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+        </div>
+      )}
     </div>
   );
 }
