@@ -196,7 +196,7 @@ pub async fn import_keys(
 
 /// 根据类型写入 Key
 async fn write_key(
-    conn: &mut redis::aio::MultiplexedConnection,
+    conn: &mut redis::aio::ConnectionManager,
     key: &str,
     key_type: &str,
     value: &serde_json::Value,
@@ -257,7 +257,7 @@ async fn write_key(
 
 /// 设置 TTL（如果需要）
 async fn set_ttl_if_needed(
-    conn: &mut redis::aio::MultiplexedConnection,
+    conn: &mut redis::aio::ConnectionManager,
     key: &str,
     ttl: i64,
 ) -> Result<(), String> {
@@ -269,7 +269,7 @@ async fn set_ttl_if_needed(
 
 /// 寻找可用的 Key 名（递增后缀）
 async fn find_available_key(
-    conn: &mut redis::aio::MultiplexedConnection,
+    conn: &mut redis::aio::ConnectionManager,
     base_key: &str,
 ) -> Result<String, String> {
     for i in 1..=100 {

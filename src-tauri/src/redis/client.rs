@@ -4,8 +4,9 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 /// Redis 客户端管理器 — 管理多个 Redis 连接的生命周期
+/// 使用 ConnectionManager 自动处理断线重连
 pub struct RedisClientManager {
-    clients: Arc<Mutex<HashMap<String, redis::aio::MultiplexedConnection>>>,
+    clients: Arc<Mutex<HashMap<String, redis::aio::ConnectionManager>>>,
 }
 
 impl RedisClientManager {
@@ -31,7 +32,7 @@ impl RedisClientManager {
 
         let client = redis::Client::open(url).map_err(|e| e.to_string())?;
         let conn = client
-            .get_multiplexed_async_connection()
+            .get_connection_manager()
             .await
             .map_err(|e| e.to_string())?;
 
@@ -51,7 +52,7 @@ impl RedisClientManager {
     pub async fn get_connection(
         &self,
         id: &str,
-    ) -> Result<redis::aio::MultiplexedConnection, String> {
+    ) -> Result<redis::aio::ConnectionManager, String> {
         let clients = self.clients.lock().await;
         clients
             .get(id)

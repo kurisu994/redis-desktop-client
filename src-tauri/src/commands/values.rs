@@ -43,7 +43,7 @@ pub struct StreamEntry {
 
 /// 切换到指定 db 的辅助函数
 async fn select_db(
-    conn: &mut redis::aio::MultiplexedConnection,
+    conn: &mut redis::aio::ConnectionManager,
     db: u32,
 ) -> Result<(), String> {
     redis::cmd("SELECT")
