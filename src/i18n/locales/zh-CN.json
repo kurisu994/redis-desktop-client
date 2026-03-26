@@ -167,6 +167,7 @@
     "streamFields": "字段",
     "largeValue": "大值",
     "largeValueHint": "值大小超过 {{size}}，仅显示预览。",
+    "hexTruncated": "Hex 视图已截断，仅显示前 {{size}}。",
     "loadFull": "加载完整值",
     "loadingFull": "加载中...",
     "preview": "预览",
@@ -320,5 +321,8 @@
     "flushAllTitle": "清空所有数据库",
     "typeToConfirm": "请输入 \"{{text}}\" 以确认操作",
     "dangerousAction": "危险操作"
+  },
+  "pagination": {
+    "showing": "第 {{from}}-{{to}} 条，共 {{total}} 条"
   }
 }

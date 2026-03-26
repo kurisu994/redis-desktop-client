@@ -167,6 +167,7 @@
     "streamFields": "Fields",
     "largeValue": "Large Value",
     "largeValueHint": "Value size exceeds {{size}}. Showing preview only.",
+    "hexTruncated": "Hex view is truncated. Only showing the first {{size}}.",
     "loadFull": "Load Full Value",
     "loadingFull": "Loading...",
     "preview": "Preview",
@@ -320,5 +321,8 @@
     "flushAllTitle": "Flush All Databases",
     "typeToConfirm": "Type \"{{text}}\" to confirm",
     "dangerousAction": "Dangerous Action"
+  },
+  "pagination": {
+    "showing": "{{from}}-{{to}} of {{total}} items"
   }
 }

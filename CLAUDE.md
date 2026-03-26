@@ -71,6 +71,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 - Phase 5（高级功能：服务器监控、慢查询、Pub/Sub、数据导入导出）✅ 已完成
 - Phase 6（高级连接 & 完善：SSH/TLS/Sentinel/Cluster UI、连接导入导出、设置页、快捷键、错误边界）✅ 已完成
   - ✅ v0.2.0：常用命令面板（⌘K）、补充快捷键（⌘D/⌘S/F5/Delete）
+  - ✅ v0.3.0：值编辑器交互重构（表格行截断 + 展开 + 双击编辑 + 自定义右键菜单）+ 大字符串性能优化（Hex useMemo/截断 + Monaco 选项优化 + model 隔离）+ 表格分页加载（Hash/List/Set/ZSet/Stream 每页 200 条）
   - 🔲 待办：SSH 隧道后端（Rust russh 库）、自动更新集成、macOS/Windows 签名
 
 详见 `docs/DEVELOPMENT_PLAN.md`。

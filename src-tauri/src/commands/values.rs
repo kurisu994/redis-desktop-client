@@ -89,7 +89,7 @@ pub async fn get_string_value_partial(
         .map_err(|e| e.to_string())
 }
 
-/// 获取 Hash 类型的值 — HSCAN 分页
+/// 获取 Hash 类型的值 — HSCAN 分页（循环迭代直到收集满 count 条或扫描完毕）
 #[tauri::command]
 pub async fn get_hash_value(
     pool: State<'_, RedisClientManager>,
@@ -104,35 +104,41 @@ pub async fn get_hash_value(
     select_db(&mut conn, db).await?;
 
     let match_pattern = if pattern.is_empty() { "*".to_string() } else { pattern };
-    let (new_cursor, raw): (u64, Vec<String>) = redis::cmd("HSCAN")
-        .arg(&key)
-        .arg(cursor)
-        .arg("MATCH")
-        .arg(&match_pattern)
-        .arg("COUNT")
-        .arg(count)
-        .query_async(&mut conn)
-        .await
-        .map_err(|e| e.to_string())?;
+    let mut accumulated_fields: Vec<HashField> = Vec::new();
+    let mut current_cursor = cursor;
 
-    // raw 是 [field1, value1, field2, value2, ...] 的交错数组
-    let fields: Vec<HashField> = raw
-        .chunks(2)
-        .filter_map(|chunk| {
+    // 循环 HSCAN 直到收集满 count 条或游标归零（扫描完毕）
+    loop {
+        let (new_cursor, raw): (u64, Vec<String>) = redis::cmd("HSCAN")
+            .arg(&key)
+            .arg(current_cursor)
+            .arg("MATCH")
+            .arg(&match_pattern)
+            .arg("COUNT")
+            .arg(count)
+            .query_async(&mut conn)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // raw 是 [field1, value1, field2, value2, ...] 的交错数组
+        for chunk in raw.chunks(2) {
             if chunk.len() == 2 {
-                Some(HashField {
+                accumulated_fields.push(HashField {
                     field: chunk[0].clone(),
                     value: chunk[1].clone(),
-                })
-            } else {
-                None
+                });
             }
-        })
-        .collect();
+        }
+
+        current_cursor = new_cursor;
+        if accumulated_fields.len() >= count as usize || current_cursor == 0 {
+            break;
+        }
+    }
 
     Ok(HashScanResult {
-        cursor: new_cursor,
-        fields,
+        cursor: current_cursor,
+        fields: accumulated_fields,
     })
 }
 
@@ -153,7 +159,7 @@ pub async fn get_list_value(
         .map_err(|e| e.to_string())
 }
 
-/// 获取 Set 类型的值 — SSCAN 分页
+/// 获取 Set 类型的值 — SSCAN 分页（循环迭代直到收集满 count 条或扫描完毕）
 #[tauri::command]
 pub async fn get_set_value(
     pool: State<'_, RedisClientManager>,
@@ -168,20 +174,32 @@ pub async fn get_set_value(
     select_db(&mut conn, db).await?;
 
     let match_pattern = if pattern.is_empty() { "*".to_string() } else { pattern };
-    let (new_cursor, members): (u64, Vec<String>) = redis::cmd("SSCAN")
-        .arg(&key)
-        .arg(cursor)
-        .arg("MATCH")
-        .arg(&match_pattern)
-        .arg("COUNT")
-        .arg(count)
-        .query_async(&mut conn)
-        .await
-        .map_err(|e| e.to_string())?;
+    let mut accumulated_members: Vec<String> = Vec::new();
+    let mut current_cursor = cursor;
+
+    // 循环 SSCAN 直到收集满 count 条或游标归零（扫描完毕）
+    loop {
+        let (new_cursor, members): (u64, Vec<String>) = redis::cmd("SSCAN")
+            .arg(&key)
+            .arg(current_cursor)
+            .arg("MATCH")
+            .arg(&match_pattern)
+            .arg("COUNT")
+            .arg(count)
+            .query_async(&mut conn)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        accumulated_members.extend(members);
+        current_cursor = new_cursor;
+        if accumulated_members.len() >= count as usize || current_cursor == 0 {
+            break;
+        }
+    }
 
     Ok(SetScanResult {
-        cursor: new_cursor,
-        members,
+        cursor: current_cursor,
+        members: accumulated_members,
     })
 }
 

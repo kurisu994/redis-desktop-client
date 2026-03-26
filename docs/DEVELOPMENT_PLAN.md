@@ -218,6 +218,10 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 | 33 | 值内搜索 | 大文本中支持 Ctrl+F 搜索（Monaco 内置） | ✅ |
 | 34 | 主题跟随 | 深色/浅色主题自动跟随应用主题切换 | ✅ |
 | 35 | 复制到剪贴板 | 一键复制 Key 名称或值 | ✅ |
+| 36 | 表格交互重构 | Hash/List/Set/ZSet 表格行值截断单行 + Tooltip + 单击展开 + 双击编辑弹窗 | ✅ |
+| 37 | 自定义右键菜单 | 禁用 Monaco 默认菜单，JSON 模式下添加"格式化 JSON"菜单 | ✅ |
+| 38 | 大字符串性能优化 | Hex useMemo 缓存 + 256KB 截断 + 大字符串 Monaco 选项优化 + path 隔离修复 | ✅ |
+| 39 | 表格分页加载 | Hash/List/Set/ZSet/Stream 服务端分页（每页 200 条），解决大数据量卡顿 | ✅ |
 
 #### 3.5 连接导入导出
 
@@ -239,6 +243,10 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 - ✅ 收藏 Key（⭐标记 + 仅显示收藏筛选）
 - ✅ Diff 对比（Monaco Diff Editor 编辑前后差异视图）
 - ✅ JSON 数据类型 (RedisJSON) 支持（JSON.GET/SET + 前端 JsonViewer + path 查询）
+- ✅ 表格交互重构（值截断单行 + Tooltip + 单击展开 + 双击编辑弹窗）
+- ✅ Monaco 自定义右键菜单（JSON 格式化）
+- ✅ 大字符串性能优化（Hex useMemo + 256KB 截断 + Monaco 选项优化 + model 隔离）
+- ✅ 表格分页加载（Hash/List/Set/ZSet/Stream 每页 200 条，SCAN 游标/索引/ID 分页策略）
 
 ---
 

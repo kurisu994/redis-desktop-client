@@ -6,6 +6,53 @@
 
 ---
 
+## [0.3.0] — 2026-03-26
+
+> 🔧 值编辑器交互重构 + 性能优化，提升大值场景下的用户体验。
+
+### ✨ 新功能
+
+#### 值编辑器表格交互重构
+- Hash/List/Set/ZSet 表格行值截断为单行显示，超出部分以 `...` 省略
+- 鼠标悬浮显示完整值（Tooltip）
+- 单击表格行展开/收起完整值
+- 双击表格行打开编辑弹窗
+- Stream 表格行同样支持单击展开（不可编辑）
+
+#### Monaco Editor 自定义右键菜单
+- 禁用 Monaco Editor 默认右键菜单（所有实例）
+- JSON 模式下新增"格式化 JSON"自定义右键菜单项
+- 支持 StringViewer（动态检测当前格式）和 JsonViewer（始终启用）
+
+### 🔧 改进
+
+#### 性能优化
+- Hex dump 使用 `useMemo` 缓存计算结果，避免格式切换时重复计算
+- Hex dump 增加最大字节限制（256KB），超出部分截断并提示
+- 大字符串（>50KB）自动优化 Monaco Editor 选项（禁用 wordWrap、folding、occurrencesHighlight 等高开销功能）
+- Hex/主编辑器使用独立 `path` prop，避免 Monaco model 冲突
+
+#### Hex 切换数据还原修复
+- 修复 Hex 模式切回 JSON 等格式时数据丢失的问题
+- 根因：Monaco Editor 条件渲染时不同编辑器共享同一 model
+- 解决：为 Hex 视图和主编辑器分配不同的 `path`，确保 model 隔离
+
+#### 树形视图缩进优化
+- Key 树形视图每层缩进改为固定值（~1 字符宽度），不再随深度线性增长
+- 减少深层 Key 的水平空间占用
+
+#### 表格行操作简化
+- 移除 Hash/List/Set/ZSet 表格行的编辑图标按钮
+- 编辑操作统一通过双击行触发，保留删除按钮
+
+#### 表格分页加载
+- Hash/List/Set/ZSet/Stream 表格支持服务端分页，每页 200 条
+- List/ZSet 使用索引分页（LRANGE/ZRANGE），支持任意跳页
+- Hash/Set 使用 SCAN 游标分页，后端循环迭代确保每页数据量达标
+- Stream 使用 ID 边界分页（XRANGE 排他起始 ID）
+- 分页控件显示"第 X-Y 条 / 共 N 条"及上一页/下一页按钮
+- 解决大数据量场景（List/ZSet 全量加载、Set/Hash 单次 SCAN）导致的界面卡顿
+
 ## [0.2.0] — 2026-03-09
 
 > 🎯 新增常用命令面板和补充快捷键，提升操作效率。
