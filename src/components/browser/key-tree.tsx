@@ -130,7 +130,7 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
   };
 
   /** 渲染叶子节点（Key），含 checkbox 和收藏 */
-  const renderLeaf = (entry: KeyEntry, depth: number) => {
+  const renderLeaf = (entry: KeyEntry, _depth: number) => {
     const isSelected = selectedKey === entry.key;
     const isChecked = checkedKeys.has(entry.key);
     const isFavorite = favorites.has(entry.key);

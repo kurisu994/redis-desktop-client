@@ -27,9 +27,14 @@ import {
   setJsonValue,
 } from "@/lib/tauri-api";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2, Save, AlertTriangle, Download } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Plus, Trash2, Save, AlertTriangle, Download } from "lucide-react";
 import { AddFieldDialog } from "./add-field-dialog";
 import Editor, { DiffEditor } from "@monaco-editor/react";
+import type { OnMount } from "@monaco-editor/react";
+
+/** Monaco Editor 实例类型（从 OnMount 回调提取） */
+type MonacoEditorInstance = Parameters<OnMount>[0];
 
 /** 在 useEffect 中安全调用数据加载函数，避免 react-hooks/set-state-in-effect */
 function useLoadEffect(loadFn: () => Promise<void>, deps: React.DependencyList) {
@@ -194,6 +199,72 @@ function toHexDump(str: string): string {
   return lines.join("\n");
 }
 
+/** 为 Monaco Editor 设置自定义右键菜单 — JSON 模式下添加"格式化 JSON"菜单项 */
+function setupJsonContextMenu(
+  editor: MonacoEditorInstance,
+  isJsonOrCheck: boolean | (() => boolean),
+) {
+  const domNode = editor.getDomNode();
+  if (!domNode) return;
+
+  const checkIsJson = typeof isJsonOrCheck === "function" ? isJsonOrCheck : () => isJsonOrCheck;
+
+  domNode.addEventListener("contextmenu", (e: MouseEvent) => {
+    if (!checkIsJson()) return; // 非 JSON 格式不拦截，保持默认行为
+    e.preventDefault();
+    e.stopPropagation();
+
+    // 移除已有的自定义菜单
+    const existing = document.getElementById("monaco-custom-ctx-menu");
+    if (existing) existing.remove();
+
+    // 创建自定义右键菜单
+    const menu = document.createElement("div");
+    menu.id = "monaco-custom-ctx-menu";
+    menu.style.cssText = `
+      position: fixed; left: ${e.clientX}px; top: ${e.clientY}px; z-index: 9999;
+      min-width: 160px; padding: 4px 0;
+      background: var(--color-card, hsl(240 10% 10%));
+      border: 1px solid var(--color-border, hsl(240 3.7% 15.9%));
+      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    `;
+    const item = document.createElement("button");
+    item.textContent = "格式化 JSON";
+    item.style.cssText = `
+      display: block; width: 100%; text-align: left; padding: 6px 12px;
+      font-size: 13px; color: var(--color-foreground, #e5e5e5);
+      background: none; border: none; cursor: pointer; border-radius: 4px; margin: 0 4px;
+      width: calc(100% - 8px);
+    `;
+    item.onmouseenter = () => { item.style.background = "var(--color-accent, hsl(240 3.7% 15.9%))"; };
+    item.onmouseleave = () => { item.style.background = "none"; };
+    item.onclick = () => {
+      try {
+        const val = editor.getValue();
+        const parsed = JSON.parse(val);
+        editor.setValue(JSON.stringify(parsed, null, 2));
+      } catch {
+        // 非法 JSON 不处理
+      }
+      menu.remove();
+    };
+
+    menu.appendChild(item);
+    document.body.appendChild(menu);
+
+    // 点击其他区域关闭菜单
+    const close = () => {
+      menu.remove();
+      document.removeEventListener("click", close);
+      document.removeEventListener("contextmenu", close);
+    };
+    setTimeout(() => {
+      document.addEventListener("click", close);
+      document.addEventListener("contextmenu", close);
+    }, 0);
+  });
+}
+
 // ============ String 查看器（含大值延迟加载 + Diff 对比 + 多格式语法高亮） ============
 
 function StringViewer({
@@ -219,6 +290,11 @@ function StringViewer({
   const [showDiff, setShowDiff] = useState(false);
   /** "更多格式" 下拉菜单 */
   const [showMoreFormats, setShowMoreFormats] = useState(false);
+  /** Monaco editor 实例引用 */
+  const editorRef = useRef<MonacoEditorInstance | null>(null);
+  /** 当前格式的 ref（供右键菜单闭包动态读取） */
+  const formatRef = useRef(format);
+  formatRef.current = format;
 
   /** 判断是否为大值（使用 keyInfo.length —— String 的 STRLEN 字节长度） */
   const isLargeValue = keyInfo.length > LARGE_VALUE_THRESHOLD;
@@ -421,6 +497,7 @@ function StringViewer({
               automaticLayout: true,
               readOnly: true,
               renderLineHighlight: "none",
+              contextmenu: false,
             }}
           />
         ) : showDiff ? (
@@ -436,6 +513,7 @@ function StringViewer({
               renderSideBySide: true,
               scrollBeyondLastLine: false,
               automaticLayout: true,
+              contextmenu: false,
             }}
             onMount={(editor) => {
               // 监听修改后的内容变化
@@ -459,6 +537,11 @@ function StringViewer({
               scrollBeyondLastLine: false,
               automaticLayout: true,
               readOnly: isLargePreview,
+              contextmenu: false,
+            }}
+            onMount={(editor) => {
+              editorRef.current = editor;
+              setupJsonContextMenu(editor, () => formatRef.current === "json");
             }}
           />
         )}
@@ -475,6 +558,7 @@ function HashViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
   const [fields, setFields] = useState<{ field: string; value: string }[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editData, setEditData] = useState<{ field: string; value: string } | null>(null);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
   const loadData = useCallback(async () => {
     if (!connectionId) return;
@@ -505,17 +589,17 @@ function HashViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
     <div className="flex-1 flex flex-col overflow-hidden">
       <TableView
         headers={[t("valueEditor.field"), t("valueEditor.value"), ""]}
-        rows={fields.map((f) => [
+        rows={fields.map((f, idx) => [
           <span key="f" className="text-primary font-medium">
             {f.field}
           </span>,
-          <span key="v" className="break-all text-foreground/80">
-            {f.value}
-          </span>,
-          <RowActions key="a" onEdit={() => setEditData(f)} onDelete={() => handleDelete(f.field)} />,
+          <TruncatedValue key="v" value={f.value} expanded={expandedRow === idx} />,
+          <RowActions key="a" onDelete={() => handleDelete(f.field)} />,
         ])}
-        widths={["w-1/3", "", "w-20"]}
-        onRowClick={(idx) => setEditData(fields[idx])}
+        widths={["w-1/3", "", "w-16"]}
+        expandedRow={expandedRow}
+        onRowClick={(idx) => setExpandedRow((prev) => (prev === idx ? null : idx))}
+        onRowDoubleClick={(idx) => setEditData(fields[idx])}
         addLabel={t("valueEditor.addField")}
         onAdd={() => setShowAdd(true)}
       />
@@ -543,6 +627,7 @@ function ListViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
   const [items, setItems] = useState<string[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
   const loadData = useCallback(async () => {
     if (!connectionId) return;
@@ -567,13 +652,13 @@ function ListViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
           <span key="i" className="text-primary font-medium">
             {i}
           </span>,
-          <span key="v" className="break-all text-foreground/80">
-            {item}
-          </span>,
-          <RowActions key="a" onEdit={() => setEditIdx(i)} onDelete={() => handleDelete(i)} />,
+          <TruncatedValue key="v" value={item} expanded={expandedRow === i} />,
+          <RowActions key="a" onDelete={() => handleDelete(i)} />,
         ])}
-        widths={["w-20", "", "w-20"]}
-        onRowClick={(idx) => setEditIdx(idx)}
+        widths={["w-20", "", "w-16"]}
+        expandedRow={expandedRow}
+        onRowClick={(idx) => setExpandedRow((prev) => (prev === idx ? null : idx))}
+        onRowDoubleClick={(idx) => setEditIdx(idx)}
         addLabel={t("valueEditor.addElement")}
         onAdd={() => setShowAdd(true)}
       />
@@ -614,6 +699,7 @@ function SetViewer({ keyName, onValueChanged }: { keyName: string; onValueChange
   const [members, setMembers] = useState<string[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editMember, setEditMember] = useState<string | null>(null);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
   const loadData = useCallback(async () => {
     if (!connectionId) return;
@@ -634,14 +720,14 @@ function SetViewer({ keyName, onValueChanged }: { keyName: string; onValueChange
     <div className="flex-1 flex flex-col overflow-hidden">
       <TableView
         headers={[t("valueEditor.member"), ""]}
-        rows={members.map((m) => [
-          <span key="m" className="break-all text-foreground/80">
-            {m}
-          </span>,
-          <RowActions key="a" onEdit={() => setEditMember(m)} onDelete={() => handleDelete(m)} />,
+        rows={members.map((m, idx) => [
+          <TruncatedValue key="m" value={m} expanded={expandedRow === idx} />,
+          <RowActions key="a" onDelete={() => handleDelete(m)} />,
         ])}
-        widths={["", "w-20"]}
-        onRowClick={(idx) => setEditMember(members[idx])}
+        widths={["", "w-16"]}
+        expandedRow={expandedRow}
+        onRowClick={(idx) => setExpandedRow((prev) => (prev === idx ? null : idx))}
+        onRowDoubleClick={(idx) => setEditMember(members[idx])}
         addLabel={t("valueEditor.addMember")}
         onAdd={() => setShowAdd(true)}
       />
@@ -679,6 +765,7 @@ function ZSetViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
   const [members, setMembers] = useState<{ member: string; score: number }[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editData, setEditData] = useState<{ member: string; score: number } | null>(null);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
   const loadData = useCallback(async () => {
     if (!connectionId) return;
@@ -699,17 +786,17 @@ function ZSetViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
     <div className="flex-1 flex flex-col overflow-hidden">
       <TableView
         headers={[t("valueEditor.score"), t("valueEditor.member"), ""]}
-        rows={members.map((m) => [
+        rows={members.map((m, idx) => [
           <span key="s" className="text-primary font-medium">
             {m.score}
           </span>,
-          <span key="m" className="break-all text-foreground/80">
-            {m.member}
-          </span>,
-          <RowActions key="a" onEdit={() => setEditData(m)} onDelete={() => handleDelete(m.member)} />,
+          <TruncatedValue key="m" value={m.member} expanded={expandedRow === idx} />,
+          <RowActions key="a" onDelete={() => handleDelete(m.member)} />,
         ])}
-        widths={["w-28", "", "w-20"]}
-        onRowClick={(idx) => setEditData(members[idx])}
+        widths={["w-28", "", "w-16"]}
+        expandedRow={expandedRow}
+        onRowClick={(idx) => setExpandedRow((prev) => (prev === idx ? null : idx))}
+        onRowDoubleClick={(idx) => setEditData(members[idx])}
         addLabel={t("valueEditor.addMember")}
         onAdd={() => setShowAdd(true)}
       />
@@ -746,6 +833,7 @@ function StreamViewer({ keyName, onValueChanged }: { keyName: string; onValueCha
   const { connectionId, selectedDb } = useBrowserStore();
   const [entries, setEntries] = useState<{ id: string; fields: [string, string][] }[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
   const loadData = useCallback(async () => {
     if (!connectionId) return;
@@ -762,25 +850,24 @@ function StreamViewer({ keyName, onValueChanged }: { keyName: string; onValueCha
     onValueChanged();
   };
 
+  /** 将 Stream entry 的 fields 格式化为字符串 */
+  const formatFields = (fields: [string, string][]) =>
+    fields.map(([k, v]) => `${k}: ${v}`).join(", ");
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <TableView
         headers={[t("valueEditor.streamId"), t("valueEditor.streamFields"), ""]}
-        rows={entries.map((e) => [
+        rows={entries.map((e, idx) => [
           <span key="id" className="text-primary font-medium text-xs">
             {e.id}
           </span>,
-          <div key="f" className="space-y-0.5">
-            {e.fields.map(([k, v], i) => (
-              <span key={i} className="text-xs text-foreground/80">
-                <span className="text-primary">{k}</span>: {v}
-                {i < e.fields.length - 1 && ", "}
-              </span>
-            ))}
-          </div>,
+          <TruncatedValue key="f" value={formatFields(e.fields)} expanded={expandedRow === idx} />,
           <RowActions key="a" onDelete={() => handleDelete(e.id)} />,
         ])}
-        widths={["w-44", "", "w-20"]}
+        widths={["w-44", "", "w-16"]}
+        expandedRow={expandedRow}
+        onRowClick={(idx) => setExpandedRow((prev) => (prev === idx ? null : idx))}
         addLabel={t("valueEditor.addEntry")}
         onAdd={() => setShowAdd(true)}
       />
@@ -805,21 +892,52 @@ function StreamViewer({ keyName, onValueChanged }: { keyName: string; onValueCha
 
 // ============ 通用表格组件 ============
 
+/** 双击检测延迟（ms） */
+const DOUBLE_CLICK_DELAY = 250;
+
 function TableView({
   headers,
   rows,
   widths,
+  expandedRow,
   onRowClick,
+  onRowDoubleClick,
   addLabel,
   onAdd,
 }: {
   headers: string[];
   rows: React.ReactNode[][];
   widths: string[];
+  /** 当前展开的行索引 */
+  expandedRow?: number | null;
+  /** 单击行回调（展开/折叠） */
   onRowClick?: (rowIdx: number) => void;
+  /** 双击行回调（打开编辑弹窗） */
+  onRowDoubleClick?: (rowIdx: number) => void;
   addLabel: string;
   onAdd: () => void;
 }) {
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** 区分单击和双击 */
+  const handleClick = useCallback(
+    (rowIdx: number) => {
+      if (clickTimerRef.current) {
+        // 双击：取消单击，触发双击
+        clearTimeout(clickTimerRef.current);
+        clickTimerRef.current = null;
+        onRowDoubleClick?.(rowIdx);
+      } else {
+        // 单击：延迟执行，等待可能的双击
+        clickTimerRef.current = setTimeout(() => {
+          clickTimerRef.current = null;
+          onRowClick?.(rowIdx);
+        }, DOUBLE_CLICK_DELAY);
+      }
+    },
+    [onRowClick, onRowDoubleClick],
+  );
+
   return (
     <div className="flex-1 overflow-auto p-5">
       <div className="rounded-lg border border-border overflow-hidden">
@@ -837,8 +955,10 @@ function TableView({
             {rows.map((cells, rowIdx) => (
               <tr
                 key={rowIdx}
-                className={`border-b border-border/50 hover:bg-muted/30 group ${onRowClick ? "cursor-pointer" : ""}`}
-                onClick={() => onRowClick?.(rowIdx)}
+                className={`border-b border-border/50 hover:bg-muted/30 group cursor-pointer ${
+                  expandedRow === rowIdx ? "bg-muted/20" : ""
+                }`}
+                onClick={() => handleClick(rowIdx)}
               >
                 {cells.map((cell, cellIdx) => (
                   <td key={cellIdx} className="px-4 py-2.5">
@@ -866,21 +986,10 @@ function TableView({
   );
 }
 
-/** 行操作按钮 */
-function RowActions({ onEdit, onDelete }: { onEdit?: () => void; onDelete?: () => void }) {
+/** 行操作按钮 — 仅删除 */
+function RowActions({ onDelete }: { onDelete?: () => void }) {
   return (
     <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-      {onEdit && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-          className="text-muted-foreground hover:text-primary p-1"
-        >
-          <Pencil className="w-3.5 h-3.5" />
-        </button>
-      )}
       {onDelete && (
         <button
           onClick={(e) => {
@@ -893,6 +1002,47 @@ function RowActions({ onEdit, onDelete }: { onEdit?: () => void; onDelete?: () =
         </button>
       )}
     </div>
+  );
+}
+
+/** 可截断的值显示组件 — 默认单行截断，展开时完整显示，截断时 hover 显示 Tooltip */
+function TruncatedValue({ value, expanded, className }: { value: string; expanded: boolean; className?: string }) {
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    const el = textRef.current;
+    if (el && !expanded) {
+      setIsTruncated(el.scrollWidth > el.clientWidth);
+    }
+  }, [value, expanded]);
+
+  if (expanded) {
+    return (
+      <span className={`whitespace-pre-wrap break-all text-foreground/80 font-mono text-xs ${className || ""}`}>
+        {value}
+      </span>
+    );
+  }
+
+  const truncatedEl = (
+    <span
+      ref={textRef}
+      className={`block truncate text-foreground/80 font-mono text-xs ${className || ""}`}
+    >
+      {value}
+    </span>
+  );
+
+  if (!isTruncated) return truncatedEl;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{truncatedEl}</TooltipTrigger>
+      <TooltipContent side="bottom" align="start" className="max-w-md max-h-60 overflow-auto">
+        <pre className="whitespace-pre-wrap text-xs font-mono break-all">{value}</pre>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -1045,6 +1195,10 @@ function JsonViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
             scrollBeyondLastLine: false,
             automaticLayout: true,
             formatOnPaste: true,
+            contextmenu: false,
+          }}
+          onMount={(editor) => {
+            setupJsonContextMenu(editor, true);
           }}
         />
       </div>

@@ -163,6 +163,7 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
                   scrollBeyondLastLine: false,
                   automaticLayout: true,
                   tabSize: 2,
+                  contextmenu: false,
                 }}
               />
             </div>
