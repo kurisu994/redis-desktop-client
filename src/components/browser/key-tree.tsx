@@ -98,7 +98,7 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
       <div key={node.fullPath}>
         <button
           className="flex items-center gap-2 w-full py-1.5 px-2 rounded-md hover:bg-white/5 cursor-pointer text-sm transition-colors"
-          style={{ paddingLeft: `${depth * 10 + 8}px` }}
+          style={{ paddingLeft: "8px" }}
           onClick={() => toggleFolder(node.fullPath)}
         >
           {isExpanded ? (
@@ -114,7 +114,7 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
         </button>
 
         {isExpanded && (
-          <div className="border-l border-border/50 pl-0.5" style={{ marginLeft: `${depth * 10 + 16}px` }}>
+          <div className="border-l border-border/50 pl-0.5" style={{ marginLeft: "10px" }}>
             {/* 子文件夹 */}
             {Array.from(node.children.values())
               .sort((a, b) => a.name.localeCompare(b.name))
@@ -145,7 +145,7 @@ export function KeyTree({ keys, selectedKey, onSelectKey }: KeyTreeProps) {
             ? "bg-primary/15 text-primary"
             : "hover:bg-white/5 text-foreground/70"
         }`}
-        style={{ paddingLeft: `${depth * 10 + 12}px` }}
+        style={{ paddingLeft: "12px" }}
       >
         {/* 多选 Checkbox */}
         <input
