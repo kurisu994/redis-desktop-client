@@ -55,7 +55,7 @@ async fn select_db(
 
 // ============ 读取命令 ============
 
-/// 获取 String 类型的值
+/// 获取 String 类型的值（支持二进制数据，lossy 转换）
 #[tauri::command]
 pub async fn get_string_value(
     pool: State<'_, RedisClientManager>,
@@ -65,10 +65,11 @@ pub async fn get_string_value(
 ) -> Result<String, String> {
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
-    conn.get(&key).await.map_err(|e| e.to_string())
+    let raw: Vec<u8> = conn.get(&key).await.map_err(|e| e.to_string())?;
+    Ok(String::from_utf8_lossy(&raw).into_owned())
 }
 
-/// 部分读取 String 值 — 使用 GETRANGE 分块读取大值
+/// 部分读取 String 值 — 使用 GETRANGE 分块读取大值（支持二进制数据）
 #[tauri::command]
 pub async fn get_string_value_partial(
     pool: State<'_, RedisClientManager>,
@@ -80,16 +81,17 @@ pub async fn get_string_value_partial(
 ) -> Result<String, String> {
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
-    redis::cmd("GETRANGE")
+    let raw: Vec<u8> = redis::cmd("GETRANGE")
         .arg(&key)
         .arg(start)
         .arg(end)
-        .query_async::<String>(&mut conn)
+        .query_async(&mut conn)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    Ok(String::from_utf8_lossy(&raw).into_owned())
 }
 
-/// 获取 Hash 类型的值 — HSCAN 分页（循环迭代直到收集满 count 条或扫描完毕）
+/// 获取 Hash 类型的值 — HSCAN 分页（循环迭代直到收集满 count 条或扫描完毕，支持二进制数据）
 #[tauri::command]
 pub async fn get_hash_value(
     pool: State<'_, RedisClientManager>,
@@ -109,7 +111,7 @@ pub async fn get_hash_value(
 
     // 循环 HSCAN 直到收集满 count 条或游标归零（扫描完毕）
     loop {
-        let (new_cursor, raw): (u64, Vec<String>) = redis::cmd("HSCAN")
+        let (new_cursor, raw): (u64, Vec<Vec<u8>>) = redis::cmd("HSCAN")
             .arg(&key)
             .arg(current_cursor)
             .arg("MATCH")
@@ -124,8 +126,8 @@ pub async fn get_hash_value(
         for chunk in raw.chunks(2) {
             if chunk.len() == 2 {
                 accumulated_fields.push(HashField {
-                    field: chunk[0].clone(),
-                    value: chunk[1].clone(),
+                    field: String::from_utf8_lossy(&chunk[0]).into_owned(),
+                    value: String::from_utf8_lossy(&chunk[1]).into_owned(),
                 });
             }
         }
@@ -142,7 +144,7 @@ pub async fn get_hash_value(
     })
 }
 
-/// 获取 List 类型的值 — LRANGE 分页
+/// 获取 List 类型的值 — LRANGE 分页（支持二进制数据）
 #[tauri::command]
 pub async fn get_list_value(
     pool: State<'_, RedisClientManager>,
@@ -154,12 +156,14 @@ pub async fn get_list_value(
 ) -> Result<Vec<String>, String> {
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
-    conn.lrange(&key, start as isize, stop as isize)
+    let raw: Vec<Vec<u8>> = conn
+        .lrange(&key, start as isize, stop as isize)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    Ok(raw.into_iter().map(|b| String::from_utf8_lossy(&b).into_owned()).collect())
 }
 
-/// 获取 Set 类型的值 — SSCAN 分页（循环迭代直到收集满 count 条或扫描完毕）
+/// 获取 Set 类型的值 — SSCAN 分页（循环迭代直到收集满 count 条或扫描完毕，支持二进制数据）
 #[tauri::command]
 pub async fn get_set_value(
     pool: State<'_, RedisClientManager>,
@@ -179,7 +183,7 @@ pub async fn get_set_value(
 
     // 循环 SSCAN 直到收集满 count 条或游标归零（扫描完毕）
     loop {
-        let (new_cursor, members): (u64, Vec<String>) = redis::cmd("SSCAN")
+        let (new_cursor, members): (u64, Vec<Vec<u8>>) = redis::cmd("SSCAN")
             .arg(&key)
             .arg(current_cursor)
             .arg("MATCH")
@@ -190,7 +194,9 @@ pub async fn get_set_value(
             .await
             .map_err(|e| e.to_string())?;
 
-        accumulated_members.extend(members);
+        accumulated_members.extend(
+            members.into_iter().map(|b| String::from_utf8_lossy(&b).into_owned())
+        );
         current_cursor = new_cursor;
         if accumulated_members.len() >= count as usize || current_cursor == 0 {
             break;
@@ -203,7 +209,7 @@ pub async fn get_set_value(
     })
 }
 
-/// 获取 ZSet 类型的值 — ZRANGE WITHSCORES
+/// 获取 ZSet 类型的值 — ZRANGE WITHSCORES（支持二进制数据）
 #[tauri::command]
 pub async fn get_zset_value(
     pool: State<'_, RedisClientManager>,
@@ -216,14 +222,17 @@ pub async fn get_zset_value(
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
 
-    let raw: Vec<(String, f64)> = conn
+    let raw: Vec<(Vec<u8>, f64)> = conn
         .zrange_withscores(&key, start as isize, stop as isize)
         .await
         .map_err(|e| e.to_string())?;
 
     Ok(raw
         .into_iter()
-        .map(|(member, score)| ZSetMember { member, score })
+        .map(|(member_bytes, score)| ZSetMember {
+            member: String::from_utf8_lossy(&member_bytes).into_owned(),
+            score,
+        })
         .collect())
 }
 

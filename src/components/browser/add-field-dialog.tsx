@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,15 +21,21 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import Editor from "@monaco-editor/react";
+import type { OnMount } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
+import { setupJsonContextMenu, toHexDump } from "./value-viewer";
+
+/** Monaco Editor 实例类型 */
+type MonacoEditorInstance = Parameters<OnMount>[0];
 
 /** 编辑器支持的格式 */
-type EditorFormat = "text" | "json" | "xml" | "yaml" | "html" | "css" | "javascript" | "typescript" | "sql" | "markdown";
+type EditorFormat = "text" | "json" | "hex" | "xml" | "yaml" | "html" | "css" | "javascript" | "typescript" | "sql" | "markdown";
 
 /** 格式 → Monaco 语言映射 */
 const EDITOR_FORMAT_LANGUAGE: Record<EditorFormat, string> = {
   text: "plaintext",
   json: "json",
+  hex: "plaintext",
   xml: "xml",
   yaml: "yaml",
   html: "html",
@@ -44,6 +50,7 @@ const EDITOR_FORMAT_LANGUAGE: Record<EditorFormat, string> = {
 const EDITOR_FORMAT_LABELS: Record<EditorFormat, string> = {
   text: "Text",
   json: "JSON",
+  hex: "Hex",
   xml: "XML",
   yaml: "YAML",
   html: "HTML",
@@ -55,10 +62,10 @@ const EDITOR_FORMAT_LABELS: Record<EditorFormat, string> = {
 };
 
 /** 常用格式 */
-const EDITOR_PRIMARY_FORMATS: EditorFormat[] = ["text", "json", "xml"];
+const EDITOR_PRIMARY_FORMATS: EditorFormat[] = ["text", "json", "hex"];
 
 /** 更多格式 */
-const EDITOR_MORE_FORMATS: EditorFormat[] = ["yaml", "html", "css", "javascript", "typescript", "sql", "markdown"];
+const EDITOR_MORE_FORMATS: EditorFormat[] = ["xml", "yaml", "html", "css", "javascript", "typescript", "sql", "markdown"];
 
 interface AddFieldDialogProps {
   isOpen: boolean;
@@ -112,6 +119,11 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
   const [format, setFormat] = useState<EditorFormat>(() => detectEditorFormat(initialData?.value ?? ""));
   /** "更多格式" 下拉菜单 */
   const [showMoreFormats, setShowMoreFormats] = useState(false);
+  /** 当前格式的 ref（供右键菜单闭包动态读取） */
+  const formatRef = useRef(format);
+  formatRef.current = format;
+  /** Monaco editor 实例引用 */
+  const editorRef = useRef<MonacoEditorInstance | null>(null);
 
   const handleSave = async () => {
     setSaving(true);
@@ -143,6 +155,9 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
       }[mode];
 
   const language = EDITOR_FORMAT_LANGUAGE[format];
+  const isHex = format === "hex";
+  /** Hex dump 内容（仅在 hex 模式时计算） */
+  const hexResult = useMemo(() => (isHex ? toHexDump(value) : { content: "", truncated: false }), [isHex, value]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -254,22 +269,54 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
               </div>
             </div>
             <div className="h-56 border border-border rounded-md overflow-hidden">
-              <Editor
-                language={language}
-                value={value}
-                onChange={(v) => setValue(v || "")}
-                theme={theme === "dark" ? "vs-dark" : "light"}
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 13,
-                  lineNumbers: "on",
-                  wordWrap: "on",
-                  scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                  tabSize: 2,
-                  contextmenu: false,
-                }}
-              />
+              {isHex ? (
+                /* Hex dump 只读视图 */
+                <Editor
+                  key="dialog-hex"
+                  path="dialog-hex-view"
+                  language="plaintext"
+                  value={hexResult.content}
+                  theme={theme === "dark" ? "vs-dark" : "light"}
+                  options={{
+                    minimap: { enabled: false },
+                    fontSize: 13,
+                    fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace",
+                    lineNumbers: "off",
+                    wordWrap: "off",
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    readOnly: true,
+                    renderLineHighlight: "none",
+                    contextmenu: false,
+                    folding: false,
+                    links: false,
+                    codeLens: false,
+                  }}
+                />
+              ) : (
+                <Editor
+                  key="dialog-editor"
+                  path="dialog-editor"
+                  language={language}
+                  value={value}
+                  onChange={(v) => setValue(v || "")}
+                  theme={theme === "dark" ? "vs-dark" : "light"}
+                  options={{
+                    minimap: { enabled: false },
+                    fontSize: 13,
+                    lineNumbers: "on",
+                    wordWrap: "on",
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    tabSize: 2,
+                    contextmenu: false,
+                  }}
+                  onMount={(editor) => {
+                    editorRef.current = editor;
+                    setupJsonContextMenu(editor, () => formatRef.current === "json");
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>

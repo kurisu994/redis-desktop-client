@@ -182,7 +182,7 @@ function detectFormat(val: string): ValueFormat {
 }
 
 /** 将字符串转换为 Hex dump 格式（地址 + 十六进制 + ASCII），支持截断 */
-function toHexDump(str: string, maxBytes = HEX_MAX_BYTES): { content: string; truncated: boolean } {
+export function toHexDump(str: string, maxBytes = HEX_MAX_BYTES): { content: string; truncated: boolean } {
   const lines: string[] = [];
   const allBytes = new TextEncoder().encode(str);
   const truncated = allBytes.length > maxBytes;
@@ -209,7 +209,7 @@ function toHexDump(str: string, maxBytes = HEX_MAX_BYTES): { content: string; tr
 }
 
 /** 为 Monaco Editor 设置自定义右键菜单 — JSON 模式下添加"格式化 JSON"菜单项 */
-function setupJsonContextMenu(
+export function setupJsonContextMenu(
   editor: MonacoEditorInstance,
   isJsonOrCheck: boolean | (() => boolean),
 ) {
@@ -237,6 +237,9 @@ function setupJsonContextMenu(
       border: 1px solid var(--color-border, hsl(240 3.7% 15.9%));
       border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     `;
+    // 阻止 pointerdown 冒泡，避免 Radix Dialog overlay 拦截点击
+    menu.addEventListener("pointerdown", (ev) => ev.stopPropagation());
+
     const item = document.createElement("button");
     item.textContent = "格式化 JSON";
     item.style.cssText = `
@@ -259,7 +262,9 @@ function setupJsonContextMenu(
     };
 
     menu.appendChild(item);
-    document.body.appendChild(menu);
+    // 如果在 Dialog 内部，挂到 Dialog 容器以避免被 overlay 遮挡
+    const dialogContainer = domNode.closest('[role="dialog"]');
+    (dialogContainer || document.body).appendChild(menu);
 
     // 点击其他区域关闭菜单
     const close = () => {

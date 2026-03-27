@@ -114,8 +114,13 @@ export const useBrowserStore = create<BrowserState>((set) => ({
   setSelectedDb: (db) => set({ selectedDb: db }),
   setDbList: (list, count) => set({ dbList: list, dbCount: count }),
   setKeys: (keys) => set({ keys }),
-  appendKeys: (keys) =>
-    set((state) => ({ keys: [...state.keys, ...keys] })),
+  appendKeys: (newKeys) =>
+    set((state) => {
+      // SCAN 可能返回重复的 key，需去重
+      const existing = new Set(state.keys.map((k) => k.key));
+      const unique = newKeys.filter((k) => !existing.has(k.key));
+      return { keys: [...state.keys, ...unique] };
+    }),
   setScanCursor: (cursor) => set({ scanCursor: cursor }),
   setScanComplete: (complete) => set({ scanComplete: complete }),
   setSelectedKey: (key) => set({ selectedKey: key, keyInfo: null }),
