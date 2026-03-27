@@ -639,9 +639,13 @@ function HashViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
     onValueChanged();
   };
 
-  /** 保存（新增或编辑）*/
-  const handleSave = async (data: { field?: string; value: string }) => {
+  /** 保存（新增或编辑，支持 field 改名）*/
+  const handleSave = async (data: { field?: string; oldField?: string; value: string }) => {
     if (!connectionId) return;
+    // 如果 field 改名了，先删旧 field 再建新 field
+    if (data.oldField && data.oldField !== data.field) {
+      await deleteHashField(connectionId, selectedDb, keyName, data.oldField);
+    }
     await setHashField(connectionId, selectedDb, keyName, data.field!, data.value);
     setShowAdd(false);
     setEditData(null);
@@ -660,7 +664,7 @@ function HashViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
           <TruncatedValue key="v" value={f.value} expanded={expandedRow === idx} />,
           <RowActions key="a" onDelete={() => handleDelete(f.field)} />,
         ])}
-        widths={["w-1/3", "", "w-16"]}
+        widths={["w-1/3", "w-1/2", "w-12"]}
         expandedRow={expandedRow}
         onRowClick={(idx) => setExpandedRow((prev) => (prev === idx ? null : idx))}
         onRowDoubleClick={(idx) => setEditData(fields[idx])}
@@ -1129,7 +1133,7 @@ function TableView({
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="flex-1 overflow-auto p-5 pb-0">
         <div className="rounded-lg border border-border overflow-hidden">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left table-fixed">
             <thead className="text-xs uppercase font-medium tracking-wider bg-muted/50 text-muted-foreground sticky top-0">
               <tr>
                 {headers.map((h, i) => (
@@ -1149,7 +1153,9 @@ function TableView({
                   onClick={() => handleClick(rowIdx)}
                 >
                   {cells.map((cell, cellIdx) => (
-                    <td key={cellIdx} className="px-4 py-2.5">
+                    <td key={cellIdx} className={`px-4 py-2.5 ${
+                      expandedRow !== rowIdx ? "overflow-hidden" : ""
+                    }`}>
                       {cell}
                     </td>
                   ))}
@@ -1239,7 +1245,7 @@ function TruncatedValue({ value, expanded, className }: { value: string; expande
 
   if (expanded) {
     return (
-      <span className={`whitespace-pre-wrap break-all text-foreground/80 font-mono text-xs ${className || ""}`}>
+      <span className={`block whitespace-pre-wrap break-all text-foreground/80 font-mono text-xs max-h-40 overflow-auto ${className || ""}`}>
         {value}
       </span>
     );

@@ -23,6 +23,43 @@ import { Loader2 } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 
+/** 编辑器支持的格式 */
+type EditorFormat = "text" | "json" | "xml" | "yaml" | "html" | "css" | "javascript" | "typescript" | "sql" | "markdown";
+
+/** 格式 → Monaco 语言映射 */
+const EDITOR_FORMAT_LANGUAGE: Record<EditorFormat, string> = {
+  text: "plaintext",
+  json: "json",
+  xml: "xml",
+  yaml: "yaml",
+  html: "html",
+  css: "css",
+  javascript: "javascript",
+  typescript: "typescript",
+  sql: "sql",
+  markdown: "markdown",
+};
+
+/** 格式显示标签 */
+const EDITOR_FORMAT_LABELS: Record<EditorFormat, string> = {
+  text: "Text",
+  json: "JSON",
+  xml: "XML",
+  yaml: "YAML",
+  html: "HTML",
+  css: "CSS",
+  javascript: "JavaScript",
+  typescript: "TypeScript",
+  sql: "SQL",
+  markdown: "Markdown",
+};
+
+/** 常用格式 */
+const EDITOR_PRIMARY_FORMATS: EditorFormat[] = ["text", "json", "xml"];
+
+/** 更多格式 */
+const EDITOR_MORE_FORMATS: EditorFormat[] = ["yaml", "html", "css", "javascript", "typescript", "sql", "markdown"];
+
 interface AddFieldDialogProps {
   isOpen: boolean;
   mode: "hash" | "list" | "set" | "zset" | "stream";
@@ -35,31 +72,33 @@ interface AddFieldDialogProps {
   onClose: () => void;
   onSave: (data: {
     field?: string;
+    /** 编辑 hash 时，如果 field 改名了，传入原始 field */
+    oldField?: string;
     value: string;
     score?: number;
     position?: "head" | "tail";
   }) => Promise<void>;
 }
 
-/** 检测内容的语言格式（用于 Monaco 语法高亮） */
-function detectLanguage(text: string): string {
-  const trimmed = text.trim();
-  if (
-    (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-    (trimmed.startsWith("[") && trimmed.endsWith("]"))
-  ) {
-    try {
-      JSON.parse(trimmed);
-      return "json";
-    } catch {
-      // 非合法 JSON
-    }
+/** 自动检测值的格式 */
+function detectEditorFormat(val: string): EditorFormat {
+  const trimmed = val.trim();
+  if (!trimmed) return "text";
+  if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+    try { JSON.parse(trimmed); return "json"; } catch { /* 非合法 JSON */ }
   }
-  if (trimmed.startsWith("<") && trimmed.endsWith(">")) return "xml";
-  return "plaintext";
+  if (/^<!DOCTYPE\s+html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed)) return "html";
+  if (/^<\?xml\s/i.test(trimmed) || (/^<[a-zA-Z]/.test(trimmed) && /<\/[a-zA-Z]/.test(trimmed))) return "xml";
+  if (/^[a-zA-Z0-9_-]+\s*:/m.test(trimmed) && !trimmed.startsWith("{") && trimmed.includes("\n")) {
+    const lines = trimmed.split("\n").slice(0, 5);
+    const yamlLike = lines.filter((l) => /^\s*[a-zA-Z0-9_-]+\s*:/.test(l) || /^\s*-\s/.test(l));
+    if (yamlLike.length >= 2) return "yaml";
+  }
+  if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH)\s/i.test(trimmed)) return "sql";
+  return "text";
 }
 
-/** 添加/编辑字段对话框 — 根据类型显示不同表单，value 使用 Monaco Editor */
+/** 添加/编辑字段对话框 — 根据类型显示不同表单，value 使用 Monaco Editor + 格式切换 */
 export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: AddFieldDialogProps) {
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -69,12 +108,21 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
   const [score, setScore] = useState(String(initialData?.score ?? 0));
   const [position, setPosition] = useState<"head" | "tail">("tail");
   const [saving, setSaving] = useState(false);
+  /** 当前编辑器格式 */
+  const [format, setFormat] = useState<EditorFormat>(() => detectEditorFormat(initialData?.value ?? ""));
+  /** "更多格式" 下拉菜单 */
+  const [showMoreFormats, setShowMoreFormats] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      // 如果是 hash 编辑模式且 field 改了名，传入 oldField
+      const oldField = isEdit && mode === "hash" && field !== initialData?.field
+        ? initialData?.field
+        : undefined;
       await onSave({
         field: mode === "hash" || mode === "stream" ? field : undefined,
+        oldField,
         value,
         score: mode === "zset" ? parseFloat(score) || 0 : undefined,
         position: mode === "list" ? position : undefined,
@@ -94,7 +142,7 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
         stream: t("valueEditor.addEntry"),
       }[mode];
 
-  const language = detectLanguage(value);
+  const language = EDITOR_FORMAT_LANGUAGE[format];
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -103,7 +151,7 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          {/* Hash / Stream 需要 field */}
+          {/* Hash / Stream 需要 field — 编辑模式也可修改 */}
           {(mode === "hash" || mode === "stream") && (
             <div className="space-y-2">
               <Label>{t("valueEditor.field")}</Label>
@@ -111,7 +159,6 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
                 value={field}
                 onChange={(e) => setField(e.target.value)}
                 autoFocus={!isEdit}
-                readOnly={isEdit && mode === "hash"}
               />
             </div>
           )}
@@ -146,9 +193,66 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
             </div>
           )}
 
-          {/* 所有类型都需要 value — 使用 Monaco Editor 替代 Input */}
+          {/* 所有类型都需要 value — 使用 Monaco Editor + 格式切换栏 */}
           <div className="space-y-2">
-            <Label>{t("valueEditor.value")}</Label>
+            <div className="flex items-center justify-between">
+              <Label>{t("valueEditor.value")}</Label>
+              {/* 格式切换栏 */}
+              <div className="flex items-center gap-1 text-xs font-medium">
+                {EDITOR_PRIMARY_FORMATS.map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    className={`px-2 py-0.5 rounded transition-colors ${
+                      format === f
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    }`}
+                    onClick={() => setFormat(f)}
+                  >
+                    {EDITOR_FORMAT_LABELS[f]}
+                  </button>
+                ))}
+                <span className="text-border mx-0.5">|</span>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className={`px-2 py-0.5 rounded transition-colors ${
+                      EDITOR_MORE_FORMATS.includes(format)
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    }`}
+                    onClick={() => setShowMoreFormats(!showMoreFormats)}
+                  >
+                    {EDITOR_MORE_FORMATS.includes(format) ? EDITOR_FORMAT_LABELS[format] : t("valueEditor.moreFormats")}
+                    <span className="ml-1 text-[10px]">▾</span>
+                  </button>
+                  {showMoreFormats && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowMoreFormats(false)} />
+                      <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-card border border-border rounded-lg shadow-lg py-1">
+                        {EDITOR_MORE_FORMATS.map((f) => (
+                          <button
+                            key={f}
+                            type="button"
+                            className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent flex items-center gap-2 ${
+                              format === f ? "text-primary font-medium" : ""
+                            }`}
+                            onClick={() => {
+                              setFormat(f);
+                              setShowMoreFormats(false);
+                            }}
+                          >
+                            {EDITOR_FORMAT_LABELS[f]}
+                            {format === f && <span className="ml-auto">✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
             <div className="h-56 border border-border rounded-md overflow-hidden">
               <Editor
                 language={language}
