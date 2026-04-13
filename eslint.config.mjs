@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // 项目自定义排除
     "**/demo/**",
+    "src-tauri/**",
   ]),
 ]);
 
