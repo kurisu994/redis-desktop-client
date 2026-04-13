@@ -6,6 +6,24 @@
 
 ---
 
+## [Unreleased]
+
+> 🔄 集成应用内自动更新机制。
+
+### ✨ 新功能
+
+#### 应用自动更新（Tauri Updater Plugin）
+- 集成 `@tauri-apps/plugin-updater`（Rust + JS），支持应用内检查/下载/安装更新
+- 集成 `@tauri-apps/plugin-process`，更新完成后支持自动重启应用
+- 配置 Ed25519 签名密钥，构建时自动签名更新包（`.sig` 文件）
+- 更新源指向 GitHub Releases 的 `latest.json`（由 `tauri-action` 自动生成）
+- 前端 API 封装：`checkUpdate()` / `downloadAndInstallUpdate()` / `relaunchApp()`
+- Windows 更新安装模式配置为 `passive`（带进度条静默安装）
+- `tauri.conf.json` 配置 `createUpdaterArtifacts: true`，构建时自动生成更新产物
+- Capabilities 添加 `updater:default` + `process:default` 权限
+
+---
+
 ## [0.3.0] — 2026-03-26
 
 > 🔧 值编辑器交互重构 + 性能优化，提升大值场景下的用户体验。
@@ -156,6 +174,6 @@
 ### 🔲 已知待办
 
 - SSH 隧道后端实现（Rust `russh` 库）
-- 自动更新集成（Tauri Updater Plugin）
+- 更新检查逻辑（启动时检查 + 可配置检查频率）+ 更新提示 UI（发现新版本弹窗）
 - macOS / Windows 代码签名
 - 连接分组（文件夹拖拽排序）

@@ -30,6 +30,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -37,5 +38,16 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDdDNzE5ODQ1MkM4OTlEQjYKUldTMm5Za3NSWmh4ZkkrVHhQdnkvOXZ2S3F1bW9YcWtlT1FJZE9ibmg0UTg1bStFYVdSNG1Ka0QK",
+      "endpoints": [
+        "https://github.com/kurisu994/redis-desktop-client/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

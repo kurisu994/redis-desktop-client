@@ -13,6 +13,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -21,6 +22,11 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            // 初始化自动更新插件（仅桌面平台）
+            #[cfg(desktop)]
+            app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())?;
 
             // 初始化连接存储（加密密钥 + 持久化目录）
             let app_data_dir = app

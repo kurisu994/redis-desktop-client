@@ -45,3 +45,7 @@ next-env.d.ts
 # Rust / Tauri
 src-tauri/target/
 src-tauri/gen/
+.tauri/
+# Tauri updater signing keys
+*.key
+*.key.pub

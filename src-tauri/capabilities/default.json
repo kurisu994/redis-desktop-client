@@ -9,6 +9,8 @@
     "core:default",
     "dialog:default",
     "fs:default",
-    "opener:default"
+    "opener:default",
+    "updater:default",
+    "process:default"
   ]
 }

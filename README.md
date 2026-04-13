@@ -12,6 +12,7 @@
 - **国际化**：i18next + react-i18next（中/英）
 - **图标**：lucide-react
 - **后端**：Rust (Edition 2021) + Tokio + redis-rs
+- **自动更新**：Tauri Updater Plugin（Ed25519 签名校验）
 
 ## 开发环境准备
 

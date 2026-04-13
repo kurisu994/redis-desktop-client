@@ -669,3 +669,54 @@ export async function getJsonValue(id: string, db: number, key: string, path?: s
 export async function setJsonValue(id: string, db: number, key: string, path: string, value: string): Promise<void> {
   return invoke("set_json_value", { id, db, key, path, value });
 }
+
+// ============ 应用更新 API ============
+
+/** 更新信息 */
+export interface UpdateInfo {
+  version: string;
+  date: string | null;
+  body: string | null;
+}
+
+/** 下载进度事件 */
+export type DownloadEvent =
+  | { event: "Started"; data: { contentLength: number | null } }
+  | { event: "Progress"; data: { chunkLength: number } }
+  | { event: "Finished" };
+
+/** 检查应用更新 */
+export async function checkUpdate(): Promise<UpdateInfo | null> {
+  if (!isTauri()) {
+    // 浏览器环境 mock：无可用更新
+    return null;
+  }
+  const { check } = await import("@tauri-apps/plugin-updater");
+  const update = await check();
+  if (!update) return null;
+  return {
+    version: update.version,
+    date: update.date ?? null,
+    body: update.body ?? null,
+  };
+}
+
+/** 下载并安装更新 */
+export async function downloadAndInstallUpdate(
+  onProgress?: (event: DownloadEvent) => void,
+): Promise<void> {
+  if (!isTauri()) return;
+  const { check } = await import("@tauri-apps/plugin-updater");
+  const update = await check();
+  if (!update) return;
+  await update.downloadAndInstall((event) => {
+    onProgress?.(event as DownloadEvent);
+  });
+}
+
+/** 重启应用（用于更新完成后） */
+export async function relaunchApp(): Promise<void> {
+  if (!isTauri()) return;
+  const { relaunch } = await import("@tauri-apps/plugin-process");
+  await relaunch();
+}

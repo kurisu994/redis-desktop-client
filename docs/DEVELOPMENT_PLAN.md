@@ -444,10 +444,10 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 | # | 任务 | 状态 | 说明 |
 |---|------|------|------|
-| 19 | 集成 Tauri Updater Plugin | 🔲 | 需要 `@tauri-apps/plugin-updater`（需配置签名密钥后集成） |
+| 19 | 集成 Tauri Updater Plugin | ✅ | `tauri-plugin-updater` + `tauri-plugin-process`，Ed25519 签名密钥已配置 |
 | 20 | 更新检查逻辑 | 🔲 | 启动时检查 + 可配置检查频率 |
 | 21 | 更新提示 UI | 🔲 | 发现新版本弹窗 |
-| 22 | 更新源配置 | 🔲 | 指向 GitHub Releases 的更新清单 JSON |
+| 22 | 更新源配置 | ✅ | 指向 GitHub Releases 的 `latest.json`（`tauri-action` 自动生成） |
 | 23 | 设置项 | ✅ | 设置页面已预留自动更新开关区域 |
 
 #### 6.6 Release 流水线 & 打包发布
@@ -470,7 +470,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 - ✅ 中英文国际化
 - ✅ 全局快捷键（⌘N/T/F/R/K/D/S/,/F5/Delete）+ Toast + 错误边界 + 设置页面
 - ✅ 补充快捷键（⌘D/⌘S/F5/Delete）+ 常用命令面板（⌘K）
-- 🔲 应用内自动更新（Tauri Updater Plugin 未集成）
+- ✅ 应用内自动更新（Tauri Updater Plugin 已集成 + 签名密钥 + API 封装 + 更新源配置）
 - ✅ GitHub Actions Release 流水线（Tag → 三平台构建 → 发布）
 - 🔲 macOS / Windows 代码签名（需配置证书）
 - ✅ 自动生成 Changelog + 版本号统一管理
@@ -521,10 +521,10 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 ### 自动更新（Phase 6）
 
-- [ ] 集成 Tauri Updater Plugin — `@tauri-apps/plugin-updater`（需配置签名密钥）
+- [x] 集成 Tauri Updater Plugin — `@tauri-apps/plugin-updater` + 签名密钥 + 前端 API 封装
 - [ ] 更新检查逻辑 — 启动时检查 + 可配置检查频率
 - [ ] 更新提示 UI — 发现新版本弹窗
-- [ ] 更新源配置 — 指向 GitHub Releases 的更新清单 JSON
+- [x] 更新源配置 — 指向 GitHub Releases 的 `latest.json`
 
 ### 打包发布（Phase 6）
 
