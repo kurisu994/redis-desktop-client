@@ -99,7 +99,7 @@ version bump:
     sed -i.bak "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" src-tauri/tauri.conf.json && rm src-tauri/tauri.conf.json.bak
     echo "✅ Version updated to $VERSION"
 
-# 创建 Git Tag 并推送（触发 Release 流水线）
+# 打包发布全流程（包含更新版本号、提交 Commit、推主干、打 Tag 并出包）
 [no-exit-message]
 release tag:
     #!/usr/bin/env bash
@@ -109,11 +109,32 @@ release tag:
         echo "Example: just release v0.2.0"
         exit 1
     fi
+    
     TAG="{{tag}}"
-    echo "Creating tag $TAG..."
-    git tag -a "$TAG" -m "Release $TAG"
-    git push origin "$TAG"
-    echo "✅ Tag $TAG pushed — Release workflow will start"
+    # 剥离前缀'v'用于修改内部配置的版本号
+    VERSION="${TAG#v}"
+    
+    echo "🚀 开始基于版本 $TAG 构建发布流程..."
+    
+    echo "1️⃣ 更新配置文件的版本号 ($VERSION) ..."
+    just version "$VERSION"
+    
+    echo "2️⃣ 提交本次发布变更到 Git..."
+    git add .
+    git commit -m "🔖 release: $TAG" || echo "⚠️ 暂无变更需要提交，跳过 Commit"
+    
+    echo "3️⃣ 推送最新代码到当前远程分支..."
+    git push origin HEAD
+    
+    echo "4️⃣ 创建并上传 $TAG 标签，准备触发云端构建流水线..."
+    if git rev-parse "$TAG" >/dev/null 2>&1; then
+        echo "⚠️ $TAG 标签已存在，将被跳过"
+    else
+        git tag -a "$TAG" -m "Release $TAG"
+        git push origin "$TAG"
+    fi
+    
+    echo "✅ 发布流程顺利结束！你可以去 GitHub Actions 查看最新的打包状态了。"
 
 # === 工具 ===
 

@@ -56,10 +56,13 @@ just build-web
 |------|------|
 | `just dev` | 启动 Tauri 开发模式 |
 | `just dev-web` | 仅启动前端 |
-| `just build` | 生产构建 |
+| `just build` | 生产环境构建应用（自动加载 `.env` 生成带签名的自动更新包） |
+| `just build-web` | 仅构建 Next.js 前端资源 |
 | `just lint` | 完整代码检查（ESLint + tsc + Clippy） |
 | `just fmt` | 格式化全部代码 |
 | `just test-rust` | Rust 单元测试 |
+| `just version <ver>` | 仅同步更新项目各配置版本号（如：`just version 0.2.1`）|
+| `just release <tag>` | 🚀 **一键发布**：自动更新版本号、Commit 变更、打 Tag 并推送 GitHub 触发自动化构建打包（如：`just release v0.2.1`）|
 | `just i18n-check` | 检查翻译 key 完整性 |
 | `just clean` | 清理构建产物 |
 
