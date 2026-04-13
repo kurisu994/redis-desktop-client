@@ -40,7 +40,12 @@ export function useGlobalShortcuts() {
       }
 
       // Delete / Backspace（无修饰键）：删除选中 Key — 仅在非编辑元素中触发
-      if ((e.key === "Delete" || e.key === "Backspace") && !isMod && !e.shiftKey && !e.altKey) {
+      if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        !isMod &&
+        !e.shiftKey &&
+        !e.altKey
+      ) {
         if (!isEditableElement(e.target) && selectedKey) {
           e.preventDefault();
           window.dispatchEvent(new CustomEvent("redis:delete-key"));
@@ -70,7 +75,9 @@ export function useGlobalShortcuts() {
             e.preventDefault();
             activateTab("browser");
             setTimeout(() => {
-              const input = document.querySelector<HTMLInputElement>('[data-search-input="true"]');
+              const input = document.querySelector<HTMLInputElement>(
+                '[data-search-input="true"]',
+              );
               input?.focus();
             }, 100);
           }
@@ -119,5 +126,12 @@ export function useGlobalShortcuts() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [openTab, activateTab, openDialog, refreshKeys, setCommandPaletteOpen, selectedKey]);
+  }, [
+    openTab,
+    activateTab,
+    openDialog,
+    refreshKeys,
+    setCommandPaletteOpen,
+    selectedKey,
+  ]);
 }

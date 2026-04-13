@@ -47,12 +47,21 @@ interface CommandEntry {
 /** 常用命令面板 — ⌘K 打开，预置常用命令快捷入口 */
 export function CommandPalette() {
   const { t } = useTranslation();
-  const { commandPaletteOpen, setCommandPaletteOpen, openTab, sidebarCollapsed, toggleSidebar } = useAppStore();
+  const {
+    commandPaletteOpen,
+    setCommandPaletteOpen,
+    openTab,
+    sidebarCollapsed,
+    toggleSidebar,
+  } = useAppStore();
   const { openDialog } = useConnectionStore();
   const { refreshKeys, selectedKey } = useBrowserStore();
   const { theme, setTheme } = useTheme();
 
-  const close = useCallback(() => setCommandPaletteOpen(false), [setCommandPaletteOpen]);
+  const close = useCallback(
+    () => setCommandPaletteOpen(false),
+    [setCommandPaletteOpen],
+  );
 
   /** 执行命令并关闭面板 */
   const run = useCallback(
@@ -91,7 +100,9 @@ export function CommandPalette() {
           run(() => {
             useAppStore.getState().activateTab("browser");
             setTimeout(() => {
-              const input = document.querySelector<HTMLInputElement>('[data-search-input="true"]');
+              const input = document.querySelector<HTMLInputElement>(
+                '[data-search-input="true"]',
+              );
               input?.focus();
             }, 100);
           }),
@@ -123,7 +134,8 @@ export function CommandPalette() {
         icon: <Save className="w-4 h-4" />,
         shortcut: "⌘S",
         requiresConnection: true,
-        action: () => run(() => window.dispatchEvent(new CustomEvent("redis:save"))),
+        action: () =>
+          run(() => window.dispatchEvent(new CustomEvent("redis:save"))),
       },
     ],
     [t, run, refreshKeys, selectedKey],
@@ -170,14 +182,28 @@ export function CommandPalette() {
     () => [
       {
         id: "toggle-theme",
-        label: theme === "dark" ? t("commandPalette.lightTheme") : t("commandPalette.darkTheme"),
-        icon: theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />,
+        label:
+          theme === "dark"
+            ? t("commandPalette.lightTheme")
+            : t("commandPalette.darkTheme"),
+        icon:
+          theme === "dark" ? (
+            <Sun className="w-4 h-4" />
+          ) : (
+            <Moon className="w-4 h-4" />
+          ),
         action: () => run(() => setTheme(theme === "dark" ? "light" : "dark")),
       },
       {
         id: "toggle-sidebar",
-        label: sidebarCollapsed ? t("commandPalette.showSidebar") : t("commandPalette.hideSidebar"),
-        icon: sidebarCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />,
+        label: sidebarCollapsed
+          ? t("commandPalette.showSidebar")
+          : t("commandPalette.hideSidebar"),
+        icon: sidebarCollapsed ? (
+          <PanelLeft className="w-4 h-4" />
+        ) : (
+          <PanelLeftClose className="w-4 h-4" />
+        ),
         action: () => run(() => toggleSidebar()),
       },
       {
@@ -193,7 +219,12 @@ export function CommandPalette() {
   /** 选择命令时触发 */
   const handleSelect = useCallback(
     (commandId: string) => {
-      const allCommands = [...connectionCommands, ...browserCommands, ...navigationCommands, ...generalCommands];
+      const allCommands = [
+        ...connectionCommands,
+        ...browserCommands,
+        ...navigationCommands,
+        ...generalCommands,
+      ];
       const cmd = allCommands.find((c) => c.id === commandId);
       cmd?.action();
     },
@@ -214,40 +245,68 @@ export function CommandPalette() {
 
         <CommandGroup heading={t("commandPalette.groupConnection")}>
           {connectionCommands.map((cmd) => (
-            <CommandItem key={cmd.id} value={cmd.id} onSelect={handleSelect} keywords={[cmd.label]}>
+            <CommandItem
+              key={cmd.id}
+              value={cmd.id}
+              onSelect={handleSelect}
+              keywords={[cmd.label]}
+            >
               {cmd.icon}
               <span>{cmd.label}</span>
-              {cmd.shortcut && <CommandShortcut>{cmd.shortcut}</CommandShortcut>}
+              {cmd.shortcut && (
+                <CommandShortcut>{cmd.shortcut}</CommandShortcut>
+              )}
             </CommandItem>
           ))}
         </CommandGroup>
 
         <CommandGroup heading={t("commandPalette.groupBrowser")}>
           {browserCommands.map((cmd) => (
-            <CommandItem key={cmd.id} value={cmd.id} onSelect={handleSelect} keywords={[cmd.label]}>
+            <CommandItem
+              key={cmd.id}
+              value={cmd.id}
+              onSelect={handleSelect}
+              keywords={[cmd.label]}
+            >
               {cmd.icon}
               <span>{cmd.label}</span>
-              {cmd.shortcut && <CommandShortcut>{cmd.shortcut}</CommandShortcut>}
+              {cmd.shortcut && (
+                <CommandShortcut>{cmd.shortcut}</CommandShortcut>
+              )}
             </CommandItem>
           ))}
         </CommandGroup>
 
         <CommandGroup heading={t("commandPalette.groupNavigation")}>
           {navigationCommands.map((cmd) => (
-            <CommandItem key={cmd.id} value={cmd.id} onSelect={handleSelect} keywords={[cmd.label]}>
+            <CommandItem
+              key={cmd.id}
+              value={cmd.id}
+              onSelect={handleSelect}
+              keywords={[cmd.label]}
+            >
               {cmd.icon}
               <span>{cmd.label}</span>
-              {cmd.shortcut && <CommandShortcut>{cmd.shortcut}</CommandShortcut>}
+              {cmd.shortcut && (
+                <CommandShortcut>{cmd.shortcut}</CommandShortcut>
+              )}
             </CommandItem>
           ))}
         </CommandGroup>
 
         <CommandGroup heading={t("commandPalette.groupGeneral")}>
           {generalCommands.map((cmd) => (
-            <CommandItem key={cmd.id} value={cmd.id} onSelect={handleSelect} keywords={[cmd.label]}>
+            <CommandItem
+              key={cmd.id}
+              value={cmd.id}
+              onSelect={handleSelect}
+              keywords={[cmd.label]}
+            >
               {cmd.icon}
               <span>{cmd.label}</span>
-              {cmd.shortcut && <CommandShortcut>{cmd.shortcut}</CommandShortcut>}
+              {cmd.shortcut && (
+                <CommandShortcut>{cmd.shortcut}</CommandShortcut>
+              )}
             </CommandItem>
           ))}
         </CommandGroup>

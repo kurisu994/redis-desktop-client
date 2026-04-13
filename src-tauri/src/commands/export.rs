@@ -76,11 +76,7 @@ pub async fn export_connections(
             host: c.host,
             port: c.port,
             username: c.username,
-            password: if include_password {
-                c.password
-            } else {
-                None
-            },
+            password: if include_password { c.password } else { None },
             db: c.db,
             group: c.group,
         })

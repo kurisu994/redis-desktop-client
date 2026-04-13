@@ -49,7 +49,9 @@ pub fn encrypt_password(master_key: &[u8; 32], plaintext: &str) -> Result<String
 pub fn decrypt_password(master_key: &[u8; 32], encrypted: &str) -> Result<String, String> {
     let key = Key::<Aes256Gcm>::from_slice(master_key);
     let cipher = Aes256Gcm::new(key);
-    let combined = BASE64.decode(encrypted).map_err(|e| format!("base64 解码失败: {e}"))?;
+    let combined = BASE64
+        .decode(encrypted)
+        .map_err(|e| format!("base64 解码失败: {e}"))?;
 
     if combined.len() < 12 {
         return Err("加密数据格式无效".into());

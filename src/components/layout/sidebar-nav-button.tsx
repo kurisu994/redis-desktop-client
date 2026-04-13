@@ -18,7 +18,9 @@ export function SidebarNavButton({
 }) {
   const { tabs, activeTabId, openTab } = useAppStore();
   const { activeConnectionId, connectionStatus } = useConnectionStore();
-  const isConnected = activeConnectionId !== null && connectionStatus[activeConnectionId] === "connected";
+  const isConnected =
+    activeConnectionId !== null &&
+    connectionStatus[activeConnectionId] === "connected";
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const isActive = activeTab?.type === view;
   const enabled = alwaysEnabled || isConnected;

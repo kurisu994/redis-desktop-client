@@ -43,8 +43,14 @@ interface KeyListProps {
 }
 
 /** 平铺 Key 列表 — 虚拟滚动，支持多选和收藏 */
-export function KeyList({ keys, selectedKey, onSelectKey, loading }: KeyListProps) {
-  const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } = useBrowserStore();
+export function KeyList({
+  keys,
+  selectedKey,
+  onSelectKey,
+  loading,
+}: KeyListProps) {
+  const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } =
+    useBrowserStore();
 
   return (
     <div className="relative h-full">
@@ -59,58 +65,61 @@ export function KeyList({ keys, selectedKey, onSelectKey, loading }: KeyListProp
               className={`flex items-center gap-1 w-full py-1.5 px-1.5 text-sm transition-colors group ${
                 isSelected
                   ? "bg-primary/15 text-primary"
-                : "hover:bg-white/5 text-foreground/70"
-            }`}
-          >
-            {/* 多选 Checkbox */}
-            <input
-              type="checkbox"
-              checked={isChecked}
-              onChange={(e) => {
-                e.stopPropagation();
-                toggleCheckedKey(entry.key);
-              }}
-              className="w-3.5 h-3.5 shrink-0 accent-primary cursor-pointer"
-            />
-            {/* 可点击区域 */}
-            <button
-              className="flex items-center gap-2 flex-1 min-w-0"
-              onClick={() => onSelectKey(entry.key)}
+                  : "hover:bg-white/5 text-foreground/70"
+              }`}
             >
-              <span
-                className={`w-2 h-2 rounded-full shrink-0 ${
-                  TYPE_COLORS[entry.key_type] || "bg-muted-foreground"
-                } ${isSelected ? TYPE_GLOW[entry.key_type] || "" : ""}`}
+              {/* 多选 Checkbox */}
+              <input
+                type="checkbox"
+                checked={isChecked}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  toggleCheckedKey(entry.key);
+                }}
+                className="w-3.5 h-3.5 shrink-0 accent-primary cursor-pointer"
               />
-              <span className="truncate font-mono text-xs flex-1 text-left">
-                {entry.key}
+              {/* 可点击区域 */}
+              <button
+                className="flex items-center gap-2 flex-1 min-w-0"
+                onClick={() => onSelectKey(entry.key)}
+              >
+                <span
+                  className={`w-2 h-2 rounded-full shrink-0 ${
+                    TYPE_COLORS[entry.key_type] || "bg-muted-foreground"
+                  } ${isSelected ? TYPE_GLOW[entry.key_type] || "" : ""}`}
+                />
+                <span className="truncate font-mono text-xs flex-1 text-left">
+                  {entry.key}
+                </span>
+              </button>
+              {/* 收藏按钮 */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(entry.key);
+                }}
+                className={`shrink-0 p-0.5 transition-opacity ${
+                  isFavorite
+                    ? "text-yellow-500 opacity-100"
+                    : "text-muted-foreground opacity-0 group-hover:opacity-60 hover:!opacity-100"
+                }`}
+              >
+                <Star
+                  className={`w-3 h-3 ${isFavorite ? "fill-yellow-500" : ""}`}
+                />
+              </button>
+              {/* 类型标签 */}
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 uppercase font-medium ${
+                  TYPE_LABEL_COLORS[entry.key_type] ||
+                  "text-muted-foreground bg-accent"
+                }`}
+              >
+                {entry.key_type}
               </span>
-            </button>
-            {/* 收藏按钮 */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFavorite(entry.key);
-              }}
-              className={`shrink-0 p-0.5 transition-opacity ${
-                isFavorite
-                  ? "text-yellow-500 opacity-100"
-                  : "text-muted-foreground opacity-0 group-hover:opacity-60 hover:!opacity-100"
-              }`}
-            >
-              <Star className={`w-3 h-3 ${isFavorite ? "fill-yellow-500" : ""}`} />
-            </button>
-            {/* 类型标签 */}
-            <span
-              className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 uppercase font-medium ${
-                TYPE_LABEL_COLORS[entry.key_type] || "text-muted-foreground bg-accent"
-              }`}
-            >
-              {entry.key_type}
-            </span>
-          </div>
-        );
-      }}
+            </div>
+          );
+        }}
       />
       {loading && keys.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center">

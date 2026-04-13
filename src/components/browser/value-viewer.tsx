@@ -27,8 +27,20 @@ import {
   setJsonValue,
 } from "@/lib/tauri-api";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { Plus, Trash2, Save, AlertTriangle, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import {
+  Plus,
+  Trash2,
+  Save,
+  AlertTriangle,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { AddFieldDialog } from "./add-field-dialog";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { OnMount } from "@monaco-editor/react";
@@ -37,7 +49,10 @@ import type { OnMount } from "@monaco-editor/react";
 type MonacoEditorInstance = Parameters<OnMount>[0];
 
 /** 在 useEffect 中安全调用数据加载函数，避免 react-hooks/set-state-in-effect */
-function useLoadEffect(loadFn: () => Promise<void>, deps: React.DependencyList) {
+function useLoadEffect(
+  loadFn: () => Promise<void>,
+  deps: React.DependencyList,
+) {
   const ref = useRef(loadFn);
   ref.current = loadFn;
   useEffect(() => {
@@ -65,21 +80,61 @@ interface ValueViewerProps {
 }
 
 /** 值查看器 — 根据 Key 类型分发不同渲染 */
-export function ValueViewer({ keyName, keyInfo, onValueChanged }: ValueViewerProps) {
+export function ValueViewer({
+  keyName,
+  keyInfo,
+  onValueChanged,
+}: ValueViewerProps) {
   const totalCount = keyInfo.length;
   switch (keyInfo.key_type) {
     case "string":
-      return <StringViewer keyName={keyName} keyInfo={keyInfo} onValueChanged={onValueChanged} />;
+      return (
+        <StringViewer
+          keyName={keyName}
+          keyInfo={keyInfo}
+          onValueChanged={onValueChanged}
+        />
+      );
     case "hash":
-      return <HashViewer keyName={keyName} totalCount={totalCount} onValueChanged={onValueChanged} />;
+      return (
+        <HashViewer
+          keyName={keyName}
+          totalCount={totalCount}
+          onValueChanged={onValueChanged}
+        />
+      );
     case "list":
-      return <ListViewer keyName={keyName} totalCount={totalCount} onValueChanged={onValueChanged} />;
+      return (
+        <ListViewer
+          keyName={keyName}
+          totalCount={totalCount}
+          onValueChanged={onValueChanged}
+        />
+      );
     case "set":
-      return <SetViewer keyName={keyName} totalCount={totalCount} onValueChanged={onValueChanged} />;
+      return (
+        <SetViewer
+          keyName={keyName}
+          totalCount={totalCount}
+          onValueChanged={onValueChanged}
+        />
+      );
     case "zset":
-      return <ZSetViewer keyName={keyName} totalCount={totalCount} onValueChanged={onValueChanged} />;
+      return (
+        <ZSetViewer
+          keyName={keyName}
+          totalCount={totalCount}
+          onValueChanged={onValueChanged}
+        />
+      );
     case "stream":
-      return <StreamViewer keyName={keyName} totalCount={totalCount} onValueChanged={onValueChanged} />;
+      return (
+        <StreamViewer
+          keyName={keyName}
+          totalCount={totalCount}
+          onValueChanged={onValueChanged}
+        />
+      );
     case "rejson":
       return <JsonViewer keyName={keyName} onValueChanged={onValueChanged} />;
     default:
@@ -141,7 +196,16 @@ const FORMAT_LABELS: Record<ValueFormat, string> = {
 const PRIMARY_FORMATS: ValueFormat[] = ["text", "json", "hex"];
 
 /** 更多格式（放入下拉菜单） */
-const MORE_FORMATS: ValueFormat[] = ["xml", "yaml", "html", "css", "javascript", "typescript", "sql", "markdown"];
+const MORE_FORMATS: ValueFormat[] = [
+  "xml",
+  "yaml",
+  "html",
+  "css",
+  "javascript",
+  "typescript",
+  "sql",
+  "markdown",
+];
 
 /** 自动检测值的格式 */
 function detectFormat(val: string): ValueFormat {
@@ -149,7 +213,10 @@ function detectFormat(val: string): ValueFormat {
   if (!trimmed) return "text";
 
   // JSON
-  if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+  if (
+    (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+    (trimmed.startsWith("[") && trimmed.endsWith("]"))
+  ) {
     try {
       JSON.parse(trimmed);
       return "json";
@@ -159,13 +226,24 @@ function detectFormat(val: string): ValueFormat {
   }
 
   // XML / HTML — HTML 优先（含 <!DOCTYPE 或常见标签）
-  if (/^<!DOCTYPE\s+html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed)) return "html";
-  if (/^<\?xml\s/i.test(trimmed) || (/^<[a-zA-Z]/.test(trimmed) && /<\/[a-zA-Z]/.test(trimmed))) return "xml";
+  if (/^<!DOCTYPE\s+html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed))
+    return "html";
+  if (
+    /^<\?xml\s/i.test(trimmed) ||
+    (/^<[a-zA-Z]/.test(trimmed) && /<\/[a-zA-Z]/.test(trimmed))
+  )
+    return "xml";
 
   // YAML — 含 key: value 格式且无 { }
-  if (/^[a-zA-Z0-9_-]+\s*:/m.test(trimmed) && !trimmed.startsWith("{") && trimmed.includes("\n")) {
+  if (
+    /^[a-zA-Z0-9_-]+\s*:/m.test(trimmed) &&
+    !trimmed.startsWith("{") &&
+    trimmed.includes("\n")
+  ) {
     const lines = trimmed.split("\n").slice(0, 5);
-    const yamlLike = lines.filter((l) => /^\s*[a-zA-Z0-9_-]+\s*:/.test(l) || /^\s*-\s/.test(l));
+    const yamlLike = lines.filter(
+      (l) => /^\s*[a-zA-Z0-9_-]+\s*:/.test(l) || /^\s*-\s/.test(l),
+    );
     if (yamlLike.length >= 2) return "yaml";
   }
 
@@ -173,16 +251,21 @@ function detectFormat(val: string): ValueFormat {
   if (/[.#@][a-zA-Z].*\{[\s\S]*\}/m.test(trimmed)) return "css";
 
   // SQL — 以常见关键字开头
-  if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH)\s/i.test(trimmed)) return "sql";
+  if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH)\s/i.test(trimmed))
+    return "sql";
 
   // Markdown — 含 # 标题或 []()/  **bold**
-  if (/^#{1,6}\s/m.test(trimmed) || /\[.+\]\(.+\)/.test(trimmed)) return "markdown";
+  if (/^#{1,6}\s/m.test(trimmed) || /\[.+\]\(.+\)/.test(trimmed))
+    return "markdown";
 
   return "text";
 }
 
 /** 将字符串转换为 Hex dump 格式（地址 + 十六进制 + ASCII），支持截断 */
-export function toHexDump(str: string, maxBytes = HEX_MAX_BYTES): { content: string; truncated: boolean } {
+export function toHexDump(
+  str: string,
+  maxBytes = HEX_MAX_BYTES,
+): { content: string; truncated: boolean } {
   const lines: string[] = [];
   const allBytes = new TextEncoder().encode(str);
   const truncated = allBytes.length > maxBytes;
@@ -195,14 +278,19 @@ export function toHexDump(str: string, maxBytes = HEX_MAX_BYTES): { content: str
     for (let j = 0; j < 16; j++) {
       if (j < chunk.length) {
         hexParts.push(chunk[j].toString(16).padStart(2, "0"));
-        asciiParts.push(chunk[j] >= 0x20 && chunk[j] <= 0x7e ? String.fromCharCode(chunk[j]) : ".");
+        asciiParts.push(
+          chunk[j] >= 0x20 && chunk[j] <= 0x7e
+            ? String.fromCharCode(chunk[j])
+            : ".",
+        );
       } else {
         hexParts.push("  ");
         asciiParts.push(" ");
       }
     }
     // 每 8 个字节加一个额外空格分隔
-    const hex = hexParts.slice(0, 8).join(" ") + "  " + hexParts.slice(8).join(" ");
+    const hex =
+      hexParts.slice(0, 8).join(" ") + "  " + hexParts.slice(8).join(" ");
     lines.push(`${addr}  ${hex}  |${asciiParts.join("")}|`);
   }
   return { content: lines.join("\n"), truncated };
@@ -216,7 +304,8 @@ export function setupJsonContextMenu(
   const domNode = editor.getDomNode();
   if (!domNode) return;
 
-  const checkIsJson = typeof isJsonOrCheck === "function" ? isJsonOrCheck : () => isJsonOrCheck;
+  const checkIsJson =
+    typeof isJsonOrCheck === "function" ? isJsonOrCheck : () => isJsonOrCheck;
 
   domNode.addEventListener("contextmenu", (e: MouseEvent) => {
     if (!checkIsJson()) return; // 非 JSON 格式不拦截，保持默认行为
@@ -248,8 +337,12 @@ export function setupJsonContextMenu(
       background: none; border: none; cursor: pointer; border-radius: 4px; margin: 0 4px;
       width: calc(100% - 8px);
     `;
-    item.onmouseenter = () => { item.style.background = "var(--color-accent, hsl(240 3.7% 15.9%))"; };
-    item.onmouseleave = () => { item.style.background = "none"; };
+    item.onmouseenter = () => {
+      item.style.background = "var(--color-accent, hsl(240 3.7% 15.9%))";
+    };
+    item.onmouseleave = () => {
+      item.style.background = "none";
+    };
     item.onclick = () => {
       try {
         const val = editor.getValue();
@@ -327,7 +420,13 @@ function StringViewer({
 
     if (isLargeValue) {
       // 大值：先加载预览（前 PREVIEW_SIZE 字节）
-      getStringValuePartial(connectionId, selectedDb, keyName, 0, PREVIEW_SIZE - 1)
+      getStringValuePartial(
+        connectionId,
+        selectedDb,
+        keyName,
+        0,
+        PREVIEW_SIZE - 1,
+      )
         .then((v) => applyValue(v, true))
         .catch(console.error);
     } else {
@@ -380,7 +479,10 @@ function StringViewer({
   const valueSizeEstimate = value.length;
   const isLargeString = valueSizeEstimate > LARGE_STRING_THRESHOLD;
   /** Hex dump 内容（仅在 hex 模式时计算，使用 useMemo 避免重复计算） */
-  const hexResult = useMemo(() => (isHex ? toHexDump(value) : { content: "", truncated: false }), [isHex, value]);
+  const hexResult = useMemo(
+    () => (isHex ? toHexDump(value) : { content: "", truncated: false }),
+    [isHex, value],
+  );
 
   /** 格式化字节大小 */
   const formatSize = (bytes: number) => {
@@ -396,13 +498,24 @@ function StringViewer({
         <div className="flex items-center gap-3 px-4 py-2 bg-yellow-500/10 border-b border-yellow-500/20 text-sm">
           <AlertTriangle className="w-4 h-4 text-yellow-500 shrink-0" />
           <span className="text-yellow-600 dark:text-yellow-400">
-            {t("valueEditor.largeValueHint", { size: formatSize(LARGE_VALUE_THRESHOLD) })}
+            {t("valueEditor.largeValueHint", {
+              size: formatSize(LARGE_VALUE_THRESHOLD),
+            })}
           </span>
-          <span className="text-muted-foreground text-xs">({formatSize(keyInfo.length)})</span>
+          <span className="text-muted-foreground text-xs">
+            ({formatSize(keyInfo.length)})
+          </span>
           <div className="flex-1" />
-          <Button size="sm" variant="outline" onClick={handleLoadFull} disabled={loadingFull}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleLoadFull}
+            disabled={loadingFull}
+          >
             <Download className="w-3.5 h-3.5" />
-            {loadingFull ? t("valueEditor.loadingFull") : t("valueEditor.loadFull")}
+            {loadingFull
+              ? t("valueEditor.loadingFull")
+              : t("valueEditor.loadFull")}
           </Button>
         </div>
       )}
@@ -439,13 +552,18 @@ function StringViewer({
                 }`}
                 onClick={() => setShowMoreFormats(!showMoreFormats)}
               >
-                {MORE_FORMATS.includes(format) ? FORMAT_LABELS[format] : t("valueEditor.moreFormats")}
+                {MORE_FORMATS.includes(format)
+                  ? FORMAT_LABELS[format]
+                  : t("valueEditor.moreFormats")}
                 <span className="ml-1 text-[10px]">▾</span>
               </button>
               {showMoreFormats && (
                 <>
                   {/* 点击外部关闭 */}
-                  <div className="fixed inset-0 z-40" onClick={() => setShowMoreFormats(false)} />
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowMoreFormats(false)}
+                  />
                   <div className="absolute left-0 top-full mt-1 z-50 min-w-[140px] bg-card border border-border rounded-lg shadow-lg py-1">
                     {MORE_FORMATS.map((f) => (
                       <button
@@ -468,7 +586,11 @@ function StringViewer({
             </div>
           </>
         )}
-        {isLargePreview && <span className="text-muted-foreground">{t("valueEditor.preview")}</span>}
+        {isLargePreview && (
+          <span className="text-muted-foreground">
+            {t("valueEditor.preview")}
+          </span>
+        )}
 
         {/* Diff 切换（仅非预览 & 非 Hex & 有改动时显示） */}
         {!isLargePreview && !isHex && isDirty && (
@@ -503,7 +625,9 @@ function StringViewer({
           <div className="flex items-center gap-2 px-4 py-1.5 bg-yellow-500/10 border-b border-yellow-500/20 text-xs">
             <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
             <span className="text-yellow-600 dark:text-yellow-400">
-              {t("valueEditor.hexTruncated", { size: formatSize(HEX_MAX_BYTES) })}
+              {t("valueEditor.hexTruncated", {
+                size: formatSize(HEX_MAX_BYTES),
+              })}
             </span>
           </div>
         )}
@@ -518,7 +642,8 @@ function StringViewer({
               options={{
                 minimap: { enabled: false },
                 fontSize: 13,
-                fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace",
+                fontFamily:
+                  "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace",
                 lineNumbers: "off",
                 wordWrap: "off",
                 scrollBeyondLastLine: false,
@@ -580,7 +705,10 @@ function StringViewer({
               }}
               onMount={(editor) => {
                 editorRef.current = editor;
-                setupJsonContextMenu(editor, () => formatRef.current === "json");
+                setupJsonContextMenu(
+                  editor,
+                  () => formatRef.current === "json",
+                );
               }}
             />
           )}
@@ -592,30 +720,58 @@ function StringViewer({
 
 // ============ Hash 查看器 ============
 
-function HashViewer({ keyName, totalCount, onValueChanged }: { keyName: string; totalCount: number; onValueChanged: () => void }) {
+function HashViewer({
+  keyName,
+  totalCount,
+  onValueChanged,
+}: {
+  keyName: string;
+  totalCount: number;
+  onValueChanged: () => void;
+}) {
   const { t } = useTranslation();
   const { connectionId, selectedDb } = useBrowserStore();
   const [fields, setFields] = useState<{ field: string; value: string }[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [editData, setEditData] = useState<{ field: string; value: string } | null>(null);
+  const [editData, setEditData] = useState<{
+    field: string;
+    value: string;
+  } | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   /** 每页对应的 HSCAN 游标历史，用于前后翻页 */
   const [cursorHistory, setCursorHistory] = useState<number[]>([0]);
 
-  const loadPage = useCallback(async (cursor: number) => {
-    if (!connectionId) return;
-    const result = await getHashValue(connectionId, selectedDb, keyName, cursor, "*", TABLE_PAGE_SIZE);
-    setFields(result.fields);
-    return result.cursor;
-  }, [connectionId, selectedDb, keyName]);
+  const loadPage = useCallback(
+    async (cursor: number) => {
+      if (!connectionId) return;
+      const result = await getHashValue(
+        connectionId,
+        selectedDb,
+        keyName,
+        cursor,
+        "*",
+        TABLE_PAGE_SIZE,
+      );
+      setFields(result.fields);
+      return result.cursor;
+    },
+    [connectionId, selectedDb, keyName],
+  );
 
   /** 初始加载第一页 */
   const loadData = useCallback(async () => {
     if (!connectionId) return;
     setPage(0);
     setCursorHistory([0]);
-    const result = await getHashValue(connectionId, selectedDb, keyName, 0, "*", TABLE_PAGE_SIZE);
+    const result = await getHashValue(
+      connectionId,
+      selectedDb,
+      keyName,
+      0,
+      "*",
+      TABLE_PAGE_SIZE,
+    );
     setFields(result.fields);
     // 记录下一页的游标
     if (result.cursor !== 0) {
@@ -626,16 +782,23 @@ function HashViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
   useLoadEffect(loadData, [connectionId, selectedDb, keyName]);
 
   /** 翻页 */
-  const handlePageChange = useCallback(async (newPage: number) => {
-    const cursor = cursorHistory[newPage] ?? 0;
-    const nextCursor = await loadPage(cursor);
-    setPage(newPage);
-    setExpandedRow(null);
-    // 记录下一页游标
-    if (nextCursor != null && nextCursor !== 0 && cursorHistory.length <= newPage + 1) {
-      setCursorHistory((prev) => [...prev, nextCursor]);
-    }
-  }, [cursorHistory, loadPage]);
+  const handlePageChange = useCallback(
+    async (newPage: number) => {
+      const cursor = cursorHistory[newPage] ?? 0;
+      const nextCursor = await loadPage(cursor);
+      setPage(newPage);
+      setExpandedRow(null);
+      // 记录下一页游标
+      if (
+        nextCursor != null &&
+        nextCursor !== 0 &&
+        cursorHistory.length <= newPage + 1
+      ) {
+        setCursorHistory((prev) => [...prev, nextCursor]);
+      }
+    },
+    [cursorHistory, loadPage],
+  );
 
   const handleDelete = async (field: string) => {
     if (!connectionId) return;
@@ -645,13 +808,23 @@ function HashViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
   };
 
   /** 保存（新增或编辑，支持 field 改名）*/
-  const handleSave = async (data: { field?: string; oldField?: string; value: string }) => {
+  const handleSave = async (data: {
+    field?: string;
+    oldField?: string;
+    value: string;
+  }) => {
     if (!connectionId) return;
     // 如果 field 改名了，先删旧 field 再建新 field
     if (data.oldField && data.oldField !== data.field) {
       await deleteHashField(connectionId, selectedDb, keyName, data.oldField);
     }
-    await setHashField(connectionId, selectedDb, keyName, data.field!, data.value);
+    await setHashField(
+      connectionId,
+      selectedDb,
+      keyName,
+      data.field!,
+      data.value,
+    );
     setShowAdd(false);
     setEditData(null);
     loadData();
@@ -666,12 +839,18 @@ function HashViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
           <span key="f" className="text-primary font-medium">
             {f.field}
           </span>,
-          <TruncatedValue key="v" value={f.value} expanded={expandedRow === idx} />,
+          <TruncatedValue
+            key="v"
+            value={f.value}
+            expanded={expandedRow === idx}
+          />,
           <RowActions key="a" onDelete={() => handleDelete(f.field)} />,
         ])}
         widths={["w-1/3", "w-1/2", "w-12"]}
         expandedRow={expandedRow}
-        onRowClick={(idx) => setExpandedRow((prev) => (prev === idx ? null : idx))}
+        onRowClick={(idx) =>
+          setExpandedRow((prev) => (prev === idx ? null : idx))
+        }
         onRowDoubleClick={(idx) => setEditData(fields[idx])}
         addLabel={t("valueEditor.addField")}
         onAdd={() => setShowAdd(true)}
@@ -684,7 +863,11 @@ function HashViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
         <AddFieldDialog
           isOpen={showAdd || !!editData}
           mode="hash"
-          initialData={editData ? { field: editData.field, value: editData.value } : undefined}
+          initialData={
+            editData
+              ? { field: editData.field, value: editData.value }
+              : undefined
+          }
           onClose={() => {
             setShowAdd(false);
             setEditData(null);
@@ -698,7 +881,15 @@ function HashViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
 
 // ============ List 查看器 ============
 
-function ListViewer({ keyName, totalCount, onValueChanged }: { keyName: string; totalCount: number; onValueChanged: () => void }) {
+function ListViewer({
+  keyName,
+  totalCount,
+  onValueChanged,
+}: {
+  keyName: string;
+  totalCount: number;
+  onValueChanged: () => void;
+}) {
   const { t } = useTranslation();
   const { connectionId, selectedDb } = useBrowserStore();
   const [items, setItems] = useState<string[]>([]);
@@ -707,13 +898,22 @@ function ListViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [page, setPage] = useState(0);
 
-  const loadPage = useCallback(async (p: number) => {
-    if (!connectionId) return;
-    const start = p * TABLE_PAGE_SIZE;
-    const stop = start + TABLE_PAGE_SIZE - 1;
-    const result = await getListValue(connectionId, selectedDb, keyName, start, stop);
-    setItems(result);
-  }, [connectionId, selectedDb, keyName]);
+  const loadPage = useCallback(
+    async (p: number) => {
+      if (!connectionId) return;
+      const start = p * TABLE_PAGE_SIZE;
+      const stop = start + TABLE_PAGE_SIZE - 1;
+      const result = await getListValue(
+        connectionId,
+        selectedDb,
+        keyName,
+        start,
+        stop,
+      );
+      setItems(result);
+    },
+    [connectionId, selectedDb, keyName],
+  );
 
   const loadData = useCallback(async () => {
     setPage(0);
@@ -722,18 +922,26 @@ function ListViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
 
   useLoadEffect(loadData, [connectionId, selectedDb, keyName]);
 
-  const handlePageChange = useCallback(async (newPage: number) => {
-    await loadPage(newPage);
-    setPage(newPage);
-    setExpandedRow(null);
-  }, [loadPage]);
+  const handlePageChange = useCallback(
+    async (newPage: number) => {
+      await loadPage(newPage);
+      setPage(newPage);
+      setExpandedRow(null);
+    },
+    [loadPage],
+  );
 
   /** 当前页中元素的真实索引偏移 */
   const indexOffset = page * TABLE_PAGE_SIZE;
 
   const handleDelete = async (index: number) => {
     if (!connectionId) return;
-    await deleteListElement(connectionId, selectedDb, keyName, indexOffset + index);
+    await deleteListElement(
+      connectionId,
+      selectedDb,
+      keyName,
+      indexOffset + index,
+    );
     loadData();
     onValueChanged();
   };
@@ -751,7 +959,9 @@ function ListViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
         ])}
         widths={["w-20", "", "w-16"]}
         expandedRow={expandedRow}
-        onRowClick={(idx) => setExpandedRow((prev) => (prev === idx ? null : idx))}
+        onRowClick={(idx) =>
+          setExpandedRow((prev) => (prev === idx ? null : idx))
+        }
         onRowDoubleClick={(idx) => setEditIdx(idx)}
         addLabel={t("valueEditor.addElement")}
         onAdd={() => setShowAdd(true)}
@@ -773,10 +983,27 @@ function ListViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
             if (!connectionId) return;
             if (editIdx !== null) {
               // 编辑：先删再加（List 无原生 SET by index 的封装，用 delete + add）
-              await deleteListElement(connectionId, selectedDb, keyName, indexOffset + editIdx);
-              await addListElement(connectionId, selectedDb, keyName, data.value, "tail");
+              await deleteListElement(
+                connectionId,
+                selectedDb,
+                keyName,
+                indexOffset + editIdx,
+              );
+              await addListElement(
+                connectionId,
+                selectedDb,
+                keyName,
+                data.value,
+                "tail",
+              );
             } else {
-              await addListElement(connectionId, selectedDb, keyName, data.value, data.position || "tail");
+              await addListElement(
+                connectionId,
+                selectedDb,
+                keyName,
+                data.value,
+                data.position || "tail",
+              );
             }
             setShowAdd(false);
             setEditIdx(null);
@@ -791,7 +1018,15 @@ function ListViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
 
 // ============ Set 查看器 ============
 
-function SetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; totalCount: number; onValueChanged: () => void }) {
+function SetViewer({
+  keyName,
+  totalCount,
+  onValueChanged,
+}: {
+  keyName: string;
+  totalCount: number;
+  onValueChanged: () => void;
+}) {
   const { t } = useTranslation();
   const { connectionId, selectedDb } = useBrowserStore();
   const [members, setMembers] = useState<string[]>([]);
@@ -801,18 +1036,35 @@ function SetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; t
   const [page, setPage] = useState(0);
   const [cursorHistory, setCursorHistory] = useState<number[]>([0]);
 
-  const loadPage = useCallback(async (cursor: number) => {
-    if (!connectionId) return;
-    const result = await getSetValue(connectionId, selectedDb, keyName, cursor, "*", TABLE_PAGE_SIZE);
-    setMembers(result.members);
-    return result.cursor;
-  }, [connectionId, selectedDb, keyName]);
+  const loadPage = useCallback(
+    async (cursor: number) => {
+      if (!connectionId) return;
+      const result = await getSetValue(
+        connectionId,
+        selectedDb,
+        keyName,
+        cursor,
+        "*",
+        TABLE_PAGE_SIZE,
+      );
+      setMembers(result.members);
+      return result.cursor;
+    },
+    [connectionId, selectedDb, keyName],
+  );
 
   const loadData = useCallback(async () => {
     if (!connectionId) return;
     setPage(0);
     setCursorHistory([0]);
-    const result = await getSetValue(connectionId, selectedDb, keyName, 0, "*", TABLE_PAGE_SIZE);
+    const result = await getSetValue(
+      connectionId,
+      selectedDb,
+      keyName,
+      0,
+      "*",
+      TABLE_PAGE_SIZE,
+    );
     setMembers(result.members);
     if (result.cursor !== 0) {
       setCursorHistory([0, result.cursor]);
@@ -821,15 +1073,22 @@ function SetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; t
 
   useLoadEffect(loadData, [connectionId, selectedDb, keyName]);
 
-  const handlePageChange = useCallback(async (newPage: number) => {
-    const cursor = cursorHistory[newPage] ?? 0;
-    const nextCursor = await loadPage(cursor);
-    setPage(newPage);
-    setExpandedRow(null);
-    if (nextCursor != null && nextCursor !== 0 && cursorHistory.length <= newPage + 1) {
-      setCursorHistory((prev) => [...prev, nextCursor]);
-    }
-  }, [cursorHistory, loadPage]);
+  const handlePageChange = useCallback(
+    async (newPage: number) => {
+      const cursor = cursorHistory[newPage] ?? 0;
+      const nextCursor = await loadPage(cursor);
+      setPage(newPage);
+      setExpandedRow(null);
+      if (
+        nextCursor != null &&
+        nextCursor !== 0 &&
+        cursorHistory.length <= newPage + 1
+      ) {
+        setCursorHistory((prev) => [...prev, nextCursor]);
+      }
+    },
+    [cursorHistory, loadPage],
+  );
 
   const handleDelete = async (member: string) => {
     if (!connectionId) return;
@@ -848,7 +1107,9 @@ function SetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; t
         ])}
         widths={["", "w-16"]}
         expandedRow={expandedRow}
-        onRowClick={(idx) => setExpandedRow((prev) => (prev === idx ? null : idx))}
+        onRowClick={(idx) =>
+          setExpandedRow((prev) => (prev === idx ? null : idx))
+        }
         onRowDoubleClick={(idx) => setEditMember(members[idx])}
         addLabel={t("valueEditor.addMember")}
         onAdd={() => setShowAdd(true)}
@@ -869,7 +1130,12 @@ function SetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; t
           onSave={async (data) => {
             if (!connectionId) return;
             if (editMember !== null) {
-              await deleteSetMember(connectionId, selectedDb, keyName, editMember);
+              await deleteSetMember(
+                connectionId,
+                selectedDb,
+                keyName,
+                editMember,
+              );
             }
             await addSetMember(connectionId, selectedDb, keyName, data.value);
             setShowAdd(false);
@@ -885,22 +1151,44 @@ function SetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; t
 
 // ============ ZSet 查看器 ============
 
-function ZSetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; totalCount: number; onValueChanged: () => void }) {
+function ZSetViewer({
+  keyName,
+  totalCount,
+  onValueChanged,
+}: {
+  keyName: string;
+  totalCount: number;
+  onValueChanged: () => void;
+}) {
   const { t } = useTranslation();
   const { connectionId, selectedDb } = useBrowserStore();
-  const [members, setMembers] = useState<{ member: string; score: number }[]>([]);
+  const [members, setMembers] = useState<{ member: string; score: number }[]>(
+    [],
+  );
   const [showAdd, setShowAdd] = useState(false);
-  const [editData, setEditData] = useState<{ member: string; score: number } | null>(null);
+  const [editData, setEditData] = useState<{
+    member: string;
+    score: number;
+  } | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [page, setPage] = useState(0);
 
-  const loadPage = useCallback(async (p: number) => {
-    if (!connectionId) return;
-    const start = p * TABLE_PAGE_SIZE;
-    const stop = start + TABLE_PAGE_SIZE - 1;
-    const result = await getZsetValue(connectionId, selectedDb, keyName, start, stop);
-    setMembers(result);
-  }, [connectionId, selectedDb, keyName]);
+  const loadPage = useCallback(
+    async (p: number) => {
+      if (!connectionId) return;
+      const start = p * TABLE_PAGE_SIZE;
+      const stop = start + TABLE_PAGE_SIZE - 1;
+      const result = await getZsetValue(
+        connectionId,
+        selectedDb,
+        keyName,
+        start,
+        stop,
+      );
+      setMembers(result);
+    },
+    [connectionId, selectedDb, keyName],
+  );
 
   const loadData = useCallback(async () => {
     setPage(0);
@@ -909,11 +1197,14 @@ function ZSetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
 
   useLoadEffect(loadData, [connectionId, selectedDb, keyName]);
 
-  const handlePageChange = useCallback(async (newPage: number) => {
-    await loadPage(newPage);
-    setPage(newPage);
-    setExpandedRow(null);
-  }, [loadPage]);
+  const handlePageChange = useCallback(
+    async (newPage: number) => {
+      await loadPage(newPage);
+      setPage(newPage);
+      setExpandedRow(null);
+    },
+    [loadPage],
+  );
 
   const handleDelete = async (member: string) => {
     if (!connectionId) return;
@@ -930,12 +1221,18 @@ function ZSetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
           <span key="s" className="text-primary font-medium">
             {m.score}
           </span>,
-          <TruncatedValue key="m" value={m.member} expanded={expandedRow === idx} />,
+          <TruncatedValue
+            key="m"
+            value={m.member}
+            expanded={expandedRow === idx}
+          />,
           <RowActions key="a" onDelete={() => handleDelete(m.member)} />,
         ])}
         widths={["w-28", "", "w-16"]}
         expandedRow={expandedRow}
-        onRowClick={(idx) => setExpandedRow((prev) => (prev === idx ? null : idx))}
+        onRowClick={(idx) =>
+          setExpandedRow((prev) => (prev === idx ? null : idx))
+        }
         onRowDoubleClick={(idx) => setEditData(members[idx])}
         addLabel={t("valueEditor.addMember")}
         onAdd={() => setShowAdd(true)}
@@ -948,7 +1245,11 @@ function ZSetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
         <AddFieldDialog
           isOpen={showAdd || !!editData}
           mode="zset"
-          initialData={editData ? { value: editData.member, score: editData.score } : undefined}
+          initialData={
+            editData
+              ? { value: editData.member, score: editData.score }
+              : undefined
+          }
           onClose={() => {
             setShowAdd(false);
             setEditData(null);
@@ -956,9 +1257,20 @@ function ZSetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
           onSave={async (data) => {
             if (!connectionId) return;
             if (editData) {
-              await deleteZsetMember(connectionId, selectedDb, keyName, editData.member);
+              await deleteZsetMember(
+                connectionId,
+                selectedDb,
+                keyName,
+                editData.member,
+              );
             }
-            await addZsetMember(connectionId, selectedDb, keyName, data.value, data.score ?? 0);
+            await addZsetMember(
+              connectionId,
+              selectedDb,
+              keyName,
+              data.value,
+              data.score ?? 0,
+            );
             setShowAdd(false);
             setEditData(null);
             loadData();
@@ -972,28 +1284,55 @@ function ZSetViewer({ keyName, totalCount, onValueChanged }: { keyName: string; 
 
 // ============ Stream 查看器 ============
 
-function StreamViewer({ keyName, totalCount, onValueChanged }: { keyName: string; totalCount: number; onValueChanged: () => void }) {
+function StreamViewer({
+  keyName,
+  totalCount,
+  onValueChanged,
+}: {
+  keyName: string;
+  totalCount: number;
+  onValueChanged: () => void;
+}) {
   const { t } = useTranslation();
   const { connectionId, selectedDb } = useBrowserStore();
-  const [entries, setEntries] = useState<{ id: string; fields: [string, string][] }[]>([]);
+  const [entries, setEntries] = useState<
+    { id: string; fields: [string, string][] }[]
+  >([]);
   const [showAdd, setShowAdd] = useState(false);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   /** ID 边界历史，每项为 [startId, endId]，用于前后翻页 */
   const [idHistory, setIdHistory] = useState<string[]>(["-"]);
 
-  const loadPage = useCallback(async (startId: string) => {
-    if (!connectionId) return;
-    const result = await getStreamValue(connectionId, selectedDb, keyName, startId, "+", TABLE_PAGE_SIZE);
-    setEntries(result);
-    return result;
-  }, [connectionId, selectedDb, keyName]);
+  const loadPage = useCallback(
+    async (startId: string) => {
+      if (!connectionId) return;
+      const result = await getStreamValue(
+        connectionId,
+        selectedDb,
+        keyName,
+        startId,
+        "+",
+        TABLE_PAGE_SIZE,
+      );
+      setEntries(result);
+      return result;
+    },
+    [connectionId, selectedDb, keyName],
+  );
 
   const loadData = useCallback(async () => {
     if (!connectionId) return;
     setPage(0);
     setIdHistory(["-"]);
-    const result = await getStreamValue(connectionId, selectedDb, keyName, "-", "+", TABLE_PAGE_SIZE);
+    const result = await getStreamValue(
+      connectionId,
+      selectedDb,
+      keyName,
+      "-",
+      "+",
+      TABLE_PAGE_SIZE,
+    );
     setEntries(result);
     // 记录下一页的起始 ID（最后一条的 ID + 1 毫秒时间戳的后缀）
     if (result.length === TABLE_PAGE_SIZE && result.length > 0) {
@@ -1006,17 +1345,25 @@ function StreamViewer({ keyName, totalCount, onValueChanged }: { keyName: string
 
   useLoadEffect(loadData, [connectionId, selectedDb, keyName]);
 
-  const handlePageChange = useCallback(async (newPage: number) => {
-    const startId = idHistory[newPage] ?? "-";
-    const result = await loadPage(startId);
-    setPage(newPage);
-    setExpandedRow(null);
-    if (result && result.length === TABLE_PAGE_SIZE && result.length > 0 && idHistory.length <= newPage + 1) {
-      const lastId = result[result.length - 1].id;
-      const nextStartId = "(" + lastId;
-      setIdHistory((prev) => [...prev, nextStartId]);
-    }
-  }, [idHistory, loadPage]);
+  const handlePageChange = useCallback(
+    async (newPage: number) => {
+      const startId = idHistory[newPage] ?? "-";
+      const result = await loadPage(startId);
+      setPage(newPage);
+      setExpandedRow(null);
+      if (
+        result &&
+        result.length === TABLE_PAGE_SIZE &&
+        result.length > 0 &&
+        idHistory.length <= newPage + 1
+      ) {
+        const lastId = result[result.length - 1].id;
+        const nextStartId = "(" + lastId;
+        setIdHistory((prev) => [...prev, nextStartId]);
+      }
+    },
+    [idHistory, loadPage],
+  );
 
   const handleDelete = async (entryId: string) => {
     if (!connectionId) return;
@@ -1037,12 +1384,18 @@ function StreamViewer({ keyName, totalCount, onValueChanged }: { keyName: string
           <span key="id" className="text-primary font-medium text-xs">
             {e.id}
           </span>,
-          <TruncatedValue key="f" value={formatFields(e.fields)} expanded={expandedRow === idx} />,
+          <TruncatedValue
+            key="f"
+            value={formatFields(e.fields)}
+            expanded={expandedRow === idx}
+          />,
           <RowActions key="a" onDelete={() => handleDelete(e.id)} />,
         ])}
         widths={["w-44", "", "w-16"]}
         expandedRow={expandedRow}
-        onRowClick={(idx) => setExpandedRow((prev) => (prev === idx ? null : idx))}
+        onRowClick={(idx) =>
+          setExpandedRow((prev) => (prev === idx ? null : idx))
+        }
         addLabel={t("valueEditor.addEntry")}
         onAdd={() => setShowAdd(true)}
         totalCount={totalCount}
@@ -1057,7 +1410,9 @@ function StreamViewer({ keyName, totalCount, onValueChanged }: { keyName: string
           onClose={() => setShowAdd(false)}
           onSave={async (data) => {
             if (!connectionId) return;
-            const fields: [string, string][] = [[data.field || "data", data.value]];
+            const fields: [string, string][] = [
+              [data.field || "data", data.value],
+            ];
             await addStreamEntry(connectionId, selectedDb, keyName, fields);
             setShowAdd(false);
             loadData();
@@ -1130,8 +1485,11 @@ function TableView({
     [onRowClick, onRowDoubleClick],
   );
 
-  const hasPagination = totalCount != null && page != null && pageSize != null && onPageChange;
-  const totalPages = hasPagination ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1;
+  const hasPagination =
+    totalCount != null && page != null && pageSize != null && onPageChange;
+  const totalPages = hasPagination
+    ? Math.max(1, Math.ceil(totalCount / pageSize))
+    : 1;
   const currentPage = page ?? 0;
 
   return (
@@ -1142,7 +1500,10 @@ function TableView({
             <thead className="text-xs uppercase font-medium tracking-wider bg-muted/50 text-muted-foreground sticky top-0">
               <tr>
                 {headers.map((h, i) => (
-                  <th key={i} className={`px-4 py-3 border-b border-border ${widths[i] || ""}`}>
+                  <th
+                    key={i}
+                    className={`px-4 py-3 border-b border-border ${widths[i] || ""}`}
+                  >
                     {h}
                   </th>
                 ))}
@@ -1158,9 +1519,12 @@ function TableView({
                   onClick={() => handleClick(rowIdx)}
                 >
                   {cells.map((cell, cellIdx) => (
-                    <td key={cellIdx} className={`px-4 py-2.5 ${
-                      expandedRow !== rowIdx ? "overflow-hidden" : ""
-                    }`}>
+                    <td
+                      key={cellIdx}
+                      className={`px-4 py-2.5 ${
+                        expandedRow !== rowIdx ? "overflow-hidden" : ""
+                      }`}
+                    >
                       {cell}
                     </td>
                   ))}
@@ -1237,7 +1601,15 @@ function RowActions({ onDelete }: { onDelete?: () => void }) {
 }
 
 /** 可截断的值显示组件 — 默认单行截断，展开时完整显示，截断时 hover 显示 Tooltip */
-function TruncatedValue({ value, expanded, className }: { value: string; expanded: boolean; className?: string }) {
+function TruncatedValue({
+  value,
+  expanded,
+  className,
+}: {
+  value: string;
+  expanded: boolean;
+  className?: string;
+}) {
   const textRef = useRef<HTMLSpanElement>(null);
   const [isTruncated, setIsTruncated] = useState(false);
 
@@ -1250,7 +1622,9 @@ function TruncatedValue({ value, expanded, className }: { value: string; expande
 
   if (expanded) {
     return (
-      <span className={`block whitespace-pre-wrap break-all text-foreground/80 font-mono text-xs max-h-40 overflow-auto ${className || ""}`}>
+      <span
+        className={`block whitespace-pre-wrap break-all text-foreground/80 font-mono text-xs max-h-40 overflow-auto ${className || ""}`}
+      >
         {value}
       </span>
     );
@@ -1270,8 +1644,14 @@ function TruncatedValue({ value, expanded, className }: { value: string; expande
   return (
     <Tooltip>
       <TooltipTrigger asChild>{truncatedEl}</TooltipTrigger>
-      <TooltipContent side="bottom" align="start" className="max-w-md max-h-60 overflow-auto">
-        <pre className="whitespace-pre-wrap text-xs font-mono break-all">{value}</pre>
+      <TooltipContent
+        side="bottom"
+        align="start"
+        className="max-w-md max-h-60 overflow-auto"
+      >
+        <pre className="whitespace-pre-wrap text-xs font-mono break-all">
+          {value}
+        </pre>
       </TooltipContent>
     </Tooltip>
   );
@@ -1280,7 +1660,13 @@ function TruncatedValue({ value, expanded, className }: { value: string; expande
 // ============ RedisJSON 查看器 ============
 
 /** RedisJSON 查看/编辑组件 */
-function JsonViewer({ keyName, onValueChanged }: { keyName: string; onValueChanged: () => void }) {
+function JsonViewer({
+  keyName,
+  onValueChanged,
+}: {
+  keyName: string;
+  onValueChanged: () => void;
+}) {
   const { t } = useTranslation();
   const { connectionId, selectedDb } = useBrowserStore();
   const { theme } = useTheme();
@@ -1296,7 +1682,12 @@ function JsonViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
       if (!connectionId) return;
       setLoading(true);
       try {
-        const raw = await getJsonValue(connectionId, selectedDb, keyName, jsonPath);
+        const raw = await getJsonValue(
+          connectionId,
+          selectedDb,
+          keyName,
+          jsonPath,
+        );
         // JSON.GET 返回的结果可能是 JSON 数组包装（如 [value]），解包并美化
         let formatted = raw;
         try {
@@ -1365,10 +1756,12 @@ function JsonViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
       if (value !== originalValue && connectionId) {
         try {
           JSON.parse(value);
-          setJsonValue(connectionId, selectedDb, keyName, path, value).then(() => {
-            setOriginalValue(value);
-            onValueChanged();
-          });
+          setJsonValue(connectionId, selectedDb, keyName, path, value).then(
+            () => {
+              setOriginalValue(value);
+              onValueChanged();
+            },
+          );
         } catch {
           // 非法 JSON 不保存
         }
@@ -1376,7 +1769,15 @@ function JsonViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
     };
     window.addEventListener("redis:save", handler);
     return () => window.removeEventListener("redis:save", handler);
-  }, [connectionId, selectedDb, keyName, path, value, originalValue, onValueChanged]);
+  }, [
+    connectionId,
+    selectedDb,
+    keyName,
+    path,
+    value,
+    originalValue,
+    onValueChanged,
+  ]);
 
   const isDirty = value !== originalValue;
 
@@ -1384,7 +1785,9 @@ function JsonViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* 路径查询 + 操作栏 */}
       <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border text-xs">
-        <span className="text-muted-foreground font-medium shrink-0">{t("valueEditor.jsonPath")}:</span>
+        <span className="text-muted-foreground font-medium shrink-0">
+          {t("valueEditor.jsonPath")}:
+        </span>
         <input
           className="flex-1 min-w-0 bg-transparent border border-border rounded px-2 py-0.5 font-mono text-xs focus:outline-none focus:border-primary"
           value={pathInput}
@@ -1392,13 +1795,24 @@ function JsonViewer({ keyName, onValueChanged }: { keyName: string; onValueChang
           onKeyDown={(e) => e.key === "Enter" && handlePathQuery()}
           placeholder="$ | $.name | $.tags[0]"
         />
-        <Button size="sm" variant="outline" onClick={handlePathQuery} disabled={loading} className="h-6 text-xs">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handlePathQuery}
+          disabled={loading}
+          className="h-6 text-xs"
+        >
           {loading ? "..." : t("actions.search")}
         </Button>
 
         <span className="text-border mx-1">|</span>
 
-        <Button size="sm" variant="ghost" onClick={handleFormat} className="h-6 text-xs">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={handleFormat}
+          className="h-6 text-xs"
+        >
           {t("valueEditor.formatJson")}
         </Button>
 

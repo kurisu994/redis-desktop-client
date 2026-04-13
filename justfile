@@ -119,14 +119,21 @@ release tag:
     echo "1️⃣ 更新配置文件的版本号 ($VERSION) ..."
     just version "$VERSION"
     
-    echo "2️⃣ 提交本次发布变更到 Git..."
+    echo "2️⃣ 自动更新 CHANGELOG.md..."
+    if grep -q '## \[Unreleased\]' CHANGELOG.md; then
+        TODAY=$(date +%Y-%m-%d)
+        perl -i -pe "s/## \\[Unreleased\\]/## \\[Unreleased\\]\\n\\n---\\n\\n## [$VERSION] — $TODAY/" CHANGELOG.md
+        echo "   ✅ CHANGELOG 已更新: [Unreleased] -> [$VERSION] — $TODAY"
+    fi
+    
+    echo "3️⃣ 提交本次发布变更到 Git..."
     git add .
     git commit -m "🔖 release: $TAG" || echo "⚠️ 暂无变更需要提交，跳过 Commit"
     
-    echo "3️⃣ 推送最新代码到当前远程分支..."
+    echo "4️⃣ 推送最新代码到当前远程分支..."
     git push origin HEAD
     
-    echo "4️⃣ 创建并上传 $TAG 标签，准备触发云端构建流水线..."
+    echo "5️⃣ 创建并上传 $TAG 标签，准备触发云端构建流水线..."
     if git rev-parse "$TAG" >/dev/null 2>&1; then
         echo "⚠️ $TAG 标签已存在，将被跳过"
     else

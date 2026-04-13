@@ -42,10 +42,7 @@ pub struct StreamEntry {
 // ============ 辅助宏：SELECT 数据库 ============
 
 /// 切换到指定 db 的辅助函数
-async fn select_db(
-    conn: &mut redis::aio::ConnectionManager,
-    db: u32,
-) -> Result<(), String> {
+async fn select_db(conn: &mut redis::aio::ConnectionManager, db: u32) -> Result<(), String> {
     redis::cmd("SELECT")
         .arg(db)
         .query_async::<()>(conn)
@@ -105,7 +102,11 @@ pub async fn get_hash_value(
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
 
-    let match_pattern = if pattern.is_empty() { "*".to_string() } else { pattern };
+    let match_pattern = if pattern.is_empty() {
+        "*".to_string()
+    } else {
+        pattern
+    };
     let mut accumulated_fields: Vec<HashField> = Vec::new();
     let mut current_cursor = cursor;
 
@@ -160,7 +161,10 @@ pub async fn get_list_value(
         .lrange(&key, start as isize, stop as isize)
         .await
         .map_err(|e| e.to_string())?;
-    Ok(raw.into_iter().map(|b| String::from_utf8_lossy(&b).into_owned()).collect())
+    Ok(raw
+        .into_iter()
+        .map(|b| String::from_utf8_lossy(&b).into_owned())
+        .collect())
 }
 
 /// 获取 Set 类型的值 — SSCAN 分页（循环迭代直到收集满 count 条或扫描完毕，支持二进制数据）
@@ -177,7 +181,11 @@ pub async fn get_set_value(
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
 
-    let match_pattern = if pattern.is_empty() { "*".to_string() } else { pattern };
+    let match_pattern = if pattern.is_empty() {
+        "*".to_string()
+    } else {
+        pattern
+    };
     let mut accumulated_members: Vec<String> = Vec::new();
     let mut current_cursor = cursor;
 
@@ -195,7 +203,9 @@ pub async fn get_set_value(
             .map_err(|e| e.to_string())?;
 
         accumulated_members.extend(
-            members.into_iter().map(|b| String::from_utf8_lossy(&b).into_owned())
+            members
+                .into_iter()
+                .map(|b| String::from_utf8_lossy(&b).into_owned()),
         );
         current_cursor = new_cursor;
         if accumulated_members.len() >= count as usize || current_cursor == 0 {
@@ -250,7 +260,11 @@ pub async fn get_stream_value(
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
 
-    let start_id = if start.is_empty() { "-".to_string() } else { start };
+    let start_id = if start.is_empty() {
+        "-".to_string()
+    } else {
+        start
+    };
     let end_id = if end.is_empty() { "+".to_string() } else { end };
 
     let raw: redis::Value = redis::cmd("XRANGE")
@@ -365,9 +379,7 @@ pub async fn delete_hash_field(
 ) -> Result<(), String> {
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
-    conn.hdel(&key, &field)
-        .await
-        .map_err(|e| e.to_string())
+    conn.hdel(&key, &field).await.map_err(|e| e.to_string())
 }
 
 /// 添加 List 元素
@@ -384,13 +396,9 @@ pub async fn add_list_element(
     select_db(&mut conn, db).await?;
 
     if position == "head" {
-        conn.lpush(&key, &value)
-            .await
-            .map_err(|e| e.to_string())
+        conn.lpush(&key, &value).await.map_err(|e| e.to_string())
     } else {
-        conn.rpush(&key, &value)
-            .await
-            .map_err(|e| e.to_string())
+        conn.rpush(&key, &value).await.map_err(|e| e.to_string())
     }
 }
 
@@ -444,9 +452,7 @@ pub async fn add_set_member(
 ) -> Result<(), String> {
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
-    conn.sadd(&key, &member)
-        .await
-        .map_err(|e| e.to_string())
+    conn.sadd(&key, &member).await.map_err(|e| e.to_string())
 }
 
 /// 删除 Set 成员
@@ -460,9 +466,7 @@ pub async fn delete_set_member(
 ) -> Result<(), String> {
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
-    conn.srem(&key, &member)
-        .await
-        .map_err(|e| e.to_string())
+    conn.srem(&key, &member).await.map_err(|e| e.to_string())
 }
 
 /// 添加 ZSet 成员
@@ -493,9 +497,7 @@ pub async fn delete_zset_member(
 ) -> Result<(), String> {
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
-    conn.zrem(&key, &member)
-        .await
-        .map_err(|e| e.to_string())
+    conn.zrem(&key, &member).await.map_err(|e| e.to_string())
 }
 
 /// 添加 Stream 条目
@@ -515,7 +517,10 @@ pub async fn add_stream_entry(
     for (k, v) in &fields {
         cmd.arg(k).arg(v);
     }
-    let entry_id: String = cmd.query_async(&mut conn).await.map_err(|e| e.to_string())?;
+    let entry_id: String = cmd
+        .query_async(&mut conn)
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(entry_id)
 }
 
@@ -660,4 +665,3 @@ pub async fn set_json_value(
         .map_err(|e| e.to_string())?;
     Ok(())
 }
-

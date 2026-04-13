@@ -177,9 +177,7 @@ fn format_redis_value(value: &redis::Value, indent: usize) -> (String, String) {
         }
         redis::Value::Double(f) => (format!("(double) {}", f), "integer".to_string()),
         redis::Value::Boolean(b) => (format!("(boolean) {}", b), "ok".to_string()),
-        redis::Value::VerbatimString { text, .. } => {
-            (format!("\"{}\"", text), "bulk".to_string())
-        }
+        redis::Value::VerbatimString { text, .. } => (format!("\"{}\"", text), "bulk".to_string()),
         redis::Value::ServerError(err) => {
             let msg = match err.details() {
                 Some(detail) => format!("(error) {} {}", err.code(), detail),

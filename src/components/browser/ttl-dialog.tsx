@@ -22,10 +22,15 @@ interface TtlDialogProps {
 }
 
 /** TTL 管理对话框 — 设置/修改/移除 TTL */
-export function TtlDialog({ isOpen, currentTtl, onClose, onSave }: TtlDialogProps) {
+export function TtlDialog({
+  isOpen,
+  currentTtl,
+  onClose,
+  onSave,
+}: TtlDialogProps) {
   const { t } = useTranslation();
   const [ttlValue, setTtlValue] = useState(
-    currentTtl > 0 ? String(currentTtl) : ""
+    currentTtl > 0 ? String(currentTtl) : "",
   );
   const [saving, setSaving] = useState(false);
 
@@ -89,10 +94,7 @@ export function TtlDialog({ isOpen, currentTtl, onClose, onSave }: TtlDialogProp
           <Button variant="ghost" onClick={onClose}>
             {t("actions.cancel")}
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-          >
+          <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="animate-spin" size={14} />}
             {t("actions.save")}
           </Button>

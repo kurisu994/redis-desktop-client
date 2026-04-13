@@ -14,7 +14,10 @@ interface ErrorBoundaryState {
 }
 
 /** 全局错误边界 — 捕获子组件渲染异常并展示降级 UI */
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -44,7 +47,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           </p>
           {this.state.error && (
             <details className="text-xs text-muted-foreground max-w-lg w-full">
-              <summary className="cursor-pointer hover:text-foreground">错误详情</summary>
+              <summary className="cursor-pointer hover:text-foreground">
+                错误详情
+              </summary>
               <pre className="mt-2 p-2 bg-muted rounded overflow-x-auto whitespace-pre-wrap">
                 {this.state.error.message}
                 {"\n"}
@@ -52,9 +57,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </pre>
             </details>
           )}
-          <Button onClick={this.handleReload}>
-            重新加载
-          </Button>
+          <Button onClick={this.handleReload}>重新加载</Button>
         </div>
       );
     }

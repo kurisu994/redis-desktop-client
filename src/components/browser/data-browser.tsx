@@ -4,14 +4,27 @@ import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBrowserStore } from "@/stores/browser-store";
 import { useConnectionStore } from "@/stores/connection-store";
-import { scanKeys, getDbInfo, getKeyInfo, deleteKeys, exportKeys } from "@/lib/tauri-api";
+import {
+  scanKeys,
+  getDbInfo,
+  getKeyInfo,
+  deleteKeys,
+  exportKeys,
+} from "@/lib/tauri-api";
 import { KeyToolbar } from "./key-toolbar";
 import { KeyTree } from "./key-tree";
 import { KeyList } from "./key-list";
 import { KeyDetail } from "./key-detail";
 import { ValueViewer } from "./value-viewer";
 import { Button } from "@/components/ui/button";
-import { Database, Trash2, Download, X, CheckSquare, Square } from "lucide-react";
+import {
+  Database,
+  Trash2,
+  Download,
+  X,
+  CheckSquare,
+  Square,
+} from "lucide-react";
 import { ConfirmDangerDialog } from "@/components/confirm-danger-dialog";
 import { toast } from "sonner";
 
@@ -65,7 +78,10 @@ export function DataBrowser() {
       if (!isDragging.current) return;
       // 用鼠标移动差值计算新宽度，避免 clientX 包含侧边栏偏移导致跳变
       const delta = e.clientX - dragStartX.current;
-      const newWidth = Math.max(200, Math.min(600, dragStartWidth.current + delta));
+      const newWidth = Math.max(
+        200,
+        Math.min(600, dragStartWidth.current + delta),
+      );
       setPanelWidth(newWidth);
     };
     const handleMouseUp = () => {
@@ -84,7 +100,9 @@ export function DataBrowser() {
   }, []);
 
   const connectedId =
-    activeConnectionId && connectionStatus[activeConnectionId] === "connected" ? activeConnectionId : null;
+    activeConnectionId && connectionStatus[activeConnectionId] === "connected"
+      ? activeConnectionId
+      : null;
 
   /** 收藏持久化 — 加载（tauri-plugin-store 或 localStorage） */
   useEffect(() => {
@@ -94,7 +112,10 @@ export function DataBrowser() {
       try {
         if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
           const { load } = await import("@tauri-apps/plugin-store");
-          const store = await load("favorites.json", { autoSave: true, defaults: {} });
+          const store = await load("favorites.json", {
+            autoSave: true,
+            defaults: {},
+          });
           const saved = await store.get<string[]>(storageKey);
           if (saved) setFavorites(new Set(saved));
         } else {
@@ -116,7 +137,10 @@ export function DataBrowser() {
       try {
         if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
           const { load } = await import("@tauri-apps/plugin-store");
-          const store = await load("favorites.json", { autoSave: true, defaults: {} });
+          const store = await load("favorites.json", {
+            autoSave: true,
+            defaults: {},
+          });
           await store.set(storageKey, favArray);
         } else {
           localStorage.setItem(storageKey, JSON.stringify(favArray));
@@ -150,14 +174,26 @@ export function DataBrowser() {
         let cursor = reset ? 0 : scanCursor;
         if (reset) {
           // 重置时先清空并加载第一批
-          const result = await scanKeys(connectedId, selectedDb, 0, filterPattern || "*", 200);
+          const result = await scanKeys(
+            connectedId,
+            selectedDb,
+            0,
+            filterPattern || "*",
+            200,
+          );
           setKeys(result.keys);
           cursor = result.cursor;
           setScanCursor(cursor);
           setScanComplete(cursor === 0);
           // 自动继续加载剩余批次
           while (cursor !== 0) {
-            const next = await scanKeys(connectedId, selectedDb, cursor, filterPattern || "*", 200);
+            const next = await scanKeys(
+              connectedId,
+              selectedDb,
+              cursor,
+              filterPattern || "*",
+              200,
+            );
             appendKeys(next.keys);
             cursor = next.cursor;
             setScanCursor(cursor);
@@ -165,7 +201,13 @@ export function DataBrowser() {
           }
         } else if (!scanComplete) {
           // 手动触发继续加载（兜底，正常不会用到）
-          const result = await scanKeys(connectedId, selectedDb, cursor, filterPattern || "*", 200);
+          const result = await scanKeys(
+            connectedId,
+            selectedDb,
+            cursor,
+            filterPattern || "*",
+            200,
+          );
           appendKeys(result.keys);
           setScanCursor(result.cursor);
           setScanComplete(result.cursor === 0);
@@ -202,7 +244,9 @@ export function DataBrowser() {
   useEffect(() => {
     // keyInfo 已在 setSelectedKey 中同步清空，避免旧类型导致 WRONGTYPE
     if (connectedId && selectedKey) {
-      getKeyInfo(connectedId, selectedDb, selectedKey).then(setKeyInfo).catch(console.error);
+      getKeyInfo(connectedId, selectedDb, selectedKey)
+        .then(setKeyInfo)
+        .catch(console.error);
     }
   }, [connectedId, selectedDb, selectedKey, setKeyInfo]);
 
@@ -225,7 +269,9 @@ export function DataBrowser() {
   /** 刷新当前 Key 的值（编辑后回调） */
   const handleValueChanged = useCallback(() => {
     if (connectedId && selectedKey) {
-      getKeyInfo(connectedId, selectedDb, selectedKey).then(setKeyInfo).catch(console.error);
+      getKeyInfo(connectedId, selectedDb, selectedKey)
+        .then(setKeyInfo)
+        .catch(console.error);
     }
   }, [connectedId, selectedDb, selectedKey, setKeyInfo]);
 
@@ -282,13 +328,26 @@ export function DataBrowser() {
         .then((info) => setDbList(info.db_sizes, info.db_count))
         .catch(console.error);
     }
-  }, [connectedId, selectedDb, checkedKeys, clearCheckedKeys, setSelectedKey, setKeyInfo, loadKeys, setDbList]);
+  }, [
+    connectedId,
+    selectedDb,
+    checkedKeys,
+    clearCheckedKeys,
+    setSelectedKey,
+    setKeyInfo,
+    loadKeys,
+    setDbList,
+  ]);
 
   /** 批量导出 */
   const handleBatchExport = useCallback(async () => {
     if (!connectedId || checkedKeys.size === 0) return;
     try {
-      const json = await exportKeys(connectedId, selectedDb, Array.from(checkedKeys));
+      const json = await exportKeys(
+        connectedId,
+        selectedDb,
+        Array.from(checkedKeys),
+      );
       // 使用 tauri-plugin-dialog 保存文件
       if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
         const { save } = await import("@tauri-apps/plugin-dialog");
@@ -336,16 +395,30 @@ export function DataBrowser() {
         >
           <div className="flex-1 overflow-y-auto">
             {viewMode === "tree" ? (
-              <KeyTree keys={displayKeys} selectedKey={selectedKey} onSelectKey={setSelectedKey} loading={loading} />
+              <KeyTree
+                keys={displayKeys}
+                selectedKey={selectedKey}
+                onSelectKey={setSelectedKey}
+                loading={loading}
+              />
             ) : (
-              <KeyList keys={displayKeys} selectedKey={selectedKey} onSelectKey={setSelectedKey} loading={loading} />
+              <KeyList
+                keys={displayKeys}
+                selectedKey={selectedKey}
+                onSelectKey={setSelectedKey}
+                loading={loading}
+              />
             )}
           </div>
 
           {/* Key 列表底部状态 */}
           <div className="px-4 py-2 text-xs border-t border-border flex justify-between items-center text-zinc-500">
             <span>{t("browser.totalKeys", { count: displayKeys.length })}</span>
-            {loading && <span className="text-primary animate-pulse">{t("browser.scanning")}</span>}
+            {loading && (
+              <span className="text-primary animate-pulse">
+                {t("browser.scanning")}
+              </span>
+            )}
           </div>
         </div>
 
@@ -390,7 +463,9 @@ export function DataBrowser() {
       {/* 批量操作浮动工具栏 */}
       {checkedKeys.size > 0 && (
         <div className="flex items-center gap-3 px-4 py-2.5 border-t border-border bg-card/95 backdrop-blur-sm">
-          <span className="text-sm font-medium">{t("browser.batchSelected", { count: checkedKeys.size })}</span>
+          <span className="text-sm font-medium">
+            {t("browser.batchSelected", { count: checkedKeys.size })}
+          </span>
           <Button size="sm" variant="outline" onClick={handleToggleSelectAll}>
             {checkedKeys.size === displayKeys.length ? (
               <>
@@ -407,11 +482,20 @@ export function DataBrowser() {
             <Download className="w-3.5 h-3.5" />
             {t("browser.batchExport", { count: checkedKeys.size })}
           </Button>
-          <Button size="sm" variant="destructive" onClick={() => setShowBatchDeleteConfirm(true)}>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => setShowBatchDeleteConfirm(true)}
+          >
             <Trash2 className="w-3.5 h-3.5" />
             {t("browser.batchDelete", { count: checkedKeys.size })}
           </Button>
-          <Button size="icon" variant="ghost" onClick={clearCheckedKeys} className="h-8 w-8">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={clearCheckedKeys}
+            className="h-8 w-8"
+          >
             <X className="w-4 h-4" />
           </Button>
         </div>

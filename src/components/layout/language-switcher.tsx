@@ -37,8 +37,12 @@ export function LanguageSwitcher() {
           value={i18n.language}
           onValueChange={(lang) => i18n.changeLanguage(lang)}
         >
-          <DropdownMenuRadioItem value="zh-CN">{t("language.zhCN")}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="en-US">{t("language.enUS")}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="zh-CN">
+            {t("language.zhCN")}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="en-US">
+            {t("language.enUS")}
+          </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>

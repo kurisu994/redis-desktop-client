@@ -61,7 +61,11 @@ pub async fn scan_keys(
         .map_err(|e| e.to_string())?;
 
     // SCAN 扫描
-    let scan_pattern = if pattern.is_empty() { "*".to_string() } else { pattern };
+    let scan_pattern = if pattern.is_empty() {
+        "*".to_string()
+    } else {
+        pattern
+    };
     let (new_cursor, raw_keys): (u64, Vec<String>) = redis::cmd("SCAN")
         .arg(cursor)
         .arg("MATCH")
@@ -86,11 +90,12 @@ pub async fn scan_keys(
 
         for (k, t) in raw_keys.into_iter().zip(types.into_iter()) {
             // 规范化 RedisJSON 类型名
-            let key_type = if t == "ReJSON-RL" { "rejson".to_string() } else { t };
-            keys.push(KeyEntry {
-                key: k,
-                key_type,
-            });
+            let key_type = if t == "ReJSON-RL" {
+                "rejson".to_string()
+            } else {
+                t
+            };
+            keys.push(KeyEntry { key: k, key_type });
         }
     }
 
@@ -204,7 +209,11 @@ pub async fn get_key_info(
     };
 
     // 规范化 RedisJSON 类型名
-    let key_type = if results.0 == "ReJSON-RL" { "rejson".to_string() } else { results.0 };
+    let key_type = if results.0 == "ReJSON-RL" {
+        "rejson".to_string()
+    } else {
+        results.0
+    };
 
     // 获取集合长度
     let length: i64 = match key_type.as_str() {
@@ -213,13 +222,11 @@ pub async fn get_key_info(
         "list" => conn.llen(&key).await.unwrap_or(0) as i64,
         "set" => conn.scard(&key).await.unwrap_or(0) as i64,
         "zset" => conn.zcard(&key).await.unwrap_or(0) as i64,
-        "stream" => {
-            redis::cmd("XLEN")
-                .arg(&key)
-                .query_async::<i64>(&mut conn)
-                .await
-                .unwrap_or(0)
-        }
+        "stream" => redis::cmd("XLEN")
+            .arg(&key)
+            .query_async::<i64>(&mut conn)
+            .await
+            .unwrap_or(0),
         "rejson" => {
             // 尝试 JSON.OBJLEN（对象），失败则尝试 JSON.ARRLEN（数组），再失败返回 0
             match redis::cmd("JSON.OBJLEN")

@@ -106,7 +106,8 @@ const REDIS_COMMANDS: Record<string, string> = {
   ZSCORE: "key member",
   ZRANK: "key member",
   ZREVRANK: "key member",
-  ZRANGE: "key min max [BYSCORE | BYLEX] [REV] [LIMIT offset count] [WITHSCORES]",
+  ZRANGE:
+    "key min max [BYSCORE | BYLEX] [REV] [LIMIT offset count] [WITHSCORES]",
   ZRANGEBYSCORE: "key min max [WITHSCORES] [LIMIT offset count]",
   ZREVRANGEBYSCORE: "key max min [WITHSCORES] [LIMIT offset count]",
   ZCARD: "key",
@@ -126,7 +127,8 @@ const REDIS_COMMANDS: Record<string, string> = {
   XDEL: "key id [id ...]",
   XTRIM: "key MAXLEN | MINID [= | ~] threshold [LIMIT count]",
   XINFO: "STREAM|GROUPS|CONSUMERS key [group]",
-  XGROUP: "CREATE|SETID|DESTROY|CREATECONSUMER|DELCONSUMER key group [id | consumer]",
+  XGROUP:
+    "CREATE|SETID|DESTROY|CREATECONSUMER|DELCONSUMER key group [id | consumer]",
   XACK: "key group id [id ...]",
   XPENDING: "key group [IDLE min-idle-time] [start end count] [consumer]",
   XCLAIM: "key group consumer min-idle-time id [id ...]",
@@ -222,7 +224,7 @@ export function CommandInput({
     // 过滤匹配的命令
     if (firstWord.length > 0) {
       const matched = COMMAND_NAMES.filter((cmd) =>
-        cmd.startsWith(firstWord)
+        cmd.startsWith(firstWord),
       ).slice(0, 10);
       setSuggestions(matched);
       setShowSuggestions(matched.length > 0 && matched[0] !== firstWord);
@@ -253,7 +255,7 @@ export function CommandInput({
       setInput(value);
       updateSuggestions(value);
     },
-    [updateSuggestions]
+    [updateSuggestions],
   );
 
   /** 处理键盘事件 */
@@ -277,7 +279,7 @@ export function CommandInput({
         e.preventDefault();
         if (showSuggestions) {
           setSelectedSuggestion((prev) =>
-            prev > 0 ? prev - 1 : suggestions.length - 1
+            prev > 0 ? prev - 1 : suggestions.length - 1,
           );
         } else {
           // 浏览历史
@@ -300,7 +302,7 @@ export function CommandInput({
         e.preventDefault();
         if (showSuggestions) {
           setSelectedSuggestion((prev) =>
-            prev < suggestions.length - 1 ? prev + 1 : 0
+            prev < suggestions.length - 1 ? prev + 1 : 0,
           );
         } else {
           // 浏览历史
@@ -361,7 +363,7 @@ export function CommandInput({
       historyIndex,
       onExecute,
       onHistoryIndexChange,
-    ]
+    ],
   );
 
   return (

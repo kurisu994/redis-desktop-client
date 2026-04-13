@@ -29,7 +29,10 @@ export function SettingsPage() {
         </div>
 
         {/* 外观 */}
-        <SectionHeader icon={<Palette size={16} />} title={t("settings.appearance")} />
+        <SectionHeader
+          icon={<Palette size={16} />}
+          title={t("settings.appearance")}
+        />
         <div className="flex flex-col gap-4 mb-6">
           <SettingRow label={t("settings.theme")}>
             <Select value={theme || "dark"} onValueChange={setTheme}>
@@ -44,7 +47,10 @@ export function SettingsPage() {
             </Select>
           </SettingRow>
           <SettingRow label={t("settings.language")}>
-            <Select value={i18n.language} onValueChange={(val) => i18n.changeLanguage(val)}>
+            <Select
+              value={i18n.language}
+              onValueChange={(val) => i18n.changeLanguage(val)}
+            >
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
@@ -59,7 +65,10 @@ export function SettingsPage() {
         <Separator className="my-4" />
 
         {/* 通用 */}
-        <SectionHeader icon={<Globe size={16} />} title={t("settings.general")} />
+        <SectionHeader
+          icon={<Globe size={16} />}
+          title={t("settings.general")}
+        />
         <div className="flex flex-col gap-4 mb-6">
           <SettingRow label={t("settings.keySeparator")}>
             <Input
@@ -73,9 +82,15 @@ export function SettingsPage() {
         <Separator className="my-4" />
 
         {/* 快捷键说明 */}
-        <SectionHeader icon={<Keyboard size={16} />} title={t("shortcuts.title")} />
+        <SectionHeader
+          icon={<Keyboard size={16} />}
+          title={t("shortcuts.title")}
+        />
         <div className="flex flex-col gap-2 mb-6">
-          <ShortcutRow label={t("shortcuts.commandPalette")} keys={["⌘", "K"]} />
+          <ShortcutRow
+            label={t("shortcuts.commandPalette")}
+            keys={["⌘", "K"]}
+          />
           <ShortcutRow label={t("shortcuts.newConnection")} keys={["⌘", "N"]} />
           <ShortcutRow label={t("shortcuts.newCliTab")} keys={["⌘", "T"]} />
           <ShortcutRow label={t("shortcuts.search")} keys={["⌘", "F"]} />
@@ -90,7 +105,10 @@ export function SettingsPage() {
         <Separator className="my-4" />
 
         {/* 关于 */}
-        <SectionHeader icon={<Settings size={16} />} title={t("settings.about")} />
+        <SectionHeader
+          icon={<Settings size={16} />}
+          title={t("settings.about")}
+        />
         <div className="text-sm text-muted-foreground">
           <p>{t("settings.currentVersion")}: 0.2.0</p>
         </div>
@@ -100,7 +118,13 @@ export function SettingsPage() {
 }
 
 /** 设置区域标题 */
-function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+function SectionHeader({
+  icon,
+  title,
+}: {
+  icon: React.ReactNode;
+  title: string;
+}) {
   return (
     <div className="flex items-center gap-2 mb-3">
       <span className="text-muted-foreground">{icon}</span>
@@ -132,10 +156,7 @@ function ShortcutRow({ label, keys }: { label: string; keys: string[] }) {
       <span className="text-sm text-muted-foreground">{label}</span>
       <div className="flex gap-1">
         {keys.map((key, i) => (
-          <kbd
-            key={i}
-            className="px-2 py-0.5 text-xs bg-muted rounded border"
-          >
+          <kbd key={i} className="px-2 py-0.5 text-xs bg-muted rounded border">
             {key}
           </kbd>
         ))}

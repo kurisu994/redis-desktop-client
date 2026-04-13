@@ -2,11 +2,23 @@
 
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useBrowserStore } from "@/stores/browser-store";
 import { createKey } from "@/lib/tauri-api";
@@ -17,7 +29,15 @@ interface KeyDialogProps {
   onCreated: () => void;
 }
 
-const KEY_TYPES = ["string", "hash", "list", "set", "zset", "stream", "ReJSON-RL"];
+const KEY_TYPES = [
+  "string",
+  "hash",
+  "list",
+  "set",
+  "zset",
+  "stream",
+  "ReJSON-RL",
+];
 
 /** 新建 Key 对话框 */
 export function KeyDialog({ isOpen, onClose, onCreated }: KeyDialogProps) {
@@ -86,7 +106,12 @@ export function KeyDialog({ isOpen, onClose, onCreated }: KeyDialogProps) {
           </div>
           <div className="space-y-2">
             <Label>{t("keyDialog.ttlOptional")}</Label>
-            <Input type="number" value={ttl} onChange={(e) => setTtl(e.target.value)} placeholder="-1" />
+            <Input
+              type="number"
+              value={ttl}
+              onChange={(e) => setTtl(e.target.value)}
+              placeholder="-1"
+            />
           </div>
         </div>
         <DialogFooter>

@@ -50,7 +50,7 @@ export function CliConsole() {
       e.stopPropagation();
       removeTab(tabId);
     },
-    [removeTab]
+    [removeTab],
   );
 
   /** 执行命令 */
@@ -81,7 +81,7 @@ export function CliConsole() {
         const result = await executeCommand(
           activeConnectionId,
           activeTab.db,
-          command
+          command,
         );
         const resultEntry: OutputEntry = {
           type: "result",
@@ -100,7 +100,7 @@ export function CliConsole() {
         addOutput(activeTab.id, errorEntry);
       }
     },
-    [activeTab, activeConnectionId, addOutput, addHistory, clearOutput]
+    [activeTab, activeConnectionId, addOutput, addHistory, clearOutput],
   );
 
   /** 处理 Ctrl+L 清屏 */
@@ -185,9 +185,7 @@ export function CliConsole() {
             history={activeTab.history}
             historyIndex={activeTab.historyIndex}
             onExecute={handleExecute}
-            onHistoryIndexChange={(idx) =>
-              setHistoryIndex(activeTab.id, idx)
-            }
+            onHistoryIndexChange={(idx) => setHistoryIndex(activeTab.id, idx)}
           />
         </div>
       ) : (

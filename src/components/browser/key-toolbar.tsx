@@ -12,7 +12,18 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useBrowserStore } from "@/stores/browser-store";
-import { Search, RefreshCw, Plus, List, FolderTree, Download, Upload, X, Loader2, Star } from "lucide-react";
+import {
+  Search,
+  RefreshCw,
+  Plus,
+  List,
+  FolderTree,
+  Download,
+  Upload,
+  X,
+  Loader2,
+  Star,
+} from "lucide-react";
 import { KeyDialog } from "./key-dialog";
 import { ExportDialog } from "./export-dialog";
 import { ImportDialog } from "./import-dialog";
@@ -74,7 +85,10 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
       <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border dark:bg-[#151619]/50">
         {/* 数据库选择器 */}
         <Select value={String(selectedDb)} onValueChange={handleDbChange}>
-          <SelectTrigger className="w-32 h-8 text-sm" aria-label={t("connection.database")}>
+          <SelectTrigger
+            className="w-32 h-8 text-sm"
+            aria-label={t("connection.database")}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -83,7 +97,9 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
                 <div className="flex justify-between items-center w-full">
                   <span>{opt.label}</span>
                   {opt.count > 0 && (
-                    <span className="text-muted-foreground text-xs ml-2">{opt.count}</span>
+                    <span className="text-muted-foreground text-xs ml-2">
+                      {opt.count}
+                    </span>
                   )}
                 </div>
               </SelectItem>
@@ -100,7 +116,11 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
           aria-label={t("actions.refresh")}
           className="h-8 w-8"
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4" />
+          )}
         </Button>
 
         {/* 搜索框 */}
@@ -163,9 +183,15 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
               : "hover:bg-accent text-muted-foreground"
           }`}
           onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-          title={showFavoritesOnly ? t("browser.showAll") : t("browser.showFavorites")}
+          title={
+            showFavoritesOnly
+              ? t("browser.showAll")
+              : t("browser.showFavorites")
+          }
         >
-          <Star className={`w-4 h-4 ${showFavoritesOnly ? "fill-yellow-500" : ""}`} />
+          <Star
+            className={`w-4 h-4 ${showFavoritesOnly ? "fill-yellow-500" : ""}`}
+          />
         </button>
 
         {/* 新建 Key */}
@@ -210,10 +236,7 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
       )}
 
       {/* 导出对话框 */}
-      <ExportDialog
-        isOpen={showExport}
-        onClose={() => setShowExport(false)}
-      />
+      <ExportDialog isOpen={showExport} onClose={() => setShowExport(false)} />
 
       {/* 导入对话框 */}
       <ImportDialog

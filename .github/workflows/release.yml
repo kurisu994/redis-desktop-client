@@ -9,6 +9,9 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   release:
     name: Release (${{ matrix.os }})
@@ -60,6 +63,33 @@ jobs:
         with:
           workspaces: src-tauri
 
+      - name: 从 CHANGELOG.md 提取发布说明
+        id: changelog
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          # 提取对应版本的内容（两个 ## [ 标题之间，或到文件末尾）
+          NOTES=$(awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              if (index($0, "[" ver "]")) found=1
+              next
+            }
+            found { print }
+          ' CHANGELOG.md)
+
+          if [ -z "$NOTES" ]; then
+            echo "⚠️ 未在 CHANGELOG.md 中找到版本 $VERSION 的记录，使用默认说明"
+            NOTES="发布版本 v${VERSION}"
+          fi
+
+          # 写入多行输出
+          {
+            echo "notes<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build and release
         uses: tauri-apps/tauri-action@v0
         env:
@@ -78,7 +108,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "Redis Desktop Client ${{ github.ref_name }}"
-          releaseBody: "See the [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+          releaseBody: ${{ steps.changelog.outputs.notes }}
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}

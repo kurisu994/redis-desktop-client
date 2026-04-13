@@ -89,9 +89,7 @@ pub async fn export_keys(
                     .map_err(|e| e.to_string())?;
                 let arr: Vec<serde_json::Value> = v
                     .into_iter()
-                    .map(|(member, score)| {
-                        serde_json::json!({"member": member, "score": score})
-                    })
+                    .map(|(member, score)| serde_json::json!({"member": member, "score": score}))
                     .collect();
                 serde_json::Value::Array(arr)
             }
@@ -203,10 +201,10 @@ async fn write_key(
 ) -> Result<(), String> {
     match key_type {
         "string" => {
-            let v = value
-                .as_str()
-                .ok_or_else(|| "string 值无效".to_string())?;
-            conn.set::<_, _, ()>(key, v).await.map_err(|e| e.to_string())?;
+            let v = value.as_str().ok_or_else(|| "string 值无效".to_string())?;
+            conn.set::<_, _, ()>(key, v)
+                .await
+                .map_err(|e| e.to_string())?;
         }
         "hash" => {
             if let Some(obj) = value.as_object() {
@@ -235,14 +233,8 @@ async fn write_key(
         "zset" => {
             if let Some(arr) = value.as_array() {
                 for item in arr {
-                    let member = item
-                        .get("member")
-                        .and_then(|m| m.as_str())
-                        .unwrap_or("");
-                    let score = item
-                        .get("score")
-                        .and_then(|s| s.as_f64())
-                        .unwrap_or(0.0);
+                    let member = item.get("member").and_then(|m| m.as_str()).unwrap_or("");
+                    let score = item.get("score").and_then(|s| s.as_f64()).unwrap_or(0.0);
                     let _: () = conn
                         .zadd(key, member, score)
                         .await
@@ -262,7 +254,9 @@ async fn set_ttl_if_needed(
     ttl: i64,
 ) -> Result<(), String> {
     if ttl > 0 {
-        conn.expire::<_, ()>(key, ttl).await.map_err(|e| e.to_string())?;
+        conn.expire::<_, ()>(key, ttl)
+            .await
+            .map_err(|e| e.to_string())?;
     }
     Ok(())
 }

@@ -35,7 +35,9 @@ export function ImportConnectionsDialog({
   const [jsonContent, setJsonContent] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [previewCount, setPreviewCount] = useState(0);
-  const [conflictStrategy, setConflictStrategy] = useState<"skip" | "overwrite" | "rename">("skip");
+  const [conflictStrategy, setConflictStrategy] = useState<
+    "skip" | "overwrite" | "rename"
+  >("skip");
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
@@ -101,7 +103,7 @@ export function ImportConnectionsDialog({
           imported: res.imported,
           skipped: res.skipped,
           overwritten: res.overwritten,
-        })
+        }),
       );
       // 刷新连接列表
       const updated = await listConnections();
@@ -130,10 +132,7 @@ export function ImportConnectionsDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex gap-2 items-center">
-            <Button
-              variant="outline"
-              onClick={handleSelectFile}
-            >
+            <Button variant="outline" onClick={handleSelectFile}>
               <Upload size={16} />
               {t("dataImport.selectFile")}
             </Button>
@@ -149,15 +148,23 @@ export function ImportConnectionsDialog({
               <Label>{t("connection.conflictStrategy")}</Label>
               <Select
                 value={conflictStrategy}
-                onValueChange={(val) => setConflictStrategy(val as typeof conflictStrategy)}
+                onValueChange={(val) =>
+                  setConflictStrategy(val as typeof conflictStrategy)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="skip">{t("connection.conflictSkip")}</SelectItem>
-                  <SelectItem value="overwrite">{t("connection.conflictOverwrite")}</SelectItem>
-                  <SelectItem value="rename">{t("connection.conflictRename")}</SelectItem>
+                  <SelectItem value="skip">
+                    {t("connection.conflictSkip")}
+                  </SelectItem>
+                  <SelectItem value="overwrite">
+                    {t("connection.conflictOverwrite")}
+                  </SelectItem>
+                  <SelectItem value="rename">
+                    {t("connection.conflictRename")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

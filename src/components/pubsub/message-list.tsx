@@ -22,7 +22,7 @@ export function MessageList({
     return messages.filter(
       (m) =>
         m.channel.toLowerCase().includes(kw) ||
-        m.message.toLowerCase().includes(kw)
+        m.message.toLowerCase().includes(kw),
     );
   }, [messages, filterKeyword]);
 

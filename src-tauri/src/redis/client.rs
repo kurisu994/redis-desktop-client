@@ -49,10 +49,7 @@ impl RedisClientManager {
     }
 
     /// 获取连接引用（用于执行命令）
-    pub async fn get_connection(
-        &self,
-        id: &str,
-    ) -> Result<redis::aio::ConnectionManager, String> {
+    pub async fn get_connection(&self, id: &str) -> Result<redis::aio::ConnectionManager, String> {
         let clients = self.clients.lock().await;
         clients
             .get(id)

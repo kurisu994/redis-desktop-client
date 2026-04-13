@@ -44,10 +44,7 @@ export function PubSubPage() {
     let unlisten: (() => void) | undefined;
 
     const setup = async () => {
-      if (
-        typeof window !== "undefined" &&
-        "__TAURI_INTERNALS__" in window
-      ) {
+      if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
         const { listen } = await import("@tauri-apps/api/event");
         unlisten = await listen<PubSubMessage>("redis://pubsub", (event) => {
           if (!usePubSubStore.getState().paused) {
@@ -70,7 +67,9 @@ export function PubSubPage() {
       await subscribeChannels(activeConnectionId, [channelInput.trim()]);
       addChannel(channelInput.trim());
       setChannelInput("");
-      toast.success(t("pubsub.subscribeSuccess", { channel: channelInput.trim() }));
+      toast.success(
+        t("pubsub.subscribeSuccess", { channel: channelInput.trim() }),
+      );
     } catch (err) {
       toast.error(String(err));
     }
@@ -78,14 +77,17 @@ export function PubSubPage() {
 
   /** 发布消息 */
   const handlePublish = useCallback(async () => {
-    if (!publishChannel.trim() || !publishContent.trim() || !activeConnectionId) return;
+    if (!publishChannel.trim() || !publishContent.trim() || !activeConnectionId)
+      return;
     try {
       const result = await publishMessage(
         activeConnectionId,
         publishChannel.trim(),
-        publishContent.trim()
+        publishContent.trim(),
       );
-      toast.success(t("pubsub.publishSuccess", { receivers: result.receivers }));
+      toast.success(
+        t("pubsub.publishSuccess", { receivers: result.receivers }),
+      );
       setPublishContent("");
     } catch (err) {
       toast.error(String(err));
@@ -110,16 +112,16 @@ export function PubSubPage() {
         <Button
           size="sm"
           variant="secondary"
-          className={paused ? "bg-green-600 hover:bg-green-700 text-white" : "bg-yellow-600 hover:bg-yellow-700 text-white"}
+          className={
+            paused
+              ? "bg-green-600 hover:bg-green-700 text-white"
+              : "bg-yellow-600 hover:bg-yellow-700 text-white"
+          }
           onClick={() => setPaused(!paused)}
         >
           {paused ? t("monitor.resume") : t("monitor.pause")}
         </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={clearMessages}
-        >
+        <Button size="sm" variant="secondary" onClick={clearMessages}>
           {t("pubsub.clearMessages")}
         </Button>
       </div>

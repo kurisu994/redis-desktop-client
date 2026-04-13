@@ -116,7 +116,7 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
   updateConnection: (id, updates) =>
     set((state) => ({
       connections: state.connections.map((c) =>
-        c.id === id ? { ...c, ...updates } : c
+        c.id === id ? { ...c, ...updates } : c,
       ),
     })),
   removeConnection: (id) =>

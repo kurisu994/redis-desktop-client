@@ -41,7 +41,7 @@ export function ExportConnectionsDialog({
   /** 切换单个连接的选中状态 */
   const toggleId = (id: string, checked: boolean) => {
     setSelectedIds((prev) =>
-      checked ? [...prev, id] : prev.filter((i) => i !== id)
+      checked ? [...prev, id] : prev.filter((i) => i !== id),
     );
   };
 
@@ -49,7 +49,8 @@ export function ExportConnectionsDialog({
   const handleExport = useCallback(async () => {
     setExporting(true);
     try {
-      const ids = selectedIds.length === connections.length ? undefined : selectedIds;
+      const ids =
+        selectedIds.length === connections.length ? undefined : selectedIds;
       const json = await exportConnections(ids, includePassword);
 
       // 使用 Tauri 文件对话框保存，或在浏览器端直接下载
@@ -106,7 +107,10 @@ export function ExportConnectionsDialog({
                   checked={selectedIds.includes(c.id)}
                   onCheckedChange={(checked) => toggleId(c.id, !!checked)}
                 />
-                <label htmlFor={`conn-${c.id}`} className="flex items-center cursor-pointer">
+                <label
+                  htmlFor={`conn-${c.id}`}
+                  className="flex items-center cursor-pointer"
+                >
                   <span className="text-sm">{c.name || c.host}</span>
                   <span className="text-xs text-muted-foreground ml-2">
                     {c.host}:{c.port}
@@ -121,7 +125,10 @@ export function ExportConnectionsDialog({
               checked={includePassword}
               onCheckedChange={(checked) => setIncludePassword(!!checked)}
             />
-            <label htmlFor="include-password" className="text-sm cursor-pointer">
+            <label
+              htmlFor="include-password"
+              className="text-sm cursor-pointer"
+            >
               {t("connection.includePassword")}
             </label>
           </div>

@@ -29,10 +29,7 @@ pub fn run() {
                 .plugin(tauri_plugin_updater::Builder::new().build())?;
 
             // 初始化连接存储（加密密钥 + 持久化目录）
-            let app_data_dir = app
-                .path()
-                .app_data_dir()
-                .map_err(|e| e.to_string())?;
+            let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
             let store = ConnectionStore::new(app_data_dir)
                 .map_err(|e| format!("初始化连接存储失败: {e}"))?;
             app.manage(store);

@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { type ConnectionConfig, useConnectionStore } from "@/stores/connection-store";
+import {
+  type ConnectionConfig,
+  useConnectionStore,
+} from "@/stores/connection-store";
 import { reorderConnections } from "@/lib/tauri-api";
 
 /** 拖拽相关 props */
@@ -39,7 +42,9 @@ export function useConnectionDrag() {
   const { connections, setConnections } = useConnectionStore();
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const [dragOverPos, setDragOverPos] = useState<"above" | "below" | null>(null);
+  const [dragOverPos, setDragOverPos] = useState<"above" | "below" | null>(
+    null,
+  );
 
   const handleDragEnd = useCallback(() => {
     setDragId(null);
@@ -71,16 +76,23 @@ export function useConnectionDrag() {
         return;
       }
       const rect = e.currentTarget.getBoundingClientRect();
-      const position = e.clientY < rect.top + rect.height / 2 ? "above" : "below";
+      const position =
+        e.clientY < rect.top + rect.height / 2 ? "above" : "below";
 
-      await applyReorder(connections, dragId, (list, fromIdx) => {
-        const toIdx = list.findIndex((c) => c.id === targetId);
-        if (toIdx < 0) return;
-        const [moved] = list.splice(fromIdx, 1);
-        const insertIdx = position === "above" ? toIdx : toIdx + 1;
-        const adjustedIdx = fromIdx < toIdx ? insertIdx - 1 : insertIdx;
-        list.splice(adjustedIdx, 0, moved);
-      }, setConnections, handleDragEnd);
+      await applyReorder(
+        connections,
+        dragId,
+        (list, fromIdx) => {
+          const toIdx = list.findIndex((c) => c.id === targetId);
+          if (toIdx < 0) return;
+          const [moved] = list.splice(fromIdx, 1);
+          const insertIdx = position === "above" ? toIdx : toIdx + 1;
+          const adjustedIdx = fromIdx < toIdx ? insertIdx - 1 : insertIdx;
+          list.splice(adjustedIdx, 0, moved);
+        },
+        setConnections,
+        handleDragEnd,
+      );
     },
     [dragId, connections, setConnections, handleDragEnd],
   );
@@ -105,11 +117,20 @@ export function useConnectionDrag() {
     async (e: React.DragEvent) => {
       if ((e.target as HTMLElement) !== e.currentTarget) return;
       e.preventDefault();
-      if (!dragId) { handleDragEnd(); return; }
-      await applyReorder(connections, dragId, (list, fromIdx) => {
-        const [moved] = list.splice(fromIdx, 1);
-        list.push(moved);
-      }, setConnections, handleDragEnd);
+      if (!dragId) {
+        handleDragEnd();
+        return;
+      }
+      await applyReorder(
+        connections,
+        dragId,
+        (list, fromIdx) => {
+          const [moved] = list.splice(fromIdx, 1);
+          list.push(moved);
+        },
+        setConnections,
+        handleDragEnd,
+      );
     },
     [dragId, connections, setConnections, handleDragEnd],
   );
@@ -132,12 +153,21 @@ export function useConnectionDrag() {
   const handleTopDrop = useCallback(
     async (e: React.DragEvent) => {
       e.preventDefault();
-      if (!dragId) { handleDragEnd(); return; }
-      await applyReorder(connections, dragId, (list, fromIdx) => {
-        if (fromIdx === 0) return;
-        const [moved] = list.splice(fromIdx, 1);
-        list.unshift(moved);
-      }, setConnections, handleDragEnd);
+      if (!dragId) {
+        handleDragEnd();
+        return;
+      }
+      await applyReorder(
+        connections,
+        dragId,
+        (list, fromIdx) => {
+          if (fromIdx === 0) return;
+          const [moved] = list.splice(fromIdx, 1);
+          list.unshift(moved);
+        },
+        setConnections,
+        handleDragEnd,
+      );
     },
     [dragId, connections, setConnections, handleDragEnd],
   );
@@ -150,9 +180,18 @@ export function useConnectionDrag() {
       onDragEnd: handleDragEnd,
       onDrop: handleDrop,
       isDragOver: dragOverId === connId && dragId !== connId,
-      dragOverPosition: dragOverId === connId && dragId !== connId ? dragOverPos : null,
+      dragOverPosition:
+        dragOverId === connId && dragId !== connId ? dragOverPos : null,
     }),
-    [handleDragStart, handleDragOver, handleDragEnd, handleDrop, dragOverId, dragId, dragOverPos],
+    [
+      handleDragStart,
+      handleDragOver,
+      handleDragEnd,
+      handleDrop,
+      dragOverId,
+      dragId,
+      dragOverPos,
+    ],
   );
 
   return {

@@ -25,7 +25,9 @@ export default function Home() {
   useGlobalShortcuts();
 
   // 判断当前是否有已连接的连接
-  const isConnected = activeConnectionId !== null && connectionStatus[activeConnectionId] === "connected";
+  const isConnected =
+    activeConnectionId !== null &&
+    connectionStatus[activeConnectionId] === "connected";
 
   // 获取当前活跃 Tab 的类型
   const activeTab = tabs.find((t) => t.id === activeTabId);

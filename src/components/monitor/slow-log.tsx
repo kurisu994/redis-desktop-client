@@ -42,7 +42,9 @@ export function SlowLog({
                 <th className="text-left p-2 w-32">{t("monitor.timestamp")}</th>
                 <th className="text-right p-2 w-24">{t("monitor.duration")}</th>
                 <th className="text-left p-2">{t("monitor.command")}</th>
-                <th className="text-left p-2 w-36">{t("monitor.clientAddr")}</th>
+                <th className="text-left p-2 w-36">
+                  {t("monitor.clientAddr")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -61,7 +63,9 @@ export function SlowLog({
                   <td className="p-2 font-mono truncate max-w-md">
                     {entry.command}
                   </td>
-                  <td className="p-2 text-muted-foreground">{entry.client_addr}</td>
+                  <td className="p-2 text-muted-foreground">
+                    {entry.client_addr}
+                  </td>
                 </tr>
               ))}
             </tbody>

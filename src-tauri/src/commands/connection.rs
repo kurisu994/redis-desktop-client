@@ -57,7 +57,9 @@ pub async fn save_connection(
         password: config.password,
         db: config.db,
         group: config.group,
-        connection_type: config.connection_type.unwrap_or_else(|| "standalone".to_string()),
+        connection_type: config
+            .connection_type
+            .unwrap_or_else(|| "standalone".to_string()),
         ssh: config.ssh,
         tls: config.tls,
         sentinel: config.sentinel,
@@ -136,11 +138,7 @@ pub async fn test_connection(config: ConnectionConfig) -> Result<TestResult, Str
 
     // 根据连接类型判断
     let conn_type = config.connection_type.as_deref().unwrap_or("standalone");
-    let tls_enabled = config
-        .tls
-        .as_ref()
-        .map(|t| t.enabled)
-        .unwrap_or(false);
+    let tls_enabled = config.tls.as_ref().map(|t| t.enabled).unwrap_or(false);
     let scheme = if tls_enabled { "rediss" } else { "redis" };
 
     match conn_type {
@@ -175,7 +173,10 @@ pub async fn test_connection(config: ConnectionConfig) -> Result<TestResult, Str
                 node.0,
                 node.1,
                 None,
-                config.sentinel.as_ref().and_then(|s| s.sentinel_password.as_deref()),
+                config
+                    .sentinel
+                    .as_ref()
+                    .and_then(|s| s.sentinel_password.as_deref()),
                 0,
             );
             test_single_connection(&url, start).await
@@ -214,7 +215,9 @@ fn build_url(
     db: u8,
 ) -> String {
     match (username, password) {
-        (Some(user), Some(pwd)) => format!("{}://{}:{}@{}:{}/{}", scheme, user, pwd, host, port, db),
+        (Some(user), Some(pwd)) => {
+            format!("{}://{}:{}@{}:{}/{}", scheme, user, pwd, host, port, db)
+        }
         (None, Some(pwd)) => format!("{}://:{}@{}:{}/{}", scheme, pwd, host, port, db),
         _ => format!("{}://{}:{}/{}", scheme, host, port, db),
     }

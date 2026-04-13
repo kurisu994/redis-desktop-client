@@ -100,16 +100,14 @@ export const useCliStore = create<CliState>((set, get) => ({
   addOutput: (tabId, entry) => {
     set((state) => ({
       tabs: state.tabs.map((t) =>
-        t.id === tabId ? { ...t, outputs: [...t.outputs, entry] } : t
+        t.id === tabId ? { ...t, outputs: [...t.outputs, entry] } : t,
       ),
     }));
   },
 
   clearOutput: (tabId) => {
     set((state) => ({
-      tabs: state.tabs.map((t) =>
-        t.id === tabId ? { ...t, outputs: [] } : t
-      ),
+      tabs: state.tabs.map((t) => (t.id === tabId ? { ...t, outputs: [] } : t)),
     }));
   },
 
@@ -122,7 +120,7 @@ export const useCliStore = create<CliState>((set, get) => ({
               history: [...t.history, command],
               historyIndex: -1,
             }
-          : t
+          : t,
       ),
     }));
   },
@@ -130,16 +128,14 @@ export const useCliStore = create<CliState>((set, get) => ({
   setHistoryIndex: (tabId, index) => {
     set((state) => ({
       tabs: state.tabs.map((t) =>
-        t.id === tabId ? { ...t, historyIndex: index } : t
+        t.id === tabId ? { ...t, historyIndex: index } : t,
       ),
     }));
   },
 
   setTabDb: (tabId, db) => {
     set((state) => ({
-      tabs: state.tabs.map((t) =>
-        t.id === tabId ? { ...t, db } : t
-      ),
+      tabs: state.tabs.map((t) => (t.id === tabId ? { ...t, db } : t)),
     }));
   },
 

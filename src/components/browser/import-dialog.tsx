@@ -38,7 +38,9 @@ export function ImportDialog({
   const { t } = useTranslation();
   const { activeConnectionId } = useConnectionStore();
   const { selectedDb } = useBrowserStore();
-  const [conflictStrategy, setConflictStrategy] = useState<"skip" | "overwrite" | "rename">("skip");
+  const [conflictStrategy, setConflictStrategy] = useState<
+    "skip" | "overwrite" | "rename"
+  >("skip");
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [keyCount, setKeyCount] = useState(0);
@@ -95,14 +97,14 @@ export function ImportDialog({
         activeConnectionId,
         selectedDb,
         fileContent,
-        conflictStrategy
+        conflictStrategy,
       );
       toast.success(
         t("dataImport.importSuccess", {
           imported: result.imported,
           skipped: result.skipped,
           total: result.total,
-        })
+        }),
       );
       onImportComplete();
       onClose();
@@ -111,7 +113,15 @@ export function ImportDialog({
     } finally {
       setImporting(false);
     }
-  }, [activeConnectionId, selectedDb, fileContent, conflictStrategy, onImportComplete, onClose, t]);
+  }, [
+    activeConnectionId,
+    selectedDb,
+    fileContent,
+    conflictStrategy,
+    onImportComplete,
+    onClose,
+    t,
+  ]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -135,15 +145,23 @@ export function ImportDialog({
             <Label>{t("connection.conflictStrategy")}</Label>
             <Select
               value={conflictStrategy}
-              onValueChange={(val) => setConflictStrategy(val as "skip" | "overwrite" | "rename")}
+              onValueChange={(val) =>
+                setConflictStrategy(val as "skip" | "overwrite" | "rename")
+              }
             >
               <SelectTrigger className="h-8 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="skip">{t("connection.conflictSkip")}</SelectItem>
-                <SelectItem value="overwrite">{t("connection.conflictOverwrite")}</SelectItem>
-                <SelectItem value="rename">{t("connection.conflictRename")}</SelectItem>
+                <SelectItem value="skip">
+                  {t("connection.conflictSkip")}
+                </SelectItem>
+                <SelectItem value="overwrite">
+                  {t("connection.conflictOverwrite")}
+                </SelectItem>
+                <SelectItem value="rename">
+                  {t("connection.conflictRename")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -154,10 +172,7 @@ export function ImportDialog({
           <Button variant="secondary" onClick={onClose}>
             {t("actions.cancel")}
           </Button>
-          <Button
-            onClick={handleImport}
-            disabled={importing || !fileContent}
-          >
+          <Button onClick={handleImport} disabled={importing || !fileContent}>
             {importing && <Loader2 className="animate-spin" size={14} />}
             {t("actions.import")}
           </Button>

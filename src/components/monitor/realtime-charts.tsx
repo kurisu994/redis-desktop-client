@@ -28,11 +28,11 @@ export function RealtimeCharts({
       snapshots.map((s) => ({
         time: new Date(s.timestamp).toLocaleTimeString(),
         ops: s.ops_per_sec,
-        memory: Math.round(s.used_memory / 1024 / 1024 * 100) / 100,
+        memory: Math.round((s.used_memory / 1024 / 1024) * 100) / 100,
         clients: s.connected_clients,
         hitRate: Math.round(s.hit_rate * 100) / 100,
       })),
-    [snapshots]
+    [snapshots],
   );
 
   if (chartData.length === 0) {

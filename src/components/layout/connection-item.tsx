@@ -4,7 +4,10 @@ import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAppStore } from "@/stores/app-store";
-import { useConnectionStore, type ConnectionConfig } from "@/stores/connection-store";
+import {
+  useConnectionStore,
+  type ConnectionConfig,
+} from "@/stores/connection-store";
 import { useBrowserStore, type DbSize } from "@/stores/browser-store";
 import {
   connectRedis,
@@ -17,11 +20,21 @@ import {
 import type { DragProps } from "@/hooks/use-connection-drag";
 
 /** 右键菜单项 */
-function ContextMenuItem({ children, onClick, danger }: { children: React.ReactNode; onClick: () => void; danger?: boolean }) {
+function ContextMenuItem({
+  children,
+  onClick,
+  danger,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  danger?: boolean;
+}) {
   return (
     <button
       className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
-        danger ? "text-destructive hover:bg-destructive/10" : "text-foreground hover:bg-accent"
+        danger
+          ? "text-destructive hover:bg-destructive/10"
+          : "text-foreground hover:bg-accent"
       }`}
       onClick={onClick}
     >
@@ -31,12 +44,34 @@ function ContextMenuItem({ children, onClick, danger }: { children: React.ReactN
 }
 
 /** 连接列表项组件 */
-export function ConnectionItem({ connection, dragProps }: { connection: ConnectionConfig; dragProps: DragProps }) {
+export function ConnectionItem({
+  connection,
+  dragProps,
+}: {
+  connection: ConnectionConfig;
+  dragProps: DragProps;
+}) {
   const { t } = useTranslation();
-  const { connectionStatus, activeConnectionId, setActiveConnection, setConnectionStatus, setConnections, openDialog } =
-    useConnectionStore();
-  const { selectedDb, setSelectedDb, setConnectionId, resetBrowser, setDbList } = useBrowserStore();
-  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
+  const {
+    connectionStatus,
+    activeConnectionId,
+    setActiveConnection,
+    setConnectionStatus,
+    setConnections,
+    openDialog,
+  } = useConnectionStore();
+  const {
+    selectedDb,
+    setSelectedDb,
+    setConnectionId,
+    resetBrowser,
+    setDbList,
+  } = useBrowserStore();
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+  }>({ visible: false, x: 0, y: 0 });
   const [dbSizes, setDbSizes] = useState<DbSize[]>([]);
   const [dbCount, setDbCount] = useState(16);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -67,9 +102,17 @@ export function ConnectionItem({ connection, dragProps }: { connection: Connecti
       setConnectionId(connection.id);
     } catch (err) {
       setConnectionStatus(connection.id, "disconnected");
-      toast.error(t("connection.testFailed"), { description: err instanceof Error ? err.message : String(err) });
+      toast.error(t("connection.testFailed"), {
+        description: err instanceof Error ? err.message : String(err),
+      });
     }
-  }, [connection.id, setConnectionStatus, setActiveConnection, setConnectionId, t]);
+  }, [
+    connection.id,
+    setConnectionStatus,
+    setActiveConnection,
+    setConnectionId,
+    t,
+  ]);
 
   /** 双击连接/断开 */
   const handleDoubleClick = useCallback(async () => {
@@ -98,7 +141,11 @@ export function ConnectionItem({ connection, dragProps }: { connection: Connecti
     },
     edit: () => openDialog(connection),
     duplicate: async () => {
-      const dup: ConnectionConfig = { ...connection, id: crypto.randomUUID(), name: `${connection.name} (${t("actions.copy")})` };
+      const dup: ConnectionConfig = {
+        ...connection,
+        id: crypto.randomUUID(),
+        name: `${connection.name} (${t("actions.copy")})`,
+      };
       await saveConnection(dup);
       setConnections(await listConnections());
     },
@@ -125,11 +172,20 @@ export function ConnectionItem({ connection, dragProps }: { connection: Connecti
           className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm transition-colors ${isActive ? "bg-primary/10 text-primary" : "hover:bg-accent"}`}
           onClick={() => setActiveConnection(connection.id)}
           onDoubleClick={handleDoubleClick}
-          onContextMenu={(e) => { e.preventDefault(); setContextMenu({ visible: true, x: e.clientX, y: e.clientY }); }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setContextMenu({ visible: true, x: e.clientX, y: e.clientY });
+          }}
         >
-          <span className={`w-2 h-2 rounded-full shrink-0 ${status === "connected" ? "bg-green-500" : status === "connecting" ? "bg-yellow-500 animate-pulse" : "bg-muted-foreground/30"}`} />
-          <span className="truncate flex-1 text-left">{connection.name || `${connection.host}:${connection.port}`}</span>
-          <span className="text-muted-foreground text-xs shrink-0">{connection.host}:{connection.port}</span>
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${status === "connected" ? "bg-green-500" : status === "connecting" ? "bg-yellow-500 animate-pulse" : "bg-muted-foreground/30"}`}
+          />
+          <span className="truncate flex-1 text-left">
+            {connection.name || `${connection.host}:${connection.port}`}
+          </span>
+          <span className="text-muted-foreground text-xs shrink-0">
+            {connection.host}:{connection.port}
+          </span>
         </button>
       </div>
 
@@ -143,7 +199,13 @@ export function ConnectionItem({ connection, dragProps }: { connection: Connecti
               <button
                 key={i}
                 className={`px-2 py-1 rounded-md text-xs cursor-pointer flex justify-between items-center w-full transition-colors ${isSelectedDb ? "bg-primary/10 text-primary" : "hover:bg-accent text-muted-foreground"}`}
-                onClick={() => { setActiveConnection(connection.id); setConnectionId(connection.id); setSelectedDb(i); resetBrowser(); useAppStore.getState().activateTab("browser"); }}
+                onClick={() => {
+                  setActiveConnection(connection.id);
+                  setConnectionId(connection.id);
+                  setSelectedDb(i);
+                  resetBrowser();
+                  useAppStore.getState().activateTab("browser");
+                }}
               >
                 <span>db{i}</span>
                 <span className="opacity-60">{size}</span>
@@ -155,17 +217,31 @@ export function ConnectionItem({ connection, dragProps }: { connection: Connecti
 
       {/* 右键菜单 */}
       {contextMenu.visible && (
-        <div ref={menuRef} className="fixed z-50 min-w-[160px] bg-popover border rounded-lg shadow-lg py-1" style={{ left: contextMenu.x, top: contextMenu.y }}>
+        <div
+          ref={menuRef}
+          className="fixed z-50 min-w-[160px] bg-popover border rounded-lg shadow-lg py-1"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
           {!isConnected ? (
-            <ContextMenuItem onClick={menuActions.connect}>{t("connection.connect")}</ContextMenuItem>
+            <ContextMenuItem onClick={menuActions.connect}>
+              {t("connection.connect")}
+            </ContextMenuItem>
           ) : (
-            <ContextMenuItem onClick={menuActions.disconnect}>{t("connection.disconnect")}</ContextMenuItem>
+            <ContextMenuItem onClick={menuActions.disconnect}>
+              {t("connection.disconnect")}
+            </ContextMenuItem>
           )}
           <div className="h-px bg-border my-1" />
-          <ContextMenuItem onClick={menuActions.edit}>{t("actions.edit")}</ContextMenuItem>
-          <ContextMenuItem onClick={menuActions.duplicate}>{t("connection.duplicate")}</ContextMenuItem>
+          <ContextMenuItem onClick={menuActions.edit}>
+            {t("actions.edit")}
+          </ContextMenuItem>
+          <ContextMenuItem onClick={menuActions.duplicate}>
+            {t("connection.duplicate")}
+          </ContextMenuItem>
           <div className="h-px bg-border my-1" />
-          <ContextMenuItem onClick={menuActions.delete} danger>{t("actions.delete")}</ContextMenuItem>
+          <ContextMenuItem onClick={menuActions.delete} danger>
+            {t("actions.delete")}
+          </ContextMenuItem>
         </div>
       )}
     </>

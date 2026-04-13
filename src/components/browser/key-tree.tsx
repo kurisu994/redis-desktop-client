@@ -40,13 +40,24 @@ interface KeyTreeProps {
 }
 
 /** 树形 Key 浏览器 — 按 : 分隔符构建命名空间层级，支持多选和收藏 */
-export function KeyTree({ keys, selectedKey, onSelectKey, loading }: KeyTreeProps) {
+export function KeyTree({
+  keys,
+  selectedKey,
+  onSelectKey,
+  loading,
+}: KeyTreeProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } = useBrowserStore();
+  const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } =
+    useBrowserStore();
 
   /** 构建树结构 */
   const tree = useMemo(() => {
-    const root: TreeNode = { name: "", fullPath: "", children: new Map(), keys: [] };
+    const root: TreeNode = {
+      name: "",
+      fullPath: "",
+      children: new Map(),
+      keys: [],
+    };
 
     for (const entry of keys) {
       const parts = entry.key.split(":");
@@ -115,7 +126,10 @@ export function KeyTree({ keys, selectedKey, onSelectKey, loading }: KeyTreeProp
         </button>
 
         {isExpanded && (
-          <div className="border-l border-border/50 pl-0.5" style={{ marginLeft: "10px" }}>
+          <div
+            className="border-l border-border/50 pl-0.5"
+            style={{ marginLeft: "10px" }}
+          >
             {/* 子文件夹 */}
             {Array.from(node.children.values())
               .sort((a, b) => a.name.localeCompare(b.name))

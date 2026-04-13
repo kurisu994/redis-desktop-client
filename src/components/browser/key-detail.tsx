@@ -38,7 +38,12 @@ interface KeyDetailProps {
 }
 
 /** Key 详情头部 — Key 名 + 类型标签 + TTL + 操作按钮 */
-export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailProps) {
+export function KeyDetail({
+  keyName,
+  keyInfo,
+  onDeleted,
+  onRefresh,
+}: KeyDetailProps) {
   const { t } = useTranslation();
   const { connectionId, selectedDb } = useBrowserStore();
   const favorites = useBrowserStore((s) => s.favorites);
@@ -100,12 +105,18 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
                 <Button size="sm" onClick={handleRename}>
                   {t("actions.confirm")}
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setRenaming(false)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setRenaming(false)}
+                >
                   {t("actions.cancel")}
                 </Button>
               </div>
             ) : (
-              <h2 className="text-xl font-mono font-medium break-all tracking-tight">{keyName}</h2>
+              <h2 className="text-xl font-mono font-medium break-all tracking-tight">
+                {keyName}
+              </h2>
             )}
 
             {/* 元信息标签 */}
@@ -113,17 +124,22 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
               {/* 类型 */}
               <span
                 className={`flex items-center gap-1.5 px-2 py-0.5 rounded ${
-                  TYPE_BADGE[keyInfo.key_type] || "text-muted-foreground bg-muted"
+                  TYPE_BADGE[keyInfo.key_type] ||
+                  "text-muted-foreground bg-muted"
                 }`}
               >
-                <span className={`w-2 h-2 rounded-full ${TYPE_DOT[keyInfo.key_type] || "bg-muted-foreground"}`} />
+                <span
+                  className={`w-2 h-2 rounded-full ${TYPE_DOT[keyInfo.key_type] || "bg-muted-foreground"}`}
+                />
                 {keyInfo.key_type.toUpperCase()}
               </span>
 
               {/* TTL */}
               <span className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="w-3.5 h-3.5" />
-                {keyInfo.ttl < 0 ? t("keyDetail.ttlNone") : t("keyDetail.ttlSeconds", { seconds: keyInfo.ttl })}
+                {keyInfo.ttl < 0
+                  ? t("keyDetail.ttlNone")
+                  : t("keyDetail.ttlSeconds", { seconds: keyInfo.ttl })}
               </span>
 
               {/* 大小 */}
@@ -149,12 +165,22 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
               size="icon"
               variant="ghost"
               onClick={() => toggleFavorite(keyName)}
-              title={isFavorite ? t("keyDetail.removeFavorite") : t("keyDetail.addFavorite")}
+              title={
+                isFavorite
+                  ? t("keyDetail.removeFavorite")
+                  : t("keyDetail.addFavorite")
+              }
               className="h-8 w-8"
             >
-              <Star className={`w-4 h-4 ${isFavorite ? "fill-yellow-500 text-yellow-500" : ""}`} />
+              <Star
+                className={`w-4 h-4 ${isFavorite ? "fill-yellow-500 text-yellow-500" : ""}`}
+              />
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setShowTtl(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowTtl(true)}
+            >
               <Clock className="w-3.5 h-3.5" />
               TTL
             </Button>
@@ -168,7 +194,12 @@ export function KeyDetail({ keyName, keyInfo, onDeleted, onRefresh }: KeyDetailP
               {t("actions.delete")}
             </Button>
             <div className="relative">
-              <Button size="icon" variant="outline" onClick={() => setShowMore(!showMore)} className="h-8 w-8">
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => setShowMore(!showMore)}
+                className="h-8 w-8"
+              >
                 <MoreVertical className="w-4 h-4" />
               </Button>
               {showMore && (

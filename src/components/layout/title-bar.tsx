@@ -3,7 +3,11 @@
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Sun, Moon, Settings } from "lucide-react";
 import { LanguageSwitcher } from "./language-switcher";
 import { useAppStore } from "@/stores/app-store";
@@ -62,11 +66,17 @@ export function TitleBar() {
               {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
             </Button>
           </TooltipTrigger>
-          <TooltipContent>{theme === "dark" ? t("theme.light") : t("theme.dark")}</TooltipContent>
+          <TooltipContent>
+            {theme === "dark" ? t("theme.light") : t("theme.dark")}
+          </TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={() => openTab("settings")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => openTab("settings")}
+            >
               <Settings size={20} />
             </Button>
           </TooltipTrigger>
@@ -74,7 +84,11 @@ export function TitleBar() {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={() => openExternal(GITHUB_URL)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => openExternal(GITHUB_URL)}
+            >
               <GitHubIcon size={20} />
             </Button>
           </TooltipTrigger>

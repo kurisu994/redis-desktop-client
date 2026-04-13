@@ -155,14 +155,20 @@ export function MonitorPage() {
             </SelectTrigger>
             <SelectContent>
               {INTERVAL_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Button
             size="sm"
             variant="secondary"
-            className={paused ? "bg-green-600 hover:bg-green-700 text-white" : "bg-yellow-600 hover:bg-yellow-700 text-white"}
+            className={
+              paused
+                ? "bg-green-600 hover:bg-green-700 text-white"
+                : "bg-yellow-600 hover:bg-yellow-700 text-white"
+            }
             onClick={() => setPaused(!paused)}
           >
             {paused ? t("monitor.resume") : t("monitor.pause")}

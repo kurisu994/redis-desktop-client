@@ -58,10 +58,7 @@ pub async fn subscribe_channels(
     );
 
     let client = redis::Client::open(url).map_err(|e| e.to_string())?;
-    let mut pubsub = client
-        .get_async_pubsub()
-        .await
-        .map_err(|e| e.to_string())?;
+    let mut pubsub = client.get_async_pubsub().await.map_err(|e| e.to_string())?;
 
     for ch in &channels {
         // 支持模式订阅（包含 * 或 ?）

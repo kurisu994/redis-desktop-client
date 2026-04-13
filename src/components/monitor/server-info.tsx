@@ -9,7 +9,8 @@ import type { ServerInfo } from "@/lib/tauri-api";
 const colorMap = {
   primary: "",
   success: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  warning: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  warning:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
   secondary: "",
   danger: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
 } as const;
@@ -31,15 +32,35 @@ export function InfoCards({ info }: { info: ServerInfo }) {
   // 运行时间格式化
   const uptimeDays = server.uptime_in_days || "0";
   const uptimeHours = Math.floor(
-    (parseInt(server.uptime_in_seconds || "0", 10) % 86400) / 3600
+    (parseInt(server.uptime_in_seconds || "0", 10) % 86400) / 3600,
   );
 
   const cards = [
-    { label: t("monitor.version"), value: server.redis_version || "-", color: "primary" as const },
-    { label: t("monitor.uptime"), value: `${uptimeDays}${t("monitor.days")} ${uptimeHours}${t("monitor.hours")}`, color: "success" as const },
-    { label: t("monitor.usedMemory"), value: memory.used_memory_human || "-", color: "warning" as const },
-    { label: t("monitor.clients"), value: clients.connected_clients || "0", color: "secondary" as const },
-    { label: t("monitor.totalKeys"), value: totalKeys.toLocaleString(), color: "danger" as const },
+    {
+      label: t("monitor.version"),
+      value: server.redis_version || "-",
+      color: "primary" as const,
+    },
+    {
+      label: t("monitor.uptime"),
+      value: `${uptimeDays}${t("monitor.days")} ${uptimeHours}${t("monitor.hours")}`,
+      color: "success" as const,
+    },
+    {
+      label: t("monitor.usedMemory"),
+      value: memory.used_memory_human || "-",
+      color: "warning" as const,
+    },
+    {
+      label: t("monitor.clients"),
+      value: clients.connected_clients || "0",
+      color: "secondary" as const,
+    },
+    {
+      label: t("monitor.totalKeys"),
+      value: totalKeys.toLocaleString(),
+      color: "danger" as const,
+    },
   ];
 
   return (
@@ -48,7 +69,10 @@ export function InfoCards({ info }: { info: ServerInfo }) {
         <Card key={card.label} className="bg-muted">
           <CardContent className="p-3 text-center">
             <p className="text-xs text-muted-foreground">{card.label}</p>
-            <Badge variant="secondary" className={`mt-1 ${colorMap[card.color]}`}>
+            <Badge
+              variant="secondary"
+              className={`mt-1 ${colorMap[card.color]}`}
+            >
               {card.value}
             </Badge>
           </CardContent>
@@ -63,7 +87,14 @@ export function ServerInfoPanel({ info }: { info: ServerInfo }) {
   const { t } = useTranslation();
 
   // 展示顺序
-  const sections = ["server", "clients", "memory", "stats", "replication", "keyspace"];
+  const sections = [
+    "server",
+    "clients",
+    "memory",
+    "stats",
+    "replication",
+    "keyspace",
+  ];
   const sectionLabels: Record<string, string> = {
     server: t("monitor.sectionServer"),
     clients: t("monitor.sectionClients"),
@@ -86,12 +117,13 @@ export function ServerInfoPanel({ info }: { info: ServerInfo }) {
               </h4>
               <div className="space-y-1">
                 {Object.entries(data).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="flex justify-between text-xs gap-2"
-                  >
-                    <span className="text-muted-foreground truncate shrink-0">{key}</span>
-                    <span className="text-foreground truncate text-right">{value}</span>
+                  <div key={key} className="flex justify-between text-xs gap-2">
+                    <span className="text-muted-foreground truncate shrink-0">
+                      {key}
+                    </span>
+                    <span className="text-foreground truncate text-right">
+                      {value}
+                    </span>
                   </div>
                 ))}
               </div>

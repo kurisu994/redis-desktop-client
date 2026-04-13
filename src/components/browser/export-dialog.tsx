@@ -37,7 +37,7 @@ export function ExportDialog({
   const matchingKeys = keys.filter((k) => {
     if (pattern === "*") return true;
     const regex = new RegExp(
-      "^" + pattern.replace(/\*/g, ".*").replace(/\?/g, ".") + "$"
+      "^" + pattern.replace(/\*/g, ".*").replace(/\?/g, ".") + "$",
     );
     return regex.test(k.key);
   });

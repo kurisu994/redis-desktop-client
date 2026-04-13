@@ -29,7 +29,18 @@ import { setupJsonContextMenu, toHexDump } from "./value-viewer";
 type MonacoEditorInstance = Parameters<OnMount>[0];
 
 /** 编辑器支持的格式 */
-type EditorFormat = "text" | "json" | "hex" | "xml" | "yaml" | "html" | "css" | "javascript" | "typescript" | "sql" | "markdown";
+type EditorFormat =
+  | "text"
+  | "json"
+  | "hex"
+  | "xml"
+  | "yaml"
+  | "html"
+  | "css"
+  | "javascript"
+  | "typescript"
+  | "sql"
+  | "markdown";
 
 /** 格式 → Monaco 语言映射 */
 const EDITOR_FORMAT_LANGUAGE: Record<EditorFormat, string> = {
@@ -65,7 +76,16 @@ const EDITOR_FORMAT_LABELS: Record<EditorFormat, string> = {
 const EDITOR_PRIMARY_FORMATS: EditorFormat[] = ["text", "json", "hex"];
 
 /** 更多格式 */
-const EDITOR_MORE_FORMATS: EditorFormat[] = ["xml", "yaml", "html", "css", "javascript", "typescript", "sql", "markdown"];
+const EDITOR_MORE_FORMATS: EditorFormat[] = [
+  "xml",
+  "yaml",
+  "html",
+  "css",
+  "javascript",
+  "typescript",
+  "sql",
+  "markdown",
+];
 
 interface AddFieldDialogProps {
   isOpen: boolean;
@@ -91,22 +111,48 @@ interface AddFieldDialogProps {
 function detectEditorFormat(val: string): EditorFormat {
   const trimmed = val.trim();
   if (!trimmed) return "text";
-  if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
-    try { JSON.parse(trimmed); return "json"; } catch { /* 非合法 JSON */ }
+  if (
+    (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+    (trimmed.startsWith("[") && trimmed.endsWith("]"))
+  ) {
+    try {
+      JSON.parse(trimmed);
+      return "json";
+    } catch {
+      /* 非合法 JSON */
+    }
   }
-  if (/^<!DOCTYPE\s+html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed)) return "html";
-  if (/^<\?xml\s/i.test(trimmed) || (/^<[a-zA-Z]/.test(trimmed) && /<\/[a-zA-Z]/.test(trimmed))) return "xml";
-  if (/^[a-zA-Z0-9_-]+\s*:/m.test(trimmed) && !trimmed.startsWith("{") && trimmed.includes("\n")) {
+  if (/^<!DOCTYPE\s+html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed))
+    return "html";
+  if (
+    /^<\?xml\s/i.test(trimmed) ||
+    (/^<[a-zA-Z]/.test(trimmed) && /<\/[a-zA-Z]/.test(trimmed))
+  )
+    return "xml";
+  if (
+    /^[a-zA-Z0-9_-]+\s*:/m.test(trimmed) &&
+    !trimmed.startsWith("{") &&
+    trimmed.includes("\n")
+  ) {
     const lines = trimmed.split("\n").slice(0, 5);
-    const yamlLike = lines.filter((l) => /^\s*[a-zA-Z0-9_-]+\s*:/.test(l) || /^\s*-\s/.test(l));
+    const yamlLike = lines.filter(
+      (l) => /^\s*[a-zA-Z0-9_-]+\s*:/.test(l) || /^\s*-\s/.test(l),
+    );
     if (yamlLike.length >= 2) return "yaml";
   }
-  if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH)\s/i.test(trimmed)) return "sql";
+  if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH)\s/i.test(trimmed))
+    return "sql";
   return "text";
 }
 
 /** 添加/编辑字段对话框 — 根据类型显示不同表单，value 使用 Monaco Editor + 格式切换 */
-export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: AddFieldDialogProps) {
+export function AddFieldDialog({
+  isOpen,
+  mode,
+  initialData,
+  onClose,
+  onSave,
+}: AddFieldDialogProps) {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const isEdit = !!initialData;
@@ -116,7 +162,9 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
   const [position, setPosition] = useState<"head" | "tail">("tail");
   const [saving, setSaving] = useState(false);
   /** 当前编辑器格式 */
-  const [format, setFormat] = useState<EditorFormat>(() => detectEditorFormat(initialData?.value ?? ""));
+  const [format, setFormat] = useState<EditorFormat>(() =>
+    detectEditorFormat(initialData?.value ?? ""),
+  );
   /** "更多格式" 下拉菜单 */
   const [showMoreFormats, setShowMoreFormats] = useState(false);
   /** 当前格式的 ref（供右键菜单闭包动态读取） */
@@ -129,9 +177,10 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
     setSaving(true);
     try {
       // 如果是 hash 编辑模式且 field 改了名，传入 oldField
-      const oldField = isEdit && mode === "hash" && field !== initialData?.field
-        ? initialData?.field
-        : undefined;
+      const oldField =
+        isEdit && mode === "hash" && field !== initialData?.field
+          ? initialData?.field
+          : undefined;
       await onSave({
         field: mode === "hash" || mode === "stream" ? field : undefined,
         oldField,
@@ -157,7 +206,10 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
   const language = EDITOR_FORMAT_LANGUAGE[format];
   const isHex = format === "hex";
   /** Hex dump 内容（仅在 hex 模式时计算） */
-  const hexResult = useMemo(() => (isHex ? toHexDump(value) : { content: "", truncated: false }), [isHex, value]);
+  const hexResult = useMemo(
+    () => (isHex ? toHexDump(value) : { content: "", truncated: false }),
+    [isHex, value],
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -194,9 +246,12 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
           {mode === "list" && (
             <div className="space-y-2">
               <Label>{t("valueEditor.position")}</Label>
-              <Select value={position} onValueChange={(val) => {
-                if (val === "head" || val === "tail") setPosition(val);
-              }}>
+              <Select
+                value={position}
+                onValueChange={(val) => {
+                  if (val === "head" || val === "tail") setPosition(val);
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -239,12 +294,17 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
                     }`}
                     onClick={() => setShowMoreFormats(!showMoreFormats)}
                   >
-                    {EDITOR_MORE_FORMATS.includes(format) ? EDITOR_FORMAT_LABELS[format] : t("valueEditor.moreFormats")}
+                    {EDITOR_MORE_FORMATS.includes(format)
+                      ? EDITOR_FORMAT_LABELS[format]
+                      : t("valueEditor.moreFormats")}
                     <span className="ml-1 text-[10px]">▾</span>
                   </button>
                   {showMoreFormats && (
                     <>
-                      <div className="fixed inset-0 z-40" onClick={() => setShowMoreFormats(false)} />
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowMoreFormats(false)}
+                      />
                       <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-card border border-border rounded-lg shadow-lg py-1">
                         {EDITOR_MORE_FORMATS.map((f) => (
                           <button
@@ -280,7 +340,8 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
                   options={{
                     minimap: { enabled: false },
                     fontSize: 13,
-                    fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace",
+                    fontFamily:
+                      "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace",
                     lineNumbers: "off",
                     wordWrap: "off",
                     scrollBeyondLastLine: false,
@@ -313,7 +374,10 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
                   }}
                   onMount={(editor) => {
                     editorRef.current = editor;
-                    setupJsonContextMenu(editor, () => formatRef.current === "json");
+                    setupJsonContextMenu(
+                      editor,
+                      () => formatRef.current === "json",
+                    );
                   }}
                 />
               )}
@@ -324,10 +388,7 @@ export function AddFieldDialog({ isOpen, mode, initialData, onClose, onSave }: A
           <Button variant="ghost" onClick={onClose}>
             {t("actions.cancel")}
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving || !value.trim()}
-          >
+          <Button onClick={handleSave} disabled={saving || !value.trim()}>
             {saving && <Loader2 className="animate-spin" size={14} />}
             {isEdit ? t("actions.save") : t("actions.add")}
           </Button>
