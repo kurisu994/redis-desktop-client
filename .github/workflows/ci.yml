@@ -140,4 +140,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: --target ${{ matrix.target }}
+          # 在普通的 CI 流水线中，临时禁用 Updater 包生成，避免因为找不到私钥而构建失败
+          args: >-
+            --target ${{ matrix.target }} --config '{"bundle": {"createUpdaterArtifacts": false}}'
