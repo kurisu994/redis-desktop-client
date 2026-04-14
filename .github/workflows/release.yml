@@ -65,6 +65,7 @@ jobs:
 
       - name: 从 CHANGELOG.md 提取发布说明
         id: changelog
+        shell: bash
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
