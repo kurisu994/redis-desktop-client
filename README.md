@@ -99,6 +99,45 @@ docs/                       # 项目文档
 └── DEVELOPMENT_PLAN.md     # 开发计划
 ```
 
+## 安装
+
+前往 [Releases](https://github.com/kurisu994/redis-desktop-client/releases) 下载最新版本。
+
+| 平台 | 文件 |
+|------|------|
+| macOS (Apple Silicon) | `.dmg` |
+| Windows (x64) | `.exe` 安装包 或 `.msi` |
+| Linux (x64) | `.AppImage` / `.deb` / `.rpm` |
+
+> [!NOTE]
+> 本项目暂未配置代码签名证书，macOS 和 Windows 首次打开时可能会弹出安全提示。请按以下方式处理。
+
+### macOS
+
+安装 `.dmg` 后首次打开如果提示**"已损坏，无法打开"**，在终端执行：
+
+```bash
+xattr -cr /Applications/Redis\ Desktop\ Client.app
+```
+
+然后重新打开应用即可。
+
+### Windows
+
+首次运行如果弹出 **SmartScreen** 提示"Windows 已保护你的电脑"：
+
+1. 点击 **"更多信息"**
+2. 点击 **"仍然运行"**
+
+### Linux
+
+AppImage 需要添加执行权限：
+
+```bash
+chmod +x Redis.Desktop.Client_*.AppImage
+./Redis.Desktop.Client_*.AppImage
+```
+
 ## License
 
 MIT
