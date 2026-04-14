@@ -133,6 +133,7 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
   setConnectionError: (id, error) =>
     set((state) => {
       if (error === null) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [id]: _removed, ...rest } = state.connectionErrors;
         return { connectionErrors: rest };
       }

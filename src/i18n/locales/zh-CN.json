@@ -323,6 +323,16 @@
     "typeToConfirm": "请输入 \"{{text}}\" 以确认操作",
     "dangerousAction": "危险操作"
   },
+  "update": {
+    "title": "软件更新",
+    "newVersion": "发现新版本",
+    "releaseNotes": "更新说明",
+    "downloadInstall": "下载并安装",
+    "later": "稍后提醒",
+    "restartNow": "立即重启",
+    "retry": "重试",
+    "checking": "检查中..."
+  },
   "pagination": {
     "showing": "第 {{from}}-{{to}} 条，共 {{total}} 条"
   }

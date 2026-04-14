@@ -323,6 +323,16 @@
     "typeToConfirm": "Type \"{{text}}\" to confirm",
     "dangerousAction": "Dangerous Action"
   },
+  "update": {
+    "title": "Software Update",
+    "newVersion": "New Version Available",
+    "releaseNotes": "Release Notes",
+    "downloadInstall": "Download & Install",
+    "later": "Remind Me Later",
+    "restartNow": "Restart Now",
+    "retry": "Retry",
+    "checking": "Checking..."
+  },
   "pagination": {
     "showing": "{{from}}-{{to}} of {{total}} items"
   }

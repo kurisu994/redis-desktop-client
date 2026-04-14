@@ -12,9 +12,11 @@ import { MonitorPage } from "@/components/monitor/monitor-page";
 import { PubSubPage } from "@/components/pubsub/pubsub-page";
 import { SettingsPage } from "@/components/layout/settings-page";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { UpdateDialog } from "@/components/update-dialog";
 import { useConnectionStore } from "@/stores/connection-store";
 import { useAppStore } from "@/stores/app-store";
 import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
+import { useUpdateChecker } from "@/hooks/use-update-checker";
 
 /** 应用主页 — 三栏布局 */
 export default function Home() {
@@ -23,6 +25,9 @@ export default function Home() {
 
   // 注册全局快捷键
   useGlobalShortcuts();
+
+  // 启动时自动检查更新
+  const { updateAvailable, dismissUpdate } = useUpdateChecker();
 
   // 判断当前是否有已连接的连接
   const isConnected =
@@ -64,6 +69,7 @@ export default function Home() {
       </div>
       <ConnectionDialog />
       <CommandPalette />
+      <UpdateDialog updateInfo={updateAvailable} onDismiss={dismissUpdate} />
     </div>
   );
 }

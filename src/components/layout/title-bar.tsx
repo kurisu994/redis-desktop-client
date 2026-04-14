@@ -53,6 +53,7 @@ export function TitleBar() {
     <header className="flex items-center justify-between h-12 px-4 border-b bg-card shrink-0">
       {/* 左侧 Logo */}
       <div className="flex items-center gap-2">
+        {/* eslint-disable-next-line @next/next/no-img-element -- Tauri 静态导出不支持 next/image */}
         <img src="/logo.png" alt="R" className="w-6 h-6 object-contain" />
         <span className="text-sm font-semibold">{t("app.title")}</span>
       </div>

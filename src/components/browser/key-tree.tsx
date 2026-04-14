@@ -40,15 +40,9 @@ interface KeyTreeProps {
 }
 
 /** 树形 Key 浏览器 — 按 : 分隔符构建命名空间层级，支持多选和收藏 */
-export function KeyTree({
-  keys,
-  selectedKey,
-  onSelectKey,
-  loading,
-}: KeyTreeProps) {
+export function KeyTree({ keys, selectedKey, onSelectKey, loading }: KeyTreeProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } =
-    useBrowserStore();
+  const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } = useBrowserStore();
 
   /** 构建树结构 */
   const tree = useMemo(() => {
@@ -120,24 +114,17 @@ export function KeyTree({
           )}
           <Folder className="w-4 h-4 text-yellow-500/80 shrink-0" />
           <span className="truncate text-foreground/80">{node.name}</span>
-          <span className="text-muted-foreground text-xs ml-auto shrink-0">
-            {childCount}
-          </span>
+          <span className="text-muted-foreground text-xs ml-auto shrink-0">{childCount}</span>
         </button>
 
         {isExpanded && (
-          <div
-            className="border-l border-border/50 pl-0.5"
-            style={{ marginLeft: "10px" }}
-          >
+          <div className="border-l border-border/50 pl-0.5" style={{ marginLeft: "10px" }}>
             {/* 子文件夹 */}
             {Array.from(node.children.values())
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((child) => renderFolder(child, depth + 1))}
             {/* 叶子节点 Key */}
-            {node.keys
-              .sort((a, b) => a.key.localeCompare(b.key))
-              .map((entry) => renderLeaf(entry, depth + 1))}
+            {node.keys.sort((a, b) => a.key.localeCompare(b.key)).map((entry) => renderLeaf(entry))}
           </div>
         )}
       </div>
@@ -145,7 +132,7 @@ export function KeyTree({
   };
 
   /** 渲染叶子节点（Key），含 checkbox 和收藏 */
-  const renderLeaf = (entry: KeyEntry, _depth: number) => {
+  const renderLeaf = (entry: KeyEntry) => {
     const isSelected = selectedKey === entry.key;
     const isChecked = checkedKeys.has(entry.key);
     const isFavorite = favorites.has(entry.key);
@@ -156,9 +143,7 @@ export function KeyTree({
       <div
         key={entry.key}
         className={`flex items-center gap-1 w-full py-1.5 px-2 rounded-md cursor-pointer text-sm transition-colors group ${
-          isSelected
-            ? "bg-primary/15 text-primary"
-            : "hover:bg-white/5 text-foreground/70"
+          isSelected ? "bg-primary/15 text-primary" : "hover:bg-white/5 text-foreground/70"
         }`}
         style={{ paddingLeft: "12px" }}
       >
@@ -172,10 +157,7 @@ export function KeyTree({
           }}
           className="w-3.5 h-3.5 shrink-0 accent-primary cursor-pointer"
         />
-        <button
-          className="flex items-center gap-2 flex-1 min-w-0"
-          onClick={() => onSelectKey(entry.key)}
-        >
+        <button className="flex items-center gap-2 flex-1 min-w-0" onClick={() => onSelectKey(entry.key)}>
           <span
             className={`w-2 h-2 rounded-full shrink-0 ${
               TYPE_COLORS[entry.key_type] || "bg-muted-foreground"
@@ -217,9 +199,7 @@ export function KeyTree({
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((child) => renderFolder(child, 0))}
       {/* 根级 Key（无命名空间） */}
-      {tree.keys
-        .sort((a, b) => a.key.localeCompare(b.key))
-        .map((entry) => renderLeaf(entry, 0))}
+      {tree.keys.sort((a, b) => a.key.localeCompare(b.key)).map((entry) => renderLeaf(entry))}
       {loading && keys.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center">
           <Loader2 className="w-5 h-5 animate-spin text-primary" />

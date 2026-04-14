@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Select,
@@ -10,15 +11,47 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useTheme } from "next-themes";
 import { useAppStore } from "@/stores/app-store";
-import { Settings, Globe, Palette, Keyboard } from "lucide-react";
+import { useUpdateChecker } from "@/hooks/use-update-checker";
+import { UpdateDialog } from "@/components/update-dialog";
+import {
+  Settings,
+  Globe,
+  Palette,
+  Keyboard,
+  ArrowDownToLine,
+  RefreshCw,
+  CheckCircle,
+} from "lucide-react";
+
+/** 当前应用版本号（构建时内联） */
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "0.2.1";
 
 /** 设置页面 */
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { keySeparator, setKeySeparator } = useAppStore();
+  const {
+    updateAvailable,
+    checking,
+    autoUpdateEnabled,
+    setAutoUpdate,
+    manualCheck,
+    dismissUpdate,
+  } = useUpdateChecker();
+  const [manualCheckDone, setManualCheckDone] = useState(false);
+
+  /** 手动检查更新 */
+  const handleManualCheck = async () => {
+    setManualCheckDone(false);
+    await manualCheck();
+    // 如果没有可用更新，显示"已是最新"
+    setManualCheckDone(true);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -81,6 +114,46 @@ export function SettingsPage() {
 
         <Separator className="my-4" />
 
+        {/* 更新 */}
+        <SectionHeader
+          icon={<ArrowDownToLine size={16} />}
+          title={t("update.title")}
+        />
+        <div className="flex flex-col gap-4 mb-6">
+          <SettingRow label={t("settings.autoUpdate")}>
+            <Switch
+              checked={autoUpdateEnabled}
+              onCheckedChange={setAutoUpdate}
+            />
+          </SettingRow>
+          <SettingRow label={t("settings.checkUpdate")}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualCheck}
+              disabled={checking}
+            >
+              {checking ? (
+                <>
+                  <RefreshCw size={14} className="mr-1 animate-spin" />
+                  {t("update.checking")}
+                </>
+              ) : (
+                t("settings.checkUpdate")
+              )}
+            </Button>
+          </SettingRow>
+          {/* 检查结果提示 */}
+          {manualCheckDone && !updateAvailable && !checking && (
+            <div className="flex items-center gap-2 text-sm text-green-500">
+              <CheckCircle size={14} />
+              {t("settings.upToDate")}
+            </div>
+          )}
+        </div>
+
+        <Separator className="my-4" />
+
         {/* 快捷键说明 */}
         <SectionHeader
           icon={<Keyboard size={16} />}
@@ -110,9 +183,12 @@ export function SettingsPage() {
           title={t("settings.about")}
         />
         <div className="text-sm text-muted-foreground">
-          <p>{t("settings.currentVersion")}: 0.2.0</p>
+          <p>{t("settings.currentVersion")}: {APP_VERSION}</p>
         </div>
       </div>
+
+      {/* 设置页面内的更新弹窗 */}
+      <UpdateDialog updateInfo={updateAvailable} onDismiss={dismissUpdate} />
     </div>
   );
 }
@@ -164,3 +240,4 @@ function ShortcutRow({ label, keys }: { label: string; keys: string[] }) {
     </div>
   );
 }
+
