@@ -44,7 +44,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { AddFieldDialog } from "./add-field-dialog";
-import Editor, { DiffEditor } from "@monaco-editor/react";
+import Editor from "@monaco-editor/react";
 import type { OnMount } from "@monaco-editor/react";
 
 /** Monaco Editor 实例类型（从 OnMount 回调提取） */
@@ -375,7 +375,7 @@ export function setupJsonContextMenu(
   });
 }
 
-// ============ String 查看器（含大值延迟加载 + Diff 对比 + 多格式语法高亮） ============
+// ============ String 查看器（含大值延迟加载 + 多格式语法高亮） ============
 
 function StringViewer({
   keyName,
@@ -396,8 +396,6 @@ function StringViewer({
   const [isLargePreview, setIsLargePreview] = useState(false);
   /** 完整加载中 */
   const [loadingFull, setLoadingFull] = useState(false);
-  /** 编辑器 / Diff 视图切换 */
-  const [showDiff, setShowDiff] = useState(false);
   /** "更多格式" 下拉菜单 */
   const [showMoreFormats, setShowMoreFormats] = useState(false);
   /** Monaco editor 实例引用 */
@@ -419,7 +417,6 @@ function StringViewer({
 
   useEffect(() => {
     if (!connectionId) return;
-    setShowDiff(false);
 
     if (isLargeValue) {
       // 大值：先加载预览（前 PREVIEW_SIZE 字节）
@@ -596,23 +593,6 @@ function StringViewer({
           </span>
         )}
 
-        {/* Diff 切换（仅非预览 & 非 Hex & 有改动时显示） */}
-        {!isLargePreview && !isHex && isDirty && (
-          <>
-            <span className="text-border mx-1">|</span>
-            <button
-              className={`px-2 py-0.5 rounded transition-colors ${
-                showDiff
-                  ? "text-primary bg-primary/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`}
-              onClick={() => setShowDiff(!showDiff)}
-            >
-              {showDiff ? t("valueEditor.editor") : t("valueEditor.diff")}
-            </button>
-          </>
-        )}
-
         <div className="flex-1" />
         {isDirty && !isLargePreview && !isHex && (
           <Button size="sm" onClick={handleSave}>
@@ -622,7 +602,7 @@ function StringViewer({
         )}
       </div>
 
-      {/* 编辑器 / Hex / Diff 视图 */}
+      {/* 编辑器 / Hex 视图 */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Hex 截断提示 */}
         {isHex && hexResult.truncated && (
@@ -658,29 +638,6 @@ function StringViewer({
                 folding: false,
                 links: false,
                 codeLens: false,
-              }}
-            />
-          ) : showDiff ? (
-            <DiffEditor
-              original={originalValue}
-              modified={value}
-              language={language}
-              theme={theme === "dark" ? "vs-dark" : "light"}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 13,
-                readOnly: false,
-                renderSideBySide: true,
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                contextmenu: false,
-              }}
-              onMount={(editor) => {
-                // 监听修改后的内容变化
-                const modifiedEditor = editor.getModifiedEditor();
-                modifiedEditor.onDidChangeModelContent(() => {
-                  setValue(modifiedEditor.getValue());
-                });
               }}
             />
           ) : (
