@@ -130,31 +130,44 @@ export function CliConsole() {
     <div className="flex-1 flex flex-col min-w-0">
       {/* Tab 栏 */}
       <div className="flex items-center border-b border-border bg-card shrink-0 h-9">
-        <div className="flex items-center flex-1 overflow-x-auto">
+        <div
+          className="flex items-center flex-1 overflow-x-auto"
+          role="tablist"
+        >
           {tabs.map((tab) => (
-            <button
+            <div
               key={tab.id}
-              className={`flex items-center gap-1.5 px-3 h-9 text-xs border-r border-border shrink-0 transition-colors ${
+              className={`flex items-center h-9 text-xs border-r border-border shrink-0 transition-colors ${
                 tab.id === activeTabId
                   ? "bg-background text-foreground"
                   : "bg-card text-muted-foreground hover:bg-accent"
               }`}
-              onClick={() => setActiveTab(tab.id)}
             >
-              <Terminal className="w-3 h-3" />
-              <span className="max-w-[120px] truncate">{tab.title}</span>
-              <span className="text-muted-foreground">db{tab.db}</span>
               <button
-                className="ml-1 p-0.5 rounded hover:bg-muted transition-colors"
+                type="button"
+                role="tab"
+                aria-selected={tab.id === activeTabId}
+                className="flex items-center gap-1.5 h-full min-w-0 pl-3 pr-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <Terminal className="w-3 h-3" />
+                <span className="max-w-[120px] truncate">{tab.title}</span>
+                <span className="text-muted-foreground">db{tab.db}</span>
+              </button>
+              <button
+                type="button"
+                aria-label={`${t("actions.close")} ${tab.title}`}
+                className="mr-2 p-0.5 rounded hover:bg-muted transition-colors"
                 onClick={(e) => handleCloseTab(e, tab.id)}
               >
                 <X className="w-3 h-3" />
               </button>
-            </button>
+            </div>
           ))}
         </div>
         {/* 新建 Tab 按钮 */}
         <button
+          type="button"
           className="px-2 h-9 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
           onClick={handleNewTab}
           title={t("cli.newTab")}
@@ -193,6 +206,7 @@ export function CliConsole() {
           <Terminal className="w-12 h-12 opacity-20" />
           <p className="text-sm">{t("cli.noTab")}</p>
           <button
+            type="button"
             className="text-primary text-sm hover:underline"
             onClick={handleNewTab}
           >
