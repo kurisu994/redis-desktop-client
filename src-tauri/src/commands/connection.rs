@@ -1,7 +1,7 @@
 use crate::config::store::{
     ClusterConfig, ConnectionStore, SentinelConfig, SshConfig, StoredConnection, TlsConfig,
 };
-use crate::redis::client::RedisClientManager;
+use crate::redis::client::{build_redis_url, sanitize_redis_error, RedisClientManager};
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
 use tauri::State;
@@ -42,12 +42,37 @@ pub struct TestResult {
     pub message: String,
 }
 
+/// 验证连接配置字段
+fn validate_connection_config(config: &ConnectionConfig) -> Result<(), String> {
+    if config.name.trim().is_empty() {
+        return Err("连接名称不能为空".to_string());
+    }
+    if config.name.len() > 128 {
+        return Err("连接名称不能超过 128 个字符".to_string());
+    }
+    if config.host.trim().is_empty() {
+        return Err("主机地址不能为空".to_string());
+    }
+    if config.host.len() > 256 {
+        return Err("主机地址不能超过 256 个字符".to_string());
+    }
+    if config.port == 0 {
+        return Err("端口号不能为 0".to_string());
+    }
+    let conn_type = config.connection_type.as_deref().unwrap_or("standalone");
+    if !matches!(conn_type, "standalone" | "sentinel" | "cluster") {
+        return Err("连接类型无效".to_string());
+    }
+    Ok(())
+}
+
 /// 保存连接配置（新建或更新）
 #[tauri::command]
 pub async fn save_connection(
     store: State<'_, ConnectionStore>,
     config: ConnectionConfig,
 ) -> Result<(), String> {
+    validate_connection_config(&config)?;
     let stored = StoredConnection {
         id: config.id,
         name: config.name,
@@ -134,6 +159,7 @@ pub async fn disconnect_redis(
 /// 测试连接 — 根据连接配置执行 PING 并返回延迟
 #[tauri::command]
 pub async fn test_connection(config: ConnectionConfig) -> Result<TestResult, String> {
+    validate_connection_config(&config)?;
     let start = Instant::now();
 
     // 根据连接类型判断
@@ -150,14 +176,14 @@ pub async fn test_connection(config: ConnectionConfig) -> Result<TestResult, Str
                 .and_then(|c| c.nodes.first())
                 .map(|n| (n.host.as_str(), n.port))
                 .unwrap_or((config.host.as_str(), config.port));
-            let url = build_url(
+            let url = build_redis_url(
                 scheme,
                 nodes.0,
                 nodes.1,
                 config.username.as_deref(),
                 config.password.as_deref(),
                 0,
-            );
+            )?;
             test_single_connection(&url, start).await
         }
         "sentinel" => {
@@ -168,7 +194,7 @@ pub async fn test_connection(config: ConnectionConfig) -> Result<TestResult, Str
                 .and_then(|s| s.nodes.first())
                 .map(|n| (n.host.as_str(), n.port))
                 .unwrap_or((config.host.as_str(), config.port));
-            let url = build_url(
+            let url = build_redis_url(
                 scheme,
                 node.0,
                 node.1,
@@ -178,19 +204,19 @@ pub async fn test_connection(config: ConnectionConfig) -> Result<TestResult, Str
                     .as_ref()
                     .and_then(|s| s.sentinel_password.as_deref()),
                 0,
-            );
+            )?;
             test_single_connection(&url, start).await
         }
         _ => {
             // Standalone 模式
-            let url = build_url(
+            let url = build_redis_url(
                 scheme,
                 &config.host,
                 config.port,
                 config.username.as_deref(),
                 config.password.as_deref(),
                 config.db,
-            );
+            )?;
             test_single_connection(&url, start).await
         }
     }
@@ -205,35 +231,17 @@ pub async fn reorder_connections(
     store.reorder_connections(&ordered_ids)
 }
 
-/// 构建 Redis URL
-fn build_url(
-    scheme: &str,
-    host: &str,
-    port: u16,
-    username: Option<&str>,
-    password: Option<&str>,
-    db: u8,
-) -> String {
-    match (username, password) {
-        (Some(user), Some(pwd)) => {
-            format!("{}://{}:{}@{}:{}/{}", scheme, user, pwd, host, port, db)
-        }
-        (None, Some(pwd)) => format!("{}://:{}@{}:{}/{}", scheme, pwd, host, port, db),
-        _ => format!("{}://{}:{}/{}", scheme, host, port, db),
-    }
-}
-
 /// 测试单个连接
 async fn test_single_connection(url: &str, start: Instant) -> Result<TestResult, String> {
-    let client = redis::Client::open(url).map_err(|e| e.to_string())?;
+    let client = redis::Client::open(url).map_err(|e| sanitize_redis_error(&e.to_string()))?;
     let mut conn = client
         .get_multiplexed_async_connection()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| sanitize_redis_error(&e.to_string()))?;
     let pong: String = redis::cmd("PING")
         .query_async(&mut conn)
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| sanitize_redis_error(&e.to_string()))?;
     let latency = start.elapsed().as_millis() as u64;
     Ok(TestResult {
         success: pong == "PONG",

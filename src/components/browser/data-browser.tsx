@@ -32,34 +32,32 @@ import { toast } from "sonner";
 export function DataBrowser() {
   const { t } = useTranslation();
   const { activeConnectionId, connectionStatus } = useConnectionStore();
-  const {
-    connectionId,
-    selectedDb,
-    keys,
-    scanCursor,
-    scanComplete,
-    selectedKey,
-    keyInfo,
-    viewMode,
-    filterPattern,
-    loading,
-    checkedKeys,
-    clearCheckedKeys,
-    setCheckedKeys,
-    showFavoritesOnly,
-    favorites,
-    setFavorites,
-    setConnectionId,
-    setKeys,
-    appendKeys,
-    setScanCursor,
-    setScanComplete,
-    setSelectedKey,
-    setKeyInfo,
-    setLoading,
-    setDbList,
-    resetBrowser,
-  } = useBrowserStore();
+  const connectionId = useBrowserStore((s) => s.connectionId);
+  const selectedDb = useBrowserStore((s) => s.selectedDb);
+  const keys = useBrowserStore((s) => s.keys);
+  const scanCursor = useBrowserStore((s) => s.scanCursor);
+  const scanComplete = useBrowserStore((s) => s.scanComplete);
+  const selectedKey = useBrowserStore((s) => s.selectedKey);
+  const keyInfo = useBrowserStore((s) => s.keyInfo);
+  const viewMode = useBrowserStore((s) => s.viewMode);
+  const filterPattern = useBrowserStore((s) => s.filterPattern);
+  const loading = useBrowserStore((s) => s.loading);
+  const checkedKeys = useBrowserStore((s) => s.checkedKeys);
+  const clearCheckedKeys = useBrowserStore((s) => s.clearCheckedKeys);
+  const setCheckedKeys = useBrowserStore((s) => s.setCheckedKeys);
+  const showFavoritesOnly = useBrowserStore((s) => s.showFavoritesOnly);
+  const favorites = useBrowserStore((s) => s.favorites);
+  const setFavorites = useBrowserStore((s) => s.setFavorites);
+  const setConnectionId = useBrowserStore((s) => s.setConnectionId);
+  const setKeys = useBrowserStore((s) => s.setKeys);
+  const appendKeys = useBrowserStore((s) => s.appendKeys);
+  const setScanCursor = useBrowserStore((s) => s.setScanCursor);
+  const setScanComplete = useBrowserStore((s) => s.setScanComplete);
+  const setSelectedKey = useBrowserStore((s) => s.setSelectedKey);
+  const setKeyInfo = useBrowserStore((s) => s.setKeyInfo);
+  const setLoading = useBrowserStore((s) => s.setLoading);
+  const setDbList = useBrowserStore((s) => s.setDbList);
+  const resetBrowser = useBrowserStore((s) => s.resetBrowser);
 
   const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
   const [showDeleteKeyConfirm, setShowDeleteKeyConfirm] = useState(false);
@@ -158,20 +156,24 @@ export function DataBrowser() {
       resetBrowser();
       getDbInfo(connectedId)
         .then((info) => setDbList(info.db_sizes, info.db_count))
-        .catch(console.error);
+        .catch(() => toast.error(t("browser.scanFailed")));
     } else if (!connectedId) {
       setConnectionId(null);
       resetBrowser();
     }
-  }, [connectedId, connectionId, setConnectionId, resetBrowser, setDbList]);
+  }, [connectedId, connectionId, setConnectionId, resetBrowser, setDbList, t]);
 
-  /** 加载 Key 列表 — 自动分片加载全部 Key */
+  /** 单次加载 Key 的最大数量，防止大数据库耗尽内存 */
+  const MAX_LOAD_KEYS = 100_000;
+
+  /** 加载 Key 列表 — 自动分片加载全部 Key（受 MAX_LOAD_KEYS 限制） */
   const loadKeys = useCallback(
     async (reset = false) => {
       if (!connectedId) return;
       setLoading(true);
       try {
         let cursor = reset ? 0 : scanCursor;
+        let totalLoaded = reset ? 0 : keys.length;
         if (reset) {
           // 重置时先清空并加载第一批
           const result = await scanKeys(
@@ -182,11 +184,12 @@ export function DataBrowser() {
             200,
           );
           setKeys(result.keys);
+          totalLoaded = result.keys.length;
           cursor = result.cursor;
           setScanCursor(cursor);
           setScanComplete(cursor === 0);
           // 自动继续加载剩余批次
-          while (cursor !== 0) {
+          while (cursor !== 0 && totalLoaded < MAX_LOAD_KEYS) {
             const next = await scanKeys(
               connectedId,
               selectedDb,
@@ -195,9 +198,13 @@ export function DataBrowser() {
               200,
             );
             appendKeys(next.keys);
+            totalLoaded += next.keys.length;
             cursor = next.cursor;
             setScanCursor(cursor);
-            setScanComplete(cursor === 0);
+            setScanComplete(cursor === 0 || totalLoaded >= MAX_LOAD_KEYS);
+          }
+          if (totalLoaded >= MAX_LOAD_KEYS && cursor !== 0) {
+            toast.info(t("browser.maxLoadKeysReached", { count: MAX_LOAD_KEYS }));
           }
         } else if (!scanComplete) {
           // 手动触发继续加载（兜底，正常不会用到）
@@ -212,8 +219,8 @@ export function DataBrowser() {
           setScanCursor(result.cursor);
           setScanComplete(result.cursor === 0);
         }
-      } catch (err) {
-        console.error("扫描 Key 失败:", err);
+      } catch {
+        toast.error(t("browser.scanFailed"));
       } finally {
         setLoading(false);
       }
@@ -229,6 +236,8 @@ export function DataBrowser() {
       setScanCursor,
       setScanComplete,
       setLoading,
+      t,
+      keys.length,
     ],
   );
 
@@ -246,9 +255,9 @@ export function DataBrowser() {
     if (connectedId && selectedKey) {
       getKeyInfo(connectedId, selectedDb, selectedKey)
         .then(setKeyInfo)
-        .catch(console.error);
+        .catch(() => toast.error(t("browser.loadKeyInfoFailed")));
     }
-  }, [connectedId, selectedDb, selectedKey, setKeyInfo]);
+  }, [connectedId, selectedDb, selectedKey, setKeyInfo, t]);
 
   /** 刷新当前 Key 列表 */
   const handleRefresh = useCallback(() => {
@@ -257,9 +266,9 @@ export function DataBrowser() {
     if (connectedId) {
       getDbInfo(connectedId)
         .then((info) => setDbList(info.db_sizes, info.db_count))
-        .catch(console.error);
+        .catch(() => toast.error(t("browser.scanFailed")));
     }
-  }, [loadKeys, connectedId, setDbList]);
+  }, [loadKeys, connectedId, setDbList, t]);
 
   /** 搜索过滤 */
   const handleSearch = useCallback(() => {
@@ -271,9 +280,9 @@ export function DataBrowser() {
     if (connectedId && selectedKey) {
       getKeyInfo(connectedId, selectedDb, selectedKey)
         .then(setKeyInfo)
-        .catch(console.error);
+        .catch(() => toast.error(t("browser.loadKeyInfoFailed")));
     }
-  }, [connectedId, selectedDb, selectedKey, setKeyInfo]);
+  }, [connectedId, selectedDb, selectedKey, setKeyInfo, t]);
 
   /** Key 被删除后的回调 */
   const handleKeyDeleted = useCallback(() => {
@@ -292,9 +301,9 @@ export function DataBrowser() {
       // 刷新 db 信息
       getDbInfo(connectedId)
         .then((info) => setDbList(info.db_sizes, info.db_count))
-        .catch(console.error);
-    } catch (err) {
-      console.error("删除 Key 失败:", err);
+        .catch(() => toast.error(t("browser.scanFailed")));
+    } catch {
+      toast.error(t("browser.deleteFailed"));
     }
   }, [connectedId, selectedDb, selectedKey, handleKeyDeleted, setDbList, t]);
 
@@ -326,7 +335,7 @@ export function DataBrowser() {
     if (connectedId) {
       getDbInfo(connectedId)
         .then((info) => setDbList(info.db_sizes, info.db_count))
-        .catch(console.error);
+        .catch(() => toast.error(t("browser.scanFailed")));
     }
   }, [
     connectedId,
@@ -337,6 +346,7 @@ export function DataBrowser() {
     setKeyInfo,
     loadKeys,
     setDbList,
+    t,
   ]);
 
   /** 批量导出 */
@@ -367,10 +377,10 @@ export function DataBrowser() {
         a.click();
         URL.revokeObjectURL(url);
       }
-    } catch (err) {
-      console.error("批量导出失败:", err);
+    } catch {
+      toast.error(t("browser.exportFailed"));
     }
-  }, [connectedId, selectedDb, checkedKeys]);
+  }, [connectedId, selectedDb, checkedKeys, t]);
 
   /** 全选 / 取消全选 */
   const handleToggleSelectAll = useCallback(() => {

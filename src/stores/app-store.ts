@@ -66,7 +66,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
     // 创建新 Tab
     const newTab: Tab = {
-      id: `${type}-${Date.now()}`,
+      id: `${type}-${crypto.randomUUID()}`,
       type,
       closable: true,
     };

@@ -20,8 +20,10 @@ import { useUpdateChecker } from "@/hooks/use-update-checker";
 
 /** 应用主页 — 三栏布局 */
 export default function Home() {
-  const { activeConnectionId, connectionStatus } = useConnectionStore();
-  const { tabs, activeTabId } = useAppStore();
+  const activeConnectionId = useConnectionStore((s) => s.activeConnectionId);
+  const connectionStatus = useConnectionStore((s) => s.connectionStatus);
+  const tabs = useAppStore((s) => s.tabs);
+  const activeTabId = useAppStore((s) => s.activeTabId);
 
   // 注册全局快捷键
   useGlobalShortcuts();

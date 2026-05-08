@@ -10,7 +10,7 @@ import { X } from "lucide-react";
 import { usePubSubStore } from "@/stores/pubsub-store";
 import { useConnectionStore } from "@/stores/connection-store";
 import type { PubSubMessage } from "@/lib/tauri-api";
-import { subscribeChannels, publishMessage } from "@/lib/tauri-api";
+import { subscribeChannels, unsubscribeChannels, publishMessage } from "@/lib/tauri-api";
 import { MessageList } from "./message-list";
 
 /** Pub/Sub 主页面 */
@@ -34,28 +34,40 @@ export function PubSubPage() {
   const [publishChannel, setPublishChannel] = useState("");
   const [publishContent, setPublishContent] = useState("");
 
-  // 连接变化时重置
+  // 连接变化时重置并取消旧订阅
   useEffect(() => {
     resetPubSub();
+    return () => {
+      if (activeConnectionId) {
+        unsubscribeChannels(activeConnectionId).catch(() => {});
+      }
+    };
   }, [activeConnectionId, resetPubSub]);
 
   // 注册 Tauri Event 监听（仅 Tauri 环境）
   useEffect(() => {
     let unlisten: (() => void) | undefined;
+    let mounted = true;
 
     const setup = async () => {
       if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
         const { listen } = await import("@tauri-apps/api/event");
-        unlisten = await listen<PubSubMessage>("redis://pubsub", (event) => {
+        const handler = await listen<PubSubMessage>("redis://pubsub", (event) => {
           if (!usePubSubStore.getState().paused) {
             usePubSubStore.getState().addMessage(event.payload);
           }
         });
+        if (mounted) {
+          unlisten = handler;
+        } else {
+          handler();
+        }
       }
     };
     setup();
 
     return () => {
+      mounted = false;
       unlisten?.();
     };
   }, []);

@@ -34,7 +34,7 @@ impl<T: Serialize> IpcResponse<T> {
 
     pub fn err(msg: impl Into<String>) -> Self {
         Self {
-            success: true,
+            success: false,
             data: None,
             error: Some(msg.into()),
         }

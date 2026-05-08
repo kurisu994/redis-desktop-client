@@ -96,7 +96,8 @@
     "conflictOverwrite": "覆盖",
     "conflictRename": "重命名",
     "importSuccess": "导入 {{imported}} 个，跳过 {{skipped}} 个，覆盖 {{overwritten}} 个",
-    "exportSuccess": "导出成功"
+    "exportSuccess": "导出成功",
+    "saveFailed": "保存连接失败"
   },
   "browser": {
     "title": "浏览器",
@@ -121,7 +122,13 @@
     "selectAll": "全选",
     "deselectAll": "取消全选",
     "batchDeleteConfirm": "确定要删除 {{count}} 个 Key 吗？此操作无法撤销。",
-    "batchDeleteTitle": "批量删除 Key"
+    "batchDeleteTitle": "批量删除 Key",
+    "scanFailed": "扫描 Key 失败",
+    "loadKeyInfoFailed": "加载 Key 信息失败",
+    "deleteFailed": "删除 Key 失败",
+    "batchDeleteFailed": "批量删除 Key 失败",
+    "exportFailed": "导出 Key 失败",
+    "maxLoadKeysReached": "已加载 {{count}} 个 Key，请使用过滤器缩小范围。"
   },
   "keyDetail": {
     "type": "类型",
@@ -177,7 +184,9 @@
     "moreFormats": "更多 ▾",
     "jsonPath": "路径",
     "formatJson": "格式化",
-    "rawJsonView": "原始 JSON"
+    "rawJsonView": "原始 JSON",
+    "unsupportedType": "不支持的数据类型: {{type}}",
+    "invalidJson": "JSON 格式无效"
   },
   "keyDialog": {
     "createKey": "新建键",

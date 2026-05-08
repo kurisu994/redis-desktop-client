@@ -3264,6 +3264,7 @@ dependencies = [
  "log",
  "rand 0.8.5",
  "redis",
+ "regex",
  "serde",
  "serde_json",
  "tauri",
@@ -3277,6 +3278,7 @@ dependencies = [
  "tauri-plugin-updater",
  "thiserror 2.0.18",
  "tokio",
+ "url",
  "uuid",
 ]
 

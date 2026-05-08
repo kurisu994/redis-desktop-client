@@ -100,7 +100,9 @@ export const useCliStore = create<CliState>((set, get) => ({
   addOutput: (tabId, entry) => {
     set((state) => ({
       tabs: state.tabs.map((t) =>
-        t.id === tabId ? { ...t, outputs: [...t.outputs, entry] } : t,
+        t.id === tabId
+          ? { ...t, outputs: [...t.outputs, entry].slice(-5000) }
+          : t,
       ),
     }));
   },

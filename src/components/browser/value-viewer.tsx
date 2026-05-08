@@ -2,6 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { KeyInfo } from "@/stores/browser-store";
 import { useBrowserStore } from "@/stores/browser-store";
 import {
@@ -85,6 +86,7 @@ export function ValueViewer({
   keyInfo,
   onValueChanged,
 }: ValueViewerProps) {
+  const { t } = useTranslation();
   const totalCount = keyInfo.length;
   switch (keyInfo.key_type) {
     case "string":
@@ -140,7 +142,7 @@ export function ValueViewer({
     default:
       return (
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
-          不支持的数据类型: {keyInfo.key_type}
+          {t("valueViewer.unsupportedType", { type: keyInfo.key_type })}
         </div>
       );
   }
@@ -1745,8 +1747,8 @@ function JsonViewer({
       await setJsonValue(connectionId, selectedDb, keyName, path, value);
       setOriginalValue(value);
       onValueChanged();
-    } catch (err) {
-      console.error("保存 JSON 值失败:", err);
+    } catch {
+      toast.error(t("valueEditor.invalidJson"));
     }
   };
 

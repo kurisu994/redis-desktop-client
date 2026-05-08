@@ -88,6 +88,16 @@ pub async fn get_string_value_partial(
     Ok(String::from_utf8_lossy(&raw).into_owned())
 }
 
+/// 单次分页获取数量上限
+const MAX_VALUE_COUNT: u64 = 10000;
+
+fn validate_value_count(count: u64) -> Result<(), String> {
+    if count == 0 || count > MAX_VALUE_COUNT {
+        return Err(format!("count 必须在 1-{} 范围内", MAX_VALUE_COUNT));
+    }
+    Ok(())
+}
+
 /// 获取 Hash 类型的值 — HSCAN 分页（循环迭代直到收集满 count 条或扫描完毕，支持二进制数据）
 #[tauri::command]
 pub async fn get_hash_value(
@@ -99,6 +109,7 @@ pub async fn get_hash_value(
     pattern: String,
     count: u64,
 ) -> Result<HashScanResult, String> {
+    validate_value_count(count)?;
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
 
@@ -178,6 +189,7 @@ pub async fn get_set_value(
     pattern: String,
     count: u64,
 ) -> Result<SetScanResult, String> {
+    validate_value_count(count)?;
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
 
@@ -257,6 +269,7 @@ pub async fn get_stream_value(
     end: String,
     count: u64,
 ) -> Result<Vec<StreamEntry>, String> {
+    validate_value_count(count)?;
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
 

@@ -41,6 +41,16 @@ pub struct KeyInfo {
     pub length: i64,
 }
 
+/// 单次扫描 Key 数量上限
+const MAX_SCAN_COUNT: u64 = 10000;
+
+fn validate_count(count: u64, max: u64) -> Result<(), String> {
+    if count == 0 || count > max {
+        return Err(format!("count 必须在 1-{} 范围内", max));
+    }
+    Ok(())
+}
+
 /// 基于 SCAN 分页扫描 Key 列表 + pipeline 批量 TYPE
 #[tauri::command]
 pub async fn scan_keys(
@@ -51,6 +61,8 @@ pub async fn scan_keys(
     pattern: String,
     count: u64,
 ) -> Result<ScanResult, String> {
+    validate_count(count, MAX_SCAN_COUNT)?;
+
     let mut conn = pool.get_connection(&id).await?;
 
     // 切换数据库
@@ -88,7 +100,7 @@ pub async fn scan_keys(
             .await
             .map_err(|e| e.to_string())?;
 
-        for (k, t) in raw_keys.into_iter().zip(types.into_iter()) {
+        for (k, t) in raw_keys.into_iter().zip(types) {
             // 规范化 RedisJSON 类型名
             let key_type = if t == "ReJSON-RL" {
                 "rejson".to_string()

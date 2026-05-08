@@ -13,6 +13,30 @@ pub struct CommandResult {
     pub elapsed_ms: u64,
 }
 
+/// 危险命令黑名单 — 禁止执行的 Redis 管理/危险命令
+const BLOCKED_COMMANDS: &[&str] = &[
+    "FLUSHALL",
+    "FLUSHDB",
+    "SHUTDOWN",
+    "CONFIG",
+    "DEBUG",
+    "SAVE",
+    "BGSAVE",
+    "BGREWRITEAOF",
+    "MODULE",
+    "SLAVEOF",
+    "REPLICAOF",
+];
+
+/// 检查命令是否在黑名单中
+fn check_command_blocked(cmd: &str) -> Result<(), String> {
+    let upper = cmd.to_uppercase();
+    if BLOCKED_COMMANDS.contains(&upper.as_str()) {
+        return Err(format!("该命令已被禁用: {}", upper));
+    }
+    Ok(())
+}
+
 /// 执行 Redis 命令 — 解析用户输入并发送到 Redis
 #[tauri::command]
 pub async fn execute_command(
@@ -35,6 +59,9 @@ pub async fn execute_command(
     if args.is_empty() {
         return Err("空命令".to_string());
     }
+
+    // 检查危险命令黑名单
+    check_command_blocked(&args[0])?;
 
     // 构建并执行命令
     let start = std::time::Instant::now();

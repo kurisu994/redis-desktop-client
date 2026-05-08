@@ -96,7 +96,8 @@
     "conflictOverwrite": "Overwrite",
     "conflictRename": "Rename",
     "importSuccess": "Imported {{imported}}, skipped {{skipped}}, overwritten {{overwritten}}",
-    "exportSuccess": "Export successful"
+    "exportSuccess": "Export successful",
+    "saveFailed": "Failed to save connection"
   },
   "browser": {
     "title": "Browser",
@@ -121,7 +122,13 @@
     "selectAll": "Select All",
     "deselectAll": "Deselect All",
     "batchDeleteConfirm": "Are you sure you want to delete {{count}} keys? This action cannot be undone.",
-    "batchDeleteTitle": "Batch Delete Keys"
+    "batchDeleteTitle": "Batch Delete Keys",
+    "scanFailed": "Failed to scan keys",
+    "loadKeyInfoFailed": "Failed to load key info",
+    "deleteFailed": "Failed to delete key",
+    "batchDeleteFailed": "Failed to batch delete keys",
+    "exportFailed": "Failed to export keys",
+    "maxLoadKeysReached": "Loaded {{count}} keys. Use filter to narrow results."
   },
   "keyDetail": {
     "type": "Type",
@@ -177,7 +184,9 @@
     "moreFormats": "More ▾",
     "jsonPath": "Path",
     "formatJson": "Format",
-    "rawJsonView": "Raw JSON"
+    "rawJsonView": "Raw JSON",
+    "unsupportedType": "Unsupported data type: {{type}}",
+    "invalidJson": "Invalid JSON format"
   },
   "keyDialog": {
     "createKey": "Create New Key",

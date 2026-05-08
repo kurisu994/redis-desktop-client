@@ -148,7 +148,10 @@ impl ConnectionStore {
         if let Some(parent) = self.store_path.parent() {
             std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
-        std::fs::write(&self.store_path, json).map_err(|e| e.to_string())?;
+        // 使用临时文件 + rename 实现原子写入，避免进程崩溃导致文件损坏
+        let tmp_path = self.store_path.with_extension("tmp");
+        std::fs::write(&tmp_path, json).map_err(|e| e.to_string())?;
+        std::fs::rename(&tmp_path, &self.store_path).map_err(|e| e.to_string())?;
         Ok(())
     }
 

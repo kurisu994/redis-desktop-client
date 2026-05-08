@@ -92,6 +92,7 @@ pub fn run() {
             // Pub/Sub
             commands::pubsub::publish_message,
             commands::pubsub::subscribe_channels,
+            commands::pubsub::unsubscribe_channels,
             // Key 数据导入导出
             commands::data::export_keys,
             commands::data::import_keys,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useAppStore } from "@/stores/app-store";
 import { useConnectionStore } from "@/stores/connection-store";
 import { useBrowserStore } from "@/stores/browser-store";
@@ -27,6 +27,11 @@ export function useGlobalShortcuts() {
   const { openTab, activateTab, setCommandPaletteOpen } = useAppStore();
   const { openDialog } = useConnectionStore();
   const { refreshKeys, selectedKey } = useBrowserStore();
+  const selectedKeyRef = useRef(selectedKey);
+
+  useEffect(() => {
+    selectedKeyRef.current = selectedKey;
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -46,7 +51,7 @@ export function useGlobalShortcuts() {
         !e.shiftKey &&
         !e.altKey
       ) {
-        if (!isEditableElement(e.target) && selectedKey) {
+        if (!isEditableElement(e.target) && selectedKeyRef.current) {
           e.preventDefault();
           window.dispatchEvent(new CustomEvent("redis:delete-key"));
           return;
@@ -101,7 +106,7 @@ export function useGlobalShortcuts() {
         case "d":
         case "D":
           // ⌘D: 删除选中 Key
-          if (!e.shiftKey && selectedKey) {
+          if (!e.shiftKey && selectedKeyRef.current) {
             e.preventDefault();
             window.dispatchEvent(new CustomEvent("redis:delete-key"));
           }
@@ -132,6 +137,5 @@ export function useGlobalShortcuts() {
     openDialog,
     refreshKeys,
     setCommandPaletteOpen,
-    selectedKey,
   ]);
 }

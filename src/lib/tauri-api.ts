@@ -758,6 +758,11 @@ export async function subscribeChannels(
   return invoke("subscribe_channels", { id, channels });
 }
 
+/** 取消订阅频道 */
+export async function unsubscribeChannels(id: string): Promise<void> {
+  return invoke("unsubscribe_channels", { id });
+}
+
 /** 发布消息 */
 export async function publishMessage(
   id: string,

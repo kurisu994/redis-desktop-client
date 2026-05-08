@@ -8,9 +8,9 @@
   "permissions": [
     "core:default",
     "dialog:default",
-    "fs:default",
-    "opener:default",
     "updater:default",
-    "process:default"
+    "opener:allow-open-url",
+    "fs:allow-appdata-read",
+    "fs:allow-appdata-write"
   ]
 }

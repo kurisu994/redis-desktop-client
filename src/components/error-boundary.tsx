@@ -3,6 +3,7 @@
 import { Component, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
+import i18n from "@/i18n";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -41,14 +42,14 @@ export class ErrorBoundary extends Component<
       return (
         <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
           <AlertTriangle size={48} className="text-yellow-500" />
-          <h2 className="text-lg font-semibold">出现了一些问题</h2>
+          <h2 className="text-lg font-semibold">{i18n.t("errorBoundary.title")}</h2>
           <p className="text-sm text-muted-foreground text-center max-w-md">
-            应用遇到了意外错误，请尝试重新加载。
+            {i18n.t("errorBoundary.description")}
           </p>
           {this.state.error && (
             <details className="text-xs text-muted-foreground max-w-lg w-full">
               <summary className="cursor-pointer hover:text-foreground">
-                错误详情
+                {i18n.t("errorBoundary.details")}
               </summary>
               <pre className="mt-2 p-2 bg-muted rounded overflow-x-auto whitespace-pre-wrap">
                 {this.state.error.message}
@@ -57,7 +58,7 @@ export class ErrorBoundary extends Component<
               </pre>
             </details>
           )}
-          <Button onClick={this.handleReload}>重新加载</Button>
+          <Button onClick={this.handleReload}>{i18n.t("errorBoundary.reload")}</Button>
         </div>
       );
     }

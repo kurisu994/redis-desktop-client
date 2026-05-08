@@ -1,5 +1,5 @@
 use crate::config::store::ConnectionStore;
-use crate::redis::client::RedisClientManager;
+use crate::redis::client::{build_redis_url, RedisClientManager};
 use redis::AsyncCommands;
 use serde::Serialize;
 use tauri::Emitter;
@@ -50,12 +50,13 @@ pub async fn subscribe_channels(
         .ok_or_else(|| format!("找不到连接配置: {}", id))?;
 
     let url = build_redis_url(
+        "redis",
         &config.host,
         config.port,
         config.username.as_deref(),
         config.password.as_deref(),
         config.db,
-    );
+    )?;
 
     let client = redis::Client::open(url).map_err(|e| e.to_string())?;
     let mut pubsub = client.get_async_pubsub().await.map_err(|e| e.to_string())?;
@@ -72,7 +73,7 @@ pub async fn subscribe_channels(
     // 异步任务持续接收消息并通过 Tauri Event 推送
     let conn_id = id.clone();
 
-    tauri::async_runtime::spawn(async move {
+    let handle = tauri::async_runtime::spawn(async move {
         use futures_util::StreamExt;
         let mut msg_stream = pubsub.on_message();
 
@@ -105,20 +106,19 @@ pub async fn subscribe_channels(
         }
     });
 
+    // 注册订阅任务句柄，便于后续取消
+    manager.register_subscriber(id, handle).await;
+
     Ok(())
 }
 
-/// 构建 Redis URL
-fn build_redis_url(
-    host: &str,
-    port: u16,
-    username: Option<&str>,
-    password: Option<&str>,
-    db: u8,
-) -> String {
-    match (username, password) {
-        (Some(user), Some(pwd)) => format!("redis://{}:{}@{}:{}/{}", user, pwd, host, port, db),
-        (None, Some(pwd)) => format!("redis://:{}@{}:{}/{}", pwd, host, port, db),
-        _ => format!("redis://{}:{}/{}", host, port, db),
-    }
+/// 取消指定连接的所有频道订阅
+#[tauri::command]
+pub async fn unsubscribe_channels(
+    manager: State<'_, RedisClientManager>,
+    id: String,
+) -> Result<(), String> {
+    manager.unregister_subscriber(&id).await;
+    Ok(())
 }
+

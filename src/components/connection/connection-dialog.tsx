@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -171,10 +172,10 @@ export function ConnectionDialog() {
       id: editingConnection?.id || crypto.randomUUID(),
       name,
       host,
-      port: parseInt(port, 10),
+      port: Number.isNaN(parseInt(port, 10)) ? 6379 : parseInt(port, 10),
       username: username || undefined,
       password: password || undefined,
-      db: parseInt(db, 10),
+      db: Number.isNaN(parseInt(db, 10)) ? 0 : parseInt(db, 10),
       connectionType,
     };
     if (ssh.enabled) config.ssh = ssh;
@@ -236,12 +237,12 @@ export function ConnectionDialog() {
       const updated = await listConnections();
       setConnections(updated);
       closeDialog();
-    } catch (err) {
-      console.error("保存连接失败:", err);
+    } catch {
+      toast.error(t("connection.saveFailed"));
     } finally {
       setSaving(false);
     }
-  }, [buildConfig, closeDialog, setConnections]);
+  }, [buildConfig, closeDialog, setConnections, t]);
 
   /** 更新 SSH 配置字段 */
   const updateSsh = (patch: Partial<SshConfig>) =>

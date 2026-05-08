@@ -30,6 +30,9 @@ pub async fn get_server_info(
     Ok(parse_info(&info))
 }
 
+/// 慢查询日志条数上限
+const MAX_SLOWLOG_COUNT: u32 = 1000;
+
 /// 获取慢查询日志
 #[tauri::command]
 pub async fn get_slowlog(
@@ -38,7 +41,7 @@ pub async fn get_slowlog(
     count: Option<u32>,
 ) -> Result<Vec<SlowLogEntry>, String> {
     let mut conn = manager.get_connection(&id).await?;
-    let count = count.unwrap_or(50);
+    let count = count.unwrap_or(50).min(MAX_SLOWLOG_COUNT);
     let raw: Vec<redis::Value> = redis::cmd("SLOWLOG")
         .arg("GET")
         .arg(count)
