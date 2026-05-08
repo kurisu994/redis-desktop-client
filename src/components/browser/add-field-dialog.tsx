@@ -19,7 +19,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import type { OnMount } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
@@ -287,7 +287,7 @@ export function AddFieldDialog({
                 <div className="relative">
                   <button
                     type="button"
-                    className={`px-2 py-0.5 rounded transition-colors ${
+                    className={`inline-flex items-center px-2 py-0.5 rounded transition-colors ${
                       EDITOR_MORE_FORMATS.includes(format)
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -297,7 +297,7 @@ export function AddFieldDialog({
                     {EDITOR_MORE_FORMATS.includes(format)
                       ? EDITOR_FORMAT_LABELS[format]
                       : t("valueEditor.moreFormats")}
-                    <span className="ml-1 text-[10px]">▾</span>
+                    <ChevronDown className="ml-1 h-3 w-3" />
                   </button>
                   {showMoreFormats && (
                     <>

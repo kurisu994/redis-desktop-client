@@ -41,6 +41,7 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import { AddFieldDialog } from "./add-field-dialog";
 import Editor, { DiffEditor } from "@monaco-editor/react";
@@ -547,7 +548,8 @@ function StringViewer({
             {/* 更多格式下拉 */}
             <div className="relative">
               <button
-                className={`px-2 py-0.5 rounded transition-colors ${
+                type="button"
+                className={`inline-flex items-center px-2 py-0.5 rounded transition-colors ${
                   MORE_FORMATS.includes(format)
                     ? "text-primary bg-primary/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -557,7 +559,7 @@ function StringViewer({
                 {MORE_FORMATS.includes(format)
                   ? FORMAT_LABELS[format]
                   : t("valueEditor.moreFormats")}
-                <span className="ml-1 text-[10px]">▾</span>
+                <ChevronDown className="ml-1 h-3 w-3" />
               </button>
               {showMoreFormats && (
                 <>
