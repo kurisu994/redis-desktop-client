@@ -183,9 +183,11 @@ export function ConnectionItem({
           <span className="truncate flex-1 text-left">
             {connection.name || `${connection.host}:${connection.port}`}
           </span>
-          <span className="text-muted-foreground text-xs shrink-0">
-            {connection.host}:{connection.port}
-          </span>
+          {connection.name && (
+            <span className="text-muted-foreground text-xs shrink-0">
+              {connection.host}:{connection.port}
+            </span>
+          )}
         </button>
       </div>
 

@@ -49,3 +49,4 @@ src-tauri/gen/
 # Tauri updater signing keys
 *.key
 *.key.pub
+.gstack/

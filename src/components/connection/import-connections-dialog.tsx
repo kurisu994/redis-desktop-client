@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -129,6 +130,7 @@ export function ImportConnectionsDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("connection.importConnections")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex gap-2 items-center">

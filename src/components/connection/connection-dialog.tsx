@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -259,6 +260,7 @@ export function ConnectionDialog() {
           <DialogTitle>
             {isEditing ? t("connection.edit") : t("connection.new")}
           </DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         <div className="flex-1 overflow-y-auto">
           <Tabs defaultValue="general">

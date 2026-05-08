@@ -31,6 +31,10 @@
     "export": "Export",
     "import": "Import"
   },
+  "sidebar": {
+    "collapse": "Collapse Sidebar",
+    "expand": "Expand Sidebar"
+  },
   "connection": {
     "title": "Connections",
     "new": "New Connection",

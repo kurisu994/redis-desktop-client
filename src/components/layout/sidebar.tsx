@@ -45,8 +45,13 @@ export function Sidebar() {
     return (
       <aside className="w-10 border-r bg-card flex flex-col items-center pt-2 shrink-0">
         <button
-          onClick={toggleSidebar}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleSidebar();
+          }}
           className="p-1.5 rounded-md hover:bg-accent transition-colors"
+          aria-label={t("sidebar.expand")}
         >
           <ChevronLeft className="w-4 h-4 rotate-180" />
         </button>
@@ -74,8 +79,13 @@ export function Sidebar() {
             <Download size={14} />
           </button>
           <button
-            onClick={toggleSidebar}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleSidebar();
+            }}
             className="p-1 rounded-md hover:bg-accent transition-colors"
+            aria-label={t("sidebar.collapse")}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
