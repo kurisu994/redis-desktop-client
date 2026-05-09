@@ -9,9 +9,6 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   release:
     name: Release (${{ matrix.os }})
@@ -31,15 +28,15 @@ jobs:
             target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
@@ -110,6 +107,6 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "Redis Desktop Client ${{ github.ref_name }}"
           releaseBody: ${{ steps.changelog.outputs.notes }}
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: --target ${{ matrix.target }}
