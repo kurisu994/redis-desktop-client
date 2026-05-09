@@ -121,4 +121,3 @@ pub async fn unsubscribe_channels(
     manager.unregister_subscriber(&id).await;
     Ok(())
 }
-

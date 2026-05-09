@@ -161,11 +161,7 @@ pub async fn start_monitor(
     // 可选：SELECT db
     if db > 0 {
         let db_str = db.to_string();
-        let select_cmd = format!(
-            "*2\r\n$6\r\nSELECT\r\n${}\r\n{}\r\n",
-            db_str.len(),
-            db_str
-        );
+        let select_cmd = format!("*2\r\n$6\r\nSELECT\r\n${}\r\n{}\r\n", db_str.len(), db_str);
         writer
             .write_all(select_cmd.as_bytes())
             .await

@@ -105,9 +105,8 @@ pub fn build_redis_url(
     password: Option<&str>,
     db: u8,
 ) -> Result<String, String> {
-    let mut url =
-        url::Url::parse(&format!("{}://{}:{}/{}", scheme, host, port, db))
-            .map_err(|e| format!("无效的 Redis URL: {}", e))?;
+    let mut url = url::Url::parse(&format!("{}://{}:{}/{}", scheme, host, port, db))
+        .map_err(|e| format!("无效的 Redis URL: {}", e))?;
     if let Some(user) = username {
         url.set_username(user)
             .map_err(|_| "设置用户名失败".to_string())?;

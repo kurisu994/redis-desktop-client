@@ -28,7 +28,9 @@ pub fn get_or_create_master_key(key_path: &Path) -> Result<[u8; 32], String> {
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            let mut perm = std::fs::metadata(key_path).map_err(|e| e.to_string())?.permissions();
+            let mut perm = std::fs::metadata(key_path)
+                .map_err(|e| e.to_string())?
+                .permissions();
             perm.set_mode(0o600);
             std::fs::set_permissions(key_path, perm).map_err(|e| e.to_string())?;
         }
