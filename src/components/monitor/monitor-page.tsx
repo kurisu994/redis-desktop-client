@@ -208,7 +208,7 @@ export function MonitorPage() {
   }, [activeConnectionId, setMonitoring]);
 
   return (
-    <div className="flex flex-col h-full p-4 gap-3 overflow-hidden">
+    <div className="flex flex-col h-full w-full p-4 gap-3 overflow-hidden">
       {/* 指标卡片 */}
       {serverInfo && <InfoCards info={serverInfo} />}
 
@@ -257,7 +257,7 @@ export function MonitorPage() {
       </div>
 
       {/* 内容区域 */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === "info" && serverInfo && (
           <ServerInfoPanel info={serverInfo} />
         )}

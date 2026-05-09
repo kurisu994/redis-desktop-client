@@ -44,95 +44,103 @@ export function RealtimeCharts({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 h-full">
+    <div className="grid grid-cols-2 gap-3 h-full content-stretch">
       {/* ops/sec 图表 */}
-      <div className="bg-muted rounded-lg p-3">
+      <div className="bg-muted rounded-lg p-3 flex flex-col">
         <h4 className="text-xs font-semibold text-primary mb-2">
           {t("monitor.opsPerSec")}
         </h4>
-        <ResponsiveContainer width="100%" height={160}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="time" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} />
-            <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="ops"
-              stroke="#006FEE"
-              strokeWidth={2}
-              dot={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="flex-1 min-h-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="ops"
+                stroke="#006FEE"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* 内存 (MB) 图表 */}
-      <div className="bg-muted rounded-lg p-3">
+      <div className="bg-muted rounded-lg p-3 flex flex-col">
         <h4 className="text-xs font-semibold text-warning mb-2">
           {t("monitor.memoryMB")}
         </h4>
-        <ResponsiveContainer width="100%" height={160}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="time" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} />
-            <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="memory"
-              stroke="#F5A524"
-              strokeWidth={2}
-              dot={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="flex-1 min-h-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="memory"
+                stroke="#F5A524"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* 连接数图表 */}
-      <div className="bg-muted rounded-lg p-3">
+      <div className="bg-muted rounded-lg p-3 flex flex-col">
         <h4 className="text-xs font-semibold text-secondary mb-2">
           {t("monitor.connectedClients")}
         </h4>
-        <ResponsiveContainer width="100%" height={160}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="time" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} />
-            <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="clients"
-              stroke="#9353D3"
-              strokeWidth={2}
-              dot={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="flex-1 min-h-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="clients"
+                stroke="#9353D3"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* 命中率 (%) 图表 */}
-      <div className="bg-muted rounded-lg p-3">
+      <div className="bg-muted rounded-lg p-3 flex flex-col">
         <h4 className="text-xs font-semibold text-green-500 mb-2">
           {t("monitor.hitRate")}
         </h4>
-        <ResponsiveContainer width="100%" height={160}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="time" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
-            <Tooltip />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="hitRate"
-              stroke="#17C964"
-              strokeWidth={2}
-              dot={false}
-              name="%"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="flex-1 min-h-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="hitRate"
+                stroke="#17C964"
+                strokeWidth={2}
+                dot={false}
+                name="%"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );

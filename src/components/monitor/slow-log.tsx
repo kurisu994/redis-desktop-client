@@ -35,7 +35,7 @@ export function SlowLog({
             {t("monitor.noSlowLog")}
           </div>
         ) : (
-          <table className="w-full text-xs">
+          <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="border-b border-border text-muted-foreground">
                 <th className="text-left p-2 w-16">ID</th>
@@ -60,7 +60,7 @@ export function SlowLog({
                   <td className="p-2 text-right font-mono text-yellow-500">
                     {entry.duration_us.toLocaleString()}μs
                   </td>
-                  <td className="p-2 font-mono truncate max-w-md">
+                  <td className="p-2 font-mono truncate">
                     {entry.command}
                   </td>
                   <td className="p-2 text-muted-foreground">

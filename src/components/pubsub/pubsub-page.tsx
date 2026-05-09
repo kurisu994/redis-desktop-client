@@ -107,7 +107,7 @@ export function PubSubPage() {
   }, [publishChannel, publishContent, activeConnectionId, t]);
 
   return (
-    <div className="flex flex-col h-full p-4 gap-3 overflow-hidden">
+    <div className="flex flex-col h-full w-full p-4 gap-3 overflow-hidden">
       {/* 订阅管理 */}
       <div className="flex items-center gap-2">
         <Input
