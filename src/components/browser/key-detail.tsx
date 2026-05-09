@@ -74,6 +74,9 @@ export function KeyDetail({
       if (remaining <= 0) {
         setRemainingTtl(0);
         clearInterval(timer);
+        // TTL 到期，标记 key 已过期
+        useBrowserStore.getState().setKeyInfo(null);
+        useBrowserStore.getState().setKeyExpired(true);
         return;
       }
       setRemainingTtl(remaining);

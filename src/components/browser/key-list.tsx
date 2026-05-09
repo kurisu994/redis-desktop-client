@@ -148,7 +148,7 @@ export const KeyList = forwardRef<KeyListHandle, KeyListProps>(function KeyList(
         }}
       />
       {loading && keys.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center pt-12">
           <Loader2 className="w-5 h-5 animate-spin text-primary" />
         </div>
       )}

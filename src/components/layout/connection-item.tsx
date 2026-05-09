@@ -9,6 +9,9 @@ import {
   type ConnectionConfig,
 } from "@/stores/connection-store";
 import { useBrowserStore, type DbSize } from "@/stores/browser-store";
+import { useCliStore } from "@/stores/cli-store";
+import { usePubSubStore } from "@/stores/pubsub-store";
+import { useMonitorStore } from "@/stores/monitor-store";
 import {
   connectRedis,
   disconnectRedis,
@@ -135,6 +138,14 @@ export function ConnectionItem({
     disconnect: async () => {
       await disconnectRedis(connection.id);
       setConnectionStatus(connection.id, "disconnected");
+      // 清空选中的 key 和浏览器状态
+      resetBrowser();
+      // 关闭 CLI、Pub/Sub、Monitor 等 tab 页
+      useAppStore.getState().closeAllClosableTabs();
+      // 清理各 store 状态
+      useCliStore.getState().removeTabsByConnection(connection.id);
+      usePubSubStore.getState().resetPubSub();
+      useMonitorStore.getState().resetMonitor();
     },
     edit: () => openDialog(connection),
     duplicate: async () => {
@@ -199,6 +210,8 @@ export function ConnectionItem({
                 key={i}
                 className={`px-2 py-1 rounded-md text-xs cursor-pointer flex justify-between items-center w-full transition-colors ${isSelectedDb ? "bg-primary/10 text-primary" : "hover:bg-accent text-muted-foreground"}`}
                 onClick={() => {
+                  // 如果点击的是当前已选中的同一个 db，不做任何操作
+                  if (isActive && selectedDb === i) return;
                   setActiveConnection(connection.id);
                   setConnectionId(connection.id);
                   setSelectedDb(i);

@@ -42,6 +42,8 @@ interface AppState {
   activateTab: (id: string) => void;
   setKeySeparator: (sep: string) => void;
   setCommandPaletteOpen: (open: boolean) => void;
+  /** 关闭所有可关闭的 Tab（断开连接时使用） */
+  closeAllClosableTabs: () => void;
 }
 
 /** 应用全局状态 Store */
@@ -99,4 +101,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setKeySeparator: (sep) => set({ keySeparator: sep }),
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
+
+  closeAllClosableTabs: () => {
+    set((state) => ({
+      tabs: state.tabs.filter((t) => !t.closable),
+      activeTabId: "browser",
+    }));
+  },
 }));
