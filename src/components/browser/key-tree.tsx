@@ -31,38 +31,6 @@ const TYPE_GLOW: Record<string, string> = {
   stream: "shadow-[0_0_8px_rgba(6,182,212,0.5)]",
 };
 
-/** 文件夹层级的弱色调，按深度轮换用于区分父级目录 */
-const FOLDER_TONES = [
-  {
-    row: "bg-sky-500/[0.04] hover:bg-sky-500/[0.08]",
-    icon: "text-sky-500/70 dark:text-sky-300/70",
-    text: "text-sky-700/80 dark:text-sky-200/75",
-    count: "text-sky-600/60 dark:text-sky-300/55",
-    border: "border-sky-500/20",
-  },
-  {
-    row: "bg-emerald-500/[0.04] hover:bg-emerald-500/[0.08]",
-    icon: "text-emerald-500/70 dark:text-emerald-300/70",
-    text: "text-emerald-700/80 dark:text-emerald-200/75",
-    count: "text-emerald-600/60 dark:text-emerald-300/55",
-    border: "border-emerald-500/20",
-  },
-  {
-    row: "bg-violet-500/[0.04] hover:bg-violet-500/[0.08]",
-    icon: "text-violet-500/70 dark:text-violet-300/70",
-    text: "text-violet-700/80 dark:text-violet-200/75",
-    count: "text-violet-600/60 dark:text-violet-300/55",
-    border: "border-violet-500/20",
-  },
-  {
-    row: "bg-amber-500/[0.04] hover:bg-amber-500/[0.08]",
-    icon: "text-amber-500/70 dark:text-amber-300/70",
-    text: "text-amber-700/80 dark:text-amber-200/75",
-    count: "text-amber-600/60 dark:text-amber-300/55",
-    border: "border-amber-500/20",
-  },
-] as const;
-
 interface TreeNode {
   name: string;
   fullPath: string;
@@ -90,11 +58,6 @@ function getParentPaths(key: string) {
     .map((_, index) => parts.slice(0, index + 1).join(":"));
 }
 
-/** 根据目录深度获取弱色调 */
-function getFolderTone(depth: number) {
-  return FOLDER_TONES[depth % FOLDER_TONES.length];
-}
-
 /** 树形 Key 浏览器 — 按 : 分隔符构建命名空间层级，支持多选和收藏 */
 export const KeyTree = forwardRef<KeyTreeHandle, KeyTreeProps>(function KeyTree(
   { keys, selectedKey, onSelectKey, loading },
@@ -104,6 +67,11 @@ export const KeyTree = forwardRef<KeyTreeHandle, KeyTreeProps>(function KeyTree(
   const leafRefs = useRef(new Map<string, HTMLDivElement>());
   const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } =
     useBrowserStore();
+  /** 当前选中 Key 的父级目录路径，用于只高亮命中的目录链 */
+  const selectedParentPaths = useMemo(
+    () => new Set(selectedKey ? getParentPaths(selectedKey) : []),
+    [selectedKey],
+  );
 
   /** 构建树结构 */
   const tree = useMemo(() => {
@@ -184,15 +152,19 @@ export const KeyTree = forwardRef<KeyTreeHandle, KeyTreeProps>(function KeyTree(
   );
 
   /** 渲染文件夹节点 */
-  const renderFolder = (node: TreeNode, depth: number) => {
+  const renderFolder = (node: TreeNode) => {
     const isExpanded = expanded.has(node.fullPath);
     const childCount = countKeys(node);
-    const tone = getFolderTone(depth);
+    const isSelectedParent = selectedParentPaths.has(node.fullPath);
 
     return (
       <div key={node.fullPath}>
         <button
-          className={`flex items-center gap-2 w-full py-1.5 px-2 rounded-md cursor-pointer text-sm transition-colors ${tone.row}`}
+          className={`flex items-center gap-2 w-full py-1.5 px-2 rounded-md cursor-pointer text-sm transition-colors ${
+            isSelectedParent
+              ? "bg-primary/[0.06] text-primary hover:bg-primary/[0.1]"
+              : "hover:bg-white/5"
+          }`}
           style={{ paddingLeft: "8px" }}
           onClick={() => toggleFolder(node.fullPath)}
         >
@@ -201,22 +173,38 @@ export const KeyTree = forwardRef<KeyTreeHandle, KeyTreeProps>(function KeyTree(
           ) : (
             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
           )}
-          <Folder className={`w-4 h-4 shrink-0 ${tone.icon}`} />
-          <span className={`truncate ${tone.text}`}>{node.name}</span>
-          <span className={`text-xs ml-auto shrink-0 ${tone.count}`}>
+          <Folder
+            className={`w-4 h-4 shrink-0 ${
+              isSelectedParent ? "text-primary/80" : "text-yellow-500/80"
+            }`}
+          />
+          <span
+            className={`truncate ${
+              isSelectedParent ? "text-primary" : "text-foreground/80"
+            }`}
+          >
+            {node.name}
+          </span>
+          <span
+            className={`text-xs ml-auto shrink-0 ${
+              isSelectedParent ? "text-primary/60" : "text-muted-foreground"
+            }`}
+          >
             {childCount}
           </span>
         </button>
 
         {isExpanded && (
           <div
-            className={`border-l pl-0.5 ${tone.border}`}
+            className={`border-l pl-0.5 ${
+              isSelectedParent ? "border-primary/30" : "border-border/50"
+            }`}
             style={{ marginLeft: "10px" }}
           >
             {/* 子文件夹 */}
             {Array.from(node.children.values())
               .sort((a, b) => a.name.localeCompare(b.name))
-              .map((child) => renderFolder(child, depth + 1))}
+              .map((child) => renderFolder(child))}
             {/* 叶子节点 Key */}
             {node.keys
               .sort((a, b) => a.key.localeCompare(b.key))
@@ -305,7 +293,7 @@ export const KeyTree = forwardRef<KeyTreeHandle, KeyTreeProps>(function KeyTree(
       {/* 根级文件夹 */}
       {Array.from(tree.children.values())
         .sort((a, b) => a.name.localeCompare(b.name))
-        .map((child) => renderFolder(child, 0))}
+        .map((child) => renderFolder(child))}
       {/* 根级 Key（无命名空间） */}
       {tree.keys
         .sort((a, b) => a.key.localeCompare(b.key))
