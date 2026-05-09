@@ -6,7 +6,7 @@ import {
   useMemo,
   useRef,
   type KeyboardEventHandler,
-  type MutableRefObject,
+  type RefObject,
 } from "react";
 
 type JsonTokenType =
@@ -173,7 +173,7 @@ export const JsonHighlightEditor = forwardRef<
       if (typeof forwardedRef === "function") {
         forwardedRef(node);
       } else if (forwardedRef) {
-        (forwardedRef as MutableRefObject<HTMLTextAreaElement | null>).current =
+        (forwardedRef as RefObject<HTMLTextAreaElement | null>).current =
           node;
       }
     },
