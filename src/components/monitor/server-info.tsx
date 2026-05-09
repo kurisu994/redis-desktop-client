@@ -105,7 +105,7 @@ export function ServerInfoPanel({ info }: { info: ServerInfo }) {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-3 overflow-y-auto">
+    <div className="grid grid-cols-3 gap-3 overflow-y-auto">
       {sections.map((section) => {
         const data = info[section];
         if (!data || Object.keys(data).length === 0) return null;

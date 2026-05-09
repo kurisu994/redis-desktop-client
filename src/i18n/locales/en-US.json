@@ -245,7 +245,14 @@
     "sectionMemory": "Memory",
     "sectionStats": "Stats",
     "sectionReplication": "Replication",
-    "sectionKeyspace": "Keyspace"
+    "sectionKeyspace": "Keyspace",
+    "log": "Log",
+    "startLog": "Start Monitor",
+    "stopLog": "Stop Monitor",
+    "clearLog": "Clear Log",
+    "logCount": "{{count}} entries",
+    "noLog": "No logs yet",
+    "waitingLog": "Waiting for log data..."
   },
   "pubsub": {
     "title": "Pub/Sub",

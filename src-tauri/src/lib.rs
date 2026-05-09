@@ -89,6 +89,8 @@ pub fn run() {
             commands::server::get_slowlog,
             commands::server::reset_slowlog,
             commands::server::set_slowlog_threshold,
+            commands::server::start_monitor,
+            commands::server::stop_monitor,
             // Pub/Sub
             commands::pubsub::publish_message,
             commands::pubsub::subscribe_channels,

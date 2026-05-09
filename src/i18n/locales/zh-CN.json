@@ -245,7 +245,14 @@
     "sectionMemory": "内存",
     "sectionStats": "统计",
     "sectionReplication": "主从复制",
-    "sectionKeyspace": "键空间"
+    "sectionKeyspace": "键空间",
+    "log": "日志",
+    "startLog": "开始监控",
+    "stopLog": "停止监控",
+    "clearLog": "清空日志",
+    "logCount": "{{count}} 条记录",
+    "noLog": "暂无日志",
+    "waitingLog": "等待日志数据..."
   },
   "pubsub": {
     "title": "发布/订阅",

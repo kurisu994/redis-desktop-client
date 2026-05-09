@@ -13,10 +13,18 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMonitorStore, type MonitorTab } from "@/stores/monitor-store";
 import { useConnectionStore } from "@/stores/connection-store";
-import { getServerInfo, getSlowLog, resetSlowLog } from "@/lib/tauri-api";
+import {
+  getServerInfo,
+  getSlowLog,
+  resetSlowLog,
+  startMonitor,
+  stopMonitor,
+} from "@/lib/tauri-api";
 import { InfoCards, ServerInfoPanel } from "./server-info";
 import { RealtimeCharts } from "./realtime-charts";
 import { SlowLog } from "./slow-log";
+import { LogPanel } from "./log-panel";
+import { listen } from "@tauri-apps/api/event";
 
 /** 刷新间隔选项 (ms) */
 const INTERVAL_OPTIONS = [
@@ -45,6 +53,11 @@ export function MonitorPage() {
     setPaused,
     loading,
     setLoading,
+    logEntries,
+    addLogEntry,
+    clearLogEntries,
+    monitoring,
+    setMonitoring,
     resetMonitor,
   } = useMonitorStore();
 
@@ -128,6 +141,52 @@ export function MonitorPage() {
     };
   }, [paused, refreshInterval, fetchServerInfo]);
 
+  // 监听 MONITOR 日志事件
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    const setupListener = async () => {
+      unlisten = await listen<string>("redis://monitor", (event) => {
+        addLogEntry({
+          timestamp: Date.now(),
+          message: event.payload,
+        });
+      });
+    };
+    setupListener();
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, [addLogEntry]);
+
+  // 连接断开时停止监控
+  useEffect(() => {
+    if (!activeConnectionId && monitoring) {
+      setMonitoring(false);
+    }
+  }, [activeConnectionId, monitoring, setMonitoring]);
+
+  /** 启动日志监控 */
+  const handleStartMonitor = useCallback(async () => {
+    if (!activeConnectionId) return;
+    try {
+      await startMonitor(activeConnectionId);
+      setMonitoring(true);
+    } catch (err) {
+      console.error("启动日志监控失败:", err);
+    }
+  }, [activeConnectionId, setMonitoring]);
+
+  /** 停止日志监控 */
+  const handleStopMonitor = useCallback(async () => {
+    if (!activeConnectionId) return;
+    try {
+      await stopMonitor(activeConnectionId);
+      setMonitoring(false);
+    } catch (err) {
+      console.error("停止日志监控失败:", err);
+    }
+  }, [activeConnectionId, setMonitoring]);
+
   return (
     <div className="flex flex-col h-full p-4 gap-3 overflow-hidden">
       {/* 指标卡片 */}
@@ -143,6 +202,7 @@ export function MonitorPage() {
             <TabsTrigger value="info">{t("monitor.serverInfo")}</TabsTrigger>
             <TabsTrigger value="realtime">{t("monitor.realtime")}</TabsTrigger>
             <TabsTrigger value="slowlog">{t("monitor.slowLog")}</TabsTrigger>
+            <TabsTrigger value="log">{t("monitor.log")}</TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="flex items-center gap-2">
@@ -192,6 +252,15 @@ export function MonitorPage() {
             entries={slowLog}
             onRefresh={fetchSlowLog}
             onReset={handleResetSlowLog}
+          />
+        )}
+        {activeTab === "log" && (
+          <LogPanel
+            entries={logEntries}
+            monitoring={monitoring}
+            onStart={handleStartMonitor}
+            onStop={handleStopMonitor}
+            onClear={clearLogEntries}
           />
         )}
       </div>

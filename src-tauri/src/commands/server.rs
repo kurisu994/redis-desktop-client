@@ -1,7 +1,11 @@
+use crate::config::store::ConnectionStore;
 use crate::redis::client::RedisClientManager;
 use serde::Serialize;
 use std::collections::HashMap;
+use tauri::Emitter;
 use tauri::State;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::net::TcpStream;
 
 /// 服务器 INFO 各区块的结构化数据
 pub type ServerInfo = HashMap<String, HashMap<String, String>>;
@@ -81,6 +85,154 @@ pub async fn set_slowlog_threshold(
         .query_async::<()>(&mut conn)
         .await
         .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// 启动 MONITOR 监控 — 创建独立 TCP 连接持续读取命令日志
+#[tauri::command]
+pub async fn start_monitor(
+    manager: State<'_, RedisClientManager>,
+    store: State<'_, ConnectionStore>,
+    app: tauri::AppHandle,
+    id: String,
+) -> Result<(), String> {
+    // 验证主连接存在
+    let _ = manager.get_connection(&id).await?;
+
+    // 从存储中读取连接配置
+    let connections = store.load_connections().map_err(|e| e.to_string())?;
+    let config = connections
+        .iter()
+        .find(|c| c.id == id)
+        .ok_or_else(|| format!("找不到连接配置: {}", id))?;
+
+    // 暂不支持的连接类型
+    if config.ssh.is_some() {
+        return Err("SSH 隧道连接暂不支持 MONITOR".to_string());
+    }
+    let tls_enabled = config.tls.as_ref().map(|t| t.enabled).unwrap_or(false);
+    if tls_enabled {
+        return Err("TLS 连接暂不支持 MONITOR".to_string());
+    }
+
+    // 建立独立 TCP 连接
+    let host = &config.host;
+    let port = config.port;
+    let username = config.username.clone();
+    let password = config.password.clone();
+    let db = config.db;
+
+    let stream = TcpStream::connect((host.as_str(), port))
+        .await
+        .map_err(|e| format!("MONITOR 连接失败: {}", e))?;
+
+    let (reader, mut writer) = stream.into_split();
+    let mut reader = BufReader::new(reader);
+
+    // 可选：AUTH
+    if let Some(pass) = password {
+        let auth_cmd = if let Some(user) = username {
+            format!(
+                "*3\r\n$4\r\nAUTH\r\n${}\r\n{}\r\n${}\r\n{}\r\n",
+                user.len(),
+                user,
+                pass.len(),
+                pass
+            )
+        } else {
+            format!("*2\r\n$4\r\nAUTH\r\n${}\r\n{}\r\n", pass.len(), pass)
+        };
+        writer
+            .write_all(auth_cmd.as_bytes())
+            .await
+            .map_err(|e| e.to_string())?;
+        writer.flush().await.map_err(|e| e.to_string())?;
+
+        let mut line = String::new();
+        reader
+            .read_line(&mut line)
+            .await
+            .map_err(|e| e.to_string())?;
+        if !line.starts_with("+OK") {
+            return Err(format!("MONITOR AUTH 失败: {}", line.trim()));
+        }
+    }
+
+    // 可选：SELECT db
+    if db > 0 {
+        let db_str = db.to_string();
+        let select_cmd = format!(
+            "*2\r\n$6\r\nSELECT\r\n${}\r\n{}\r\n",
+            db_str.len(),
+            db_str
+        );
+        writer
+            .write_all(select_cmd.as_bytes())
+            .await
+            .map_err(|e| e.to_string())?;
+        writer.flush().await.map_err(|e| e.to_string())?;
+
+        let mut line = String::new();
+        reader
+            .read_line(&mut line)
+            .await
+            .map_err(|e| e.to_string())?;
+        if !line.starts_with("+OK") {
+            return Err(format!("MONITOR SELECT 失败: {}", line.trim()));
+        }
+    }
+
+    // 发送 MONITOR
+    writer
+        .write_all(b"*1\r\n$7\r\nMONITOR\r\n")
+        .await
+        .map_err(|e| e.to_string())?;
+    writer.flush().await.map_err(|e| e.to_string())?;
+
+    // 读取 OK
+    let mut line = String::new();
+    reader
+        .read_line(&mut line)
+        .await
+        .map_err(|e| e.to_string())?;
+    if !line.starts_with("+OK") {
+        return Err(format!("MONITOR 启动失败: {}", line.trim()));
+    }
+
+    // 异步任务持续读取监控数据并通过 Tauri Event 推送
+    let _conn_id = id.clone();
+    let handle = tauri::async_runtime::spawn(async move {
+        loop {
+            let mut line = String::new();
+            match reader.read_line(&mut line).await {
+                Ok(0) => break, // 连接断开
+                Ok(_) => {
+                    if line.starts_with('+') {
+                        let data = line
+                            .trim_start_matches('+')
+                            .trim_end_matches("\r\n")
+                            .trim_end_matches('\n');
+                        let _ = app.emit("redis://monitor", data);
+                    }
+                }
+                Err(_) => break,
+            }
+        }
+    });
+
+    // 注册监控任务句柄，便于后续取消
+    manager.register_subscriber(id, handle).await;
+
+    Ok(())
+}
+
+/// 停止 MONITOR 监控
+#[tauri::command]
+pub async fn stop_monitor(
+    manager: State<'_, RedisClientManager>,
+    id: String,
+) -> Result<(), String> {
+    manager.unregister_subscriber(&id).await;
     Ok(())
 }
 

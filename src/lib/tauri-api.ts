@@ -266,6 +266,11 @@ function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
         },
       } as T;
 
+    // 日志监控 mock
+    case "start_monitor":
+    case "stop_monitor":
+      return undefined as T;
+
     // 慢查询 mock
     case "get_slowlog":
       return [
@@ -733,6 +738,16 @@ export async function setSlowLogThreshold(
   threshold: number,
 ): Promise<void> {
   return invoke("set_slowlog_threshold", { id, threshold });
+}
+
+/** 启动 Redis MONITOR 日志监控 */
+export async function startMonitor(id: string): Promise<void> {
+  return invoke("start_monitor", { id });
+}
+
+/** 停止 Redis MONITOR 日志监控 */
+export async function stopMonitor(id: string): Promise<void> {
+  return invoke("stop_monitor", { id });
 }
 
 // ============ Pub/Sub API ============

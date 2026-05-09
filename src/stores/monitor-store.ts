@@ -11,7 +11,13 @@ export interface MonitorSnapshot {
 }
 
 /** 监控页面 Tab */
-export type MonitorTab = "info" | "realtime" | "slowlog";
+export type MonitorTab = "info" | "realtime" | "slowlog" | "log";
+
+/** 日志条目 */
+export interface LogEntry {
+  timestamp: number;
+  message: string;
+}
 
 interface MonitorState {
   /** 当前 Tab */
@@ -26,6 +32,10 @@ interface MonitorState {
   refreshInterval: number;
   /** 是否暂停实时监控 */
   paused: boolean;
+  /** 日志条目列表 */
+  logEntries: LogEntry[];
+  /** 是否正在监控日志 */
+  monitoring: boolean;
   /** 加载状态 */
   loading: boolean;
 
@@ -36,6 +46,10 @@ interface MonitorState {
   setRefreshInterval: (interval: number) => void;
   setPaused: (paused: boolean) => void;
   setLoading: (loading: boolean) => void;
+  setLogEntries: (entries: LogEntry[]) => void;
+  addLogEntry: (entry: LogEntry) => void;
+  clearLogEntries: () => void;
+  setMonitoring: (monitoring: boolean) => void;
   resetMonitor: () => void;
 }
 
@@ -48,6 +62,8 @@ export const useMonitorStore = create<MonitorState>((set) => ({
   refreshInterval: 5000,
   paused: false,
   loading: false,
+  logEntries: [],
+  monitoring: false,
 
   setActiveTab: (tab) => set({ activeTab: tab }),
   setServerInfo: (info) => set({ serverInfo: info }),
@@ -59,6 +75,13 @@ export const useMonitorStore = create<MonitorState>((set) => ({
   setRefreshInterval: (interval) => set({ refreshInterval: interval }),
   setPaused: (paused) => set({ paused }),
   setLoading: (loading) => set({ loading }),
+  setLogEntries: (entries) => set({ logEntries: entries }),
+  addLogEntry: (entry) =>
+    set((state) => ({
+      logEntries: [...state.logEntries.slice(-499), entry],
+    })),
+  clearLogEntries: () => set({ logEntries: [] }),
+  setMonitoring: (monitoring) => set({ monitoring }),
   resetMonitor: () =>
     set({
       serverInfo: null,
@@ -66,5 +89,7 @@ export const useMonitorStore = create<MonitorState>((set) => ({
       snapshots: [],
       paused: false,
       loading: false,
+      logEntries: [],
+      monitoring: false,
     }),
 }));
