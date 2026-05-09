@@ -114,15 +114,12 @@ export function ConnectionItem({
     t,
   ]);
 
-  /** 双击连接/断开 */
+  /** 双击连接（已连接时不做操作，仅未连接时才发起连接） */
   const handleDoubleClick = useCallback(async () => {
-    if (isConnected) {
-      setConnectionStatus(connection.id, "disconnected");
-      await disconnectRedis(connection.id);
-    } else {
+    if (!isConnected) {
       await doConnect();
     }
-  }, [connection.id, isConnected, setConnectionStatus, doConnect]);
+  }, [isConnected, doConnect]);
 
   /** 关闭右键菜单 */
   useEffect(() => {

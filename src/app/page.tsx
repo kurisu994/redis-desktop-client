@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { TitleBar } from "@/components/layout/title-bar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TabBar } from "@/components/layout/tab-bar";
@@ -14,6 +16,8 @@ import { SettingsPage } from "@/components/layout/settings-page";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { UpdateDialog } from "@/components/update-dialog";
 import { useConnectionStore } from "@/stores/connection-store";
+import { useMonitorStore } from "@/stores/monitor-store";
+import { stopMonitor } from "@/lib/tauri-api";
 import { useAppStore } from "@/stores/app-store";
 import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
 import { useUpdateChecker } from "@/hooks/use-update-checker";
@@ -30,6 +34,35 @@ export default function Home() {
 
   // 启动时自动检查更新
   const { updateAvailable, dismissUpdate } = useUpdateChecker();
+
+  // 监控日志生命周期：关闭 monitor tab 或断开连接时停止后台 MONITOR
+  const prevConnRef = useRef(activeConnectionId);
+  useEffect(() => {
+    const monitorTabExists = tabs.some((t) => t.type === "monitor");
+    const { monitoring, setMonitoring, resetMonitor } =
+      useMonitorStore.getState();
+
+    // 连接切换时停止旧连接的 MONITOR
+    if (
+      prevConnRef.current &&
+      prevConnRef.current !== activeConnectionId &&
+      monitoring
+    ) {
+      stopMonitor(prevConnRef.current).catch(() => {});
+      setMonitoring(false);
+      resetMonitor();
+    }
+    prevConnRef.current = activeConnectionId;
+
+    // monitor tab 被关闭 或 连接断开时停止 MONITOR
+    if (monitoring && (!monitorTabExists || !activeConnectionId)) {
+      const connId = activeConnectionId || prevConnRef.current;
+      if (connId) {
+        stopMonitor(connId).catch(() => {});
+      }
+      setMonitoring(false);
+    }
+  }, [tabs, activeConnectionId]);
 
   // 判断当前是否有已连接的连接
   const isConnected =

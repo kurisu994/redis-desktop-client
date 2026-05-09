@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -121,17 +121,17 @@ export function MonitorPage() {
     resetMonitor();
   }, [activeConnectionId, resetMonitor]);
 
-  // 组件卸载时自动停止后台监控
+  // 在 monitor 内部切换子 tab（从 "log" 切到 info/realtime/slowlog）时停止监控
+  const [prevTab, setPrevTab] = useState(activeTab);
   useEffect(() => {
-    return () => {
-      const monitoring = useMonitorStore.getState().monitoring;
-      const connId = useConnectionStore.getState().activeConnectionId;
-      if (monitoring && connId) {
-        stopMonitor(connId).catch(() => {});
-        useMonitorStore.getState().setMonitoring(false);
+    if (prevTab !== activeTab) {
+      if (prevTab === "log" && monitoring && activeConnectionId) {
+        stopMonitor(activeConnectionId).catch(() => {});
+        setMonitoring(false);
       }
-    };
-  }, []);
+      setPrevTab(activeTab);
+    }
+  }, [activeTab, prevTab, monitoring, activeConnectionId, setMonitoring]);
 
   // 初始加载
   useEffect(() => {
