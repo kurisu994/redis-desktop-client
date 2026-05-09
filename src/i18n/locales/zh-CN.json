@@ -347,6 +347,7 @@
     "checking": "检查中..."
   },
   "pagination": {
-    "showing": "第 {{from}}-{{to}} 条，共 {{total}} 条"
+    "showing": "第 {{from}}-{{to}} 条，共 {{total}} 条",
+    "perPage": "每页"
   }
 }

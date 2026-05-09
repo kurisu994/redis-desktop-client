@@ -347,6 +347,7 @@
     "checking": "Checking..."
   },
   "pagination": {
-    "showing": "{{from}}-{{to}} of {{total}} items"
+    "showing": "{{from}}-{{to}} of {{total}} items",
+    "perPage": "Per page"
   }
 }

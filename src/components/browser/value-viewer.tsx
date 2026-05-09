@@ -74,8 +74,10 @@ const LARGE_VALUE_THRESHOLD = 1024 * 1024;
 const PREVIEW_SIZE = 1024;
 /** 大字符串阈值（50KB），超过时关闭自动换行以减少渲染开销 */
 const LARGE_STRING_THRESHOLD = 50 * 1024;
-/** 表格每页加载条数 */
-const TABLE_PAGE_SIZE = 100;
+/** 表格默认每页加载条数 */
+const DEFAULT_TABLE_PAGE_SIZE = 10;
+/** 表格可选每页加载条数 */
+const TABLE_PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
 interface ValueViewerProps {
   keyName: string;
@@ -615,6 +617,7 @@ function HashViewer({
   } | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
   /** 每页对应的 HSCAN 游标历史，用于前后翻页 */
   const [cursorHistory, setCursorHistory] = useState<number[]>([0]);
 
@@ -627,12 +630,12 @@ function HashViewer({
         keyName,
         cursor,
         "*",
-        TABLE_PAGE_SIZE,
+        pageSize,
       );
       setFields(result.fields);
       return result.cursor;
     },
-    [connectionId, selectedDb, keyName],
+    [connectionId, selectedDb, keyName, pageSize],
   );
 
   /** 初始加载第一页 */
@@ -646,16 +649,16 @@ function HashViewer({
       keyName,
       0,
       "*",
-      TABLE_PAGE_SIZE,
+      pageSize,
     );
     setFields(result.fields);
     // 记录下一页的游标
     if (result.cursor !== 0) {
       setCursorHistory([0, result.cursor]);
     }
-  }, [connectionId, selectedDb, keyName]);
+  }, [connectionId, selectedDb, keyName, pageSize]);
 
-  useLoadEffect(loadData, [connectionId, selectedDb, keyName]);
+  useLoadEffect(loadData, [connectionId, selectedDb, keyName, pageSize]);
 
   /** 翻页 */
   const handlePageChange = useCallback(
@@ -732,8 +735,9 @@ function HashViewer({
         onAdd={() => setShowAdd(true)}
         totalCount={totalCount}
         page={page}
-        pageSize={TABLE_PAGE_SIZE}
+        pageSize={pageSize}
         onPageChange={handlePageChange}
+        onPageSizeChange={setPageSize}
       />
       {(showAdd || editData) && (
         <AddFieldDialog
@@ -773,12 +777,13 @@ function ListViewer({
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
 
   const loadPage = useCallback(
     async (p: number) => {
       if (!connectionId) return;
-      const start = p * TABLE_PAGE_SIZE;
-      const stop = start + TABLE_PAGE_SIZE - 1;
+      const start = p * pageSize;
+      const stop = start + pageSize - 1;
       const result = await getListValue(
         connectionId,
         selectedDb,
@@ -788,7 +793,7 @@ function ListViewer({
       );
       setItems(result);
     },
-    [connectionId, selectedDb, keyName],
+    [connectionId, selectedDb, keyName, pageSize],
   );
 
   const loadData = useCallback(async () => {
@@ -796,7 +801,7 @@ function ListViewer({
     await loadPage(0);
   }, [loadPage]);
 
-  useLoadEffect(loadData, [connectionId, selectedDb, keyName]);
+  useLoadEffect(loadData, [connectionId, selectedDb, keyName, pageSize]);
 
   const handlePageChange = useCallback(
     async (newPage: number) => {
@@ -808,7 +813,7 @@ function ListViewer({
   );
 
   /** 当前页中元素的真实索引偏移 */
-  const indexOffset = page * TABLE_PAGE_SIZE;
+  const indexOffset = page * pageSize;
 
   const handleDelete = async (index: number) => {
     if (!connectionId) return;
@@ -843,8 +848,9 @@ function ListViewer({
         onAdd={() => setShowAdd(true)}
         totalCount={totalCount}
         page={page}
-        pageSize={TABLE_PAGE_SIZE}
+        pageSize={pageSize}
         onPageChange={handlePageChange}
+        onPageSizeChange={setPageSize}
       />
       {(showAdd || editIdx !== null) && (
         <AddFieldDialog
@@ -910,6 +916,7 @@ function SetViewer({
   const [editMember, setEditMember] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
   const [cursorHistory, setCursorHistory] = useState<number[]>([0]);
 
   const loadPage = useCallback(
@@ -921,12 +928,12 @@ function SetViewer({
         keyName,
         cursor,
         "*",
-        TABLE_PAGE_SIZE,
+        pageSize,
       );
       setMembers(result.members);
       return result.cursor;
     },
-    [connectionId, selectedDb, keyName],
+    [connectionId, selectedDb, keyName, pageSize],
   );
 
   const loadData = useCallback(async () => {
@@ -939,15 +946,15 @@ function SetViewer({
       keyName,
       0,
       "*",
-      TABLE_PAGE_SIZE,
+      pageSize,
     );
     setMembers(result.members);
     if (result.cursor !== 0) {
       setCursorHistory([0, result.cursor]);
     }
-  }, [connectionId, selectedDb, keyName]);
+  }, [connectionId, selectedDb, keyName, pageSize]);
 
-  useLoadEffect(loadData, [connectionId, selectedDb, keyName]);
+  useLoadEffect(loadData, [connectionId, selectedDb, keyName, pageSize]);
 
   const handlePageChange = useCallback(
     async (newPage: number) => {
@@ -991,8 +998,9 @@ function SetViewer({
         onAdd={() => setShowAdd(true)}
         totalCount={totalCount}
         page={page}
-        pageSize={TABLE_PAGE_SIZE}
+        pageSize={pageSize}
         onPageChange={handlePageChange}
+        onPageSizeChange={setPageSize}
       />
       {(showAdd || editMember !== null) && (
         <AddFieldDialog
@@ -1048,12 +1056,13 @@ function ZSetViewer({
   } | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
 
   const loadPage = useCallback(
     async (p: number) => {
       if (!connectionId) return;
-      const start = p * TABLE_PAGE_SIZE;
-      const stop = start + TABLE_PAGE_SIZE - 1;
+      const start = p * pageSize;
+      const stop = start + pageSize - 1;
       const result = await getZsetValue(
         connectionId,
         selectedDb,
@@ -1063,7 +1072,7 @@ function ZSetViewer({
       );
       setMembers(result);
     },
-    [connectionId, selectedDb, keyName],
+    [connectionId, selectedDb, keyName, pageSize],
   );
 
   const loadData = useCallback(async () => {
@@ -1071,7 +1080,7 @@ function ZSetViewer({
     await loadPage(0);
   }, [loadPage]);
 
-  useLoadEffect(loadData, [connectionId, selectedDb, keyName]);
+  useLoadEffect(loadData, [connectionId, selectedDb, keyName, pageSize]);
 
   const handlePageChange = useCallback(
     async (newPage: number) => {
@@ -1114,8 +1123,9 @@ function ZSetViewer({
         onAdd={() => setShowAdd(true)}
         totalCount={totalCount}
         page={page}
-        pageSize={TABLE_PAGE_SIZE}
+        pageSize={pageSize}
         onPageChange={handlePageChange}
+        onPageSizeChange={setPageSize}
       />
       {(showAdd || editData) && (
         <AddFieldDialog
@@ -1177,6 +1187,7 @@ function StreamViewer({
   const [showAdd, setShowAdd] = useState(false);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
   /** ID 边界历史，每项为 [startId, endId]，用于前后翻页 */
   const [idHistory, setIdHistory] = useState<string[]>(["-"]);
 
@@ -1189,12 +1200,12 @@ function StreamViewer({
         keyName,
         startId,
         "+",
-        TABLE_PAGE_SIZE,
+        pageSize,
       );
       setEntries(result);
       return result;
     },
-    [connectionId, selectedDb, keyName],
+    [connectionId, selectedDb, keyName, pageSize],
   );
 
   const loadData = useCallback(async () => {
@@ -1207,19 +1218,19 @@ function StreamViewer({
       keyName,
       "-",
       "+",
-      TABLE_PAGE_SIZE,
+      pageSize,
     );
     setEntries(result);
     // 记录下一页的起始 ID（最后一条的 ID + 1 毫秒时间戳的后缀）
-    if (result.length === TABLE_PAGE_SIZE && result.length > 0) {
+    if (result.length === pageSize && result.length > 0) {
       const lastId = result[result.length - 1].id;
       // Stream ID 格式: timestamp-seq，用 "(" 前缀表示排除当前 ID
       const nextStartId = "(" + lastId;
       setIdHistory(["-", nextStartId]);
     }
-  }, [connectionId, selectedDb, keyName]);
+  }, [connectionId, selectedDb, keyName, pageSize]);
 
-  useLoadEffect(loadData, [connectionId, selectedDb, keyName]);
+  useLoadEffect(loadData, [connectionId, selectedDb, keyName, pageSize]);
 
   const handlePageChange = useCallback(
     async (newPage: number) => {
@@ -1229,7 +1240,7 @@ function StreamViewer({
       setExpandedRow(null);
       if (
         result &&
-        result.length === TABLE_PAGE_SIZE &&
+        result.length === pageSize &&
         result.length > 0 &&
         idHistory.length <= newPage + 1
       ) {
@@ -1238,7 +1249,7 @@ function StreamViewer({
         setIdHistory((prev) => [...prev, nextStartId]);
       }
     },
-    [idHistory, loadPage],
+    [idHistory, loadPage, pageSize],
   );
 
   const handleDelete = async (entryId: string) => {
@@ -1276,8 +1287,9 @@ function StreamViewer({
         onAdd={() => setShowAdd(true)}
         totalCount={totalCount}
         page={page}
-        pageSize={TABLE_PAGE_SIZE}
+        pageSize={pageSize}
         onPageChange={handlePageChange}
+        onPageSizeChange={setPageSize}
       />
       {showAdd && (
         <AddFieldDialog
@@ -1318,6 +1330,7 @@ function TableView({
   page,
   pageSize,
   onPageChange,
+  onPageSizeChange,
 }: {
   headers: string[];
   rows: React.ReactNode[][];
@@ -1338,6 +1351,8 @@ function TableView({
   pageSize?: number;
   /** 分页：翻页回调 */
   onPageChange?: (page: number) => void;
+  /** 分页：每页条数变更回调 */
+  onPageSizeChange?: (pageSize: number) => void;
 }) {
   const { t } = useTranslation();
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1424,7 +1439,7 @@ function TableView({
       </div>
       {/* 分页控件 */}
       {hasPagination && totalCount > 0 && (
-        <div className="flex items-center justify-between px-5 py-2 border-t border-border text-xs text-muted-foreground shrink-0">
+        <div className="flex items-center justify-between gap-3 px-5 py-2 border-t border-border text-xs text-muted-foreground shrink-0">
           <span>
             {t("pagination.showing", {
               from: currentPage * pageSize + 1,
@@ -1432,7 +1447,25 @@ function TableView({
               total: totalCount,
             })}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-3">
+            {onPageSizeChange && (
+              <label className="flex items-center gap-1.5">
+                <span>{t("pagination.perPage")}</span>
+                <select
+                  value={pageSize}
+                  onChange={(event) =>
+                    onPageSizeChange(Number(event.target.value))
+                  }
+                  className="h-7 rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
+                >
+                  {TABLE_PAGE_SIZE_OPTIONS.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <button
               className="p-1 rounded hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
               disabled={currentPage <= 0}
