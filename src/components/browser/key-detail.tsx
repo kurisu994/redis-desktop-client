@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import type { KeyInfo } from "@/stores/browser-store";
 import { useBrowserStore } from "@/stores/browser-store";
@@ -53,6 +53,49 @@ export function KeyDetail({
   const [showMore, setShowMore] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState("");
+
+  /** 实时倒计时：基于 keyInfo.ttl 记录加载时刻，每秒递减 */
+  const ttlLoadedAtRef = useRef(0);
+  const [remainingTtl, setRemainingTtl] = useState(() => {
+    if (keyInfo.ttl < 0) return -1;
+    return keyInfo.ttl;
+  });
+
+  // keyInfo 变化时重置加载时刻
+  useEffect(() => {
+    ttlLoadedAtRef.current = Date.now();
+  }, [keyInfo.ttl]);
+
+  useEffect(() => {
+    if (keyInfo.ttl < 0) return;
+    const timer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - ttlLoadedAtRef.current) / 1000);
+      const remaining = keyInfo.ttl - elapsed;
+      if (remaining <= 0) {
+        setRemainingTtl(0);
+        clearInterval(timer);
+        return;
+      }
+      setRemainingTtl(remaining);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [keyInfo.ttl]);
+
+  /** 格式化 TTL 为友好时间 */
+  const formatTtl = useCallback((seconds: number) => {
+    if (seconds < 0) return "TTL";
+    if (seconds === 0) return "0s";
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m${seconds % 60}s`;
+    if (seconds < 86400) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      return `${h}h${m}m`;
+    }
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
+    return `${d}d${h}h`;
+  }, []);
 
   /** 删除 Key */
   const handleDelete = async () => {
@@ -134,14 +177,6 @@ export function KeyDetail({
                 {keyInfo.key_type.toUpperCase()}
               </span>
 
-              {/* TTL */}
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Clock className="w-3.5 h-3.5" />
-                {keyInfo.ttl < 0
-                  ? t("keyDetail.ttlNone")
-                  : t("keyDetail.ttlSeconds", { seconds: keyInfo.ttl })}
-              </span>
-
               {/* 大小 */}
               <span className="text-muted-foreground">
                 {t("keyDetail.size")}: {formatSize(keyInfo.size)}
@@ -182,7 +217,7 @@ export function KeyDetail({
               onClick={() => setShowTtl(true)}
             >
               <Clock className="w-3.5 h-3.5" />
-              TTL
+              {formatTtl(remainingTtl)}
             </Button>
             <Button
               size="sm"
