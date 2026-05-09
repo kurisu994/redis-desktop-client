@@ -44,12 +44,11 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { AddFieldDialog } from "./add-field-dialog";
-import { HEX_MAX_BYTES, toHexDump } from "./value-editor-utils";
-import Editor from "@monaco-editor/react";
-import type { OnMount } from "@monaco-editor/react";
-
-/** Monaco Editor 实例类型（从 OnMount 回调提取） */
-type MonacoEditorInstance = Parameters<OnMount>[0];
+import {
+  HEX_MAX_BYTES,
+  insertTextAtSelection,
+  toHexDump,
+} from "./value-editor-utils";
 
 /** 在 useEffect 中安全调用数据加载函数，避免 react-hooks/set-state-in-effect */
 function useLoadEffect(
@@ -63,7 +62,6 @@ function useLoadEffect(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 }
-import { useTheme } from "next-themes";
 
 /** 大值阈值：1MB */
 const LARGE_VALUE_THRESHOLD = 1024 * 1024;
@@ -248,82 +246,6 @@ function detectFormat(val: string): ValueFormat {
   return "text";
 }
 
-/** 为 Monaco Editor 设置自定义右键菜单 — JSON 模式下添加"格式化 JSON"菜单项 */
-export function setupJsonContextMenu(
-  editor: MonacoEditorInstance,
-  isJsonOrCheck: boolean | (() => boolean),
-) {
-  const domNode = editor.getDomNode();
-  if (!domNode) return;
-
-  const checkIsJson =
-    typeof isJsonOrCheck === "function" ? isJsonOrCheck : () => isJsonOrCheck;
-
-  domNode.addEventListener("contextmenu", (e: MouseEvent) => {
-    if (!checkIsJson()) return; // 非 JSON 格式不拦截，保持默认行为
-    e.preventDefault();
-    e.stopPropagation();
-
-    // 移除已有的自定义菜单
-    const existing = document.getElementById("monaco-custom-ctx-menu");
-    if (existing) existing.remove();
-
-    // 创建自定义右键菜单
-    const menu = document.createElement("div");
-    menu.id = "monaco-custom-ctx-menu";
-    menu.style.cssText = `
-      position: fixed; left: ${e.clientX}px; top: ${e.clientY}px; z-index: 9999;
-      min-width: 160px; padding: 4px 0;
-      background: var(--color-card, hsl(240 10% 10%));
-      border: 1px solid var(--color-border, hsl(240 3.7% 15.9%));
-      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    `;
-    // 阻止 pointerdown 冒泡，避免 Radix Dialog overlay 拦截点击
-    menu.addEventListener("pointerdown", (ev) => ev.stopPropagation());
-
-    const item = document.createElement("button");
-    item.textContent = "格式化 JSON";
-    item.style.cssText = `
-      display: block; width: 100%; text-align: left; padding: 6px 12px;
-      font-size: 13px; color: var(--color-foreground, #e5e5e5);
-      background: none; border: none; cursor: pointer; border-radius: 4px; margin: 0 4px;
-      width: calc(100% - 8px);
-    `;
-    item.onmouseenter = () => {
-      item.style.background = "var(--color-accent, hsl(240 3.7% 15.9%))";
-    };
-    item.onmouseleave = () => {
-      item.style.background = "none";
-    };
-    item.onclick = () => {
-      try {
-        const val = editor.getValue();
-        const parsed = JSON.parse(val);
-        editor.setValue(JSON.stringify(parsed, null, 2));
-      } catch {
-        // 非法 JSON 不处理
-      }
-      menu.remove();
-    };
-
-    menu.appendChild(item);
-    // 如果在 Dialog 内部，挂到 Dialog 容器以避免被 overlay 遮挡
-    const dialogContainer = domNode.closest('[role="dialog"]');
-    (dialogContainer || document.body).appendChild(menu);
-
-    // 点击其他区域关闭菜单
-    const close = () => {
-      menu.remove();
-      document.removeEventListener("click", close);
-      document.removeEventListener("contextmenu", close);
-    };
-    setTimeout(() => {
-      document.addEventListener("click", close);
-      document.addEventListener("contextmenu", close);
-    }, 0);
-  });
-}
-
 // ============ String 查看器（含大值延迟加载 + 多格式显示） ============
 
 function StringViewer({
@@ -416,17 +338,7 @@ function StringViewer({
     if (e.key !== "Tab") return;
 
     e.preventDefault();
-    const textarea = e.currentTarget;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const indent = "  ";
-    const nextValue = value.slice(0, start) + indent + value.slice(end);
-    setValue(nextValue);
-
-    requestAnimationFrame(() => {
-      textarea.selectionStart = start + indent.length;
-      textarea.selectionEnd = start + indent.length;
-    });
+    insertTextAtSelection(e.currentTarget, value, "  ", setValue);
   };
 
   /** 监听 redis:save 自定义事件（由 ⌘S 快捷键触发） */
@@ -1573,7 +1485,6 @@ function JsonViewer({
 }) {
   const { t } = useTranslation();
   const { connectionId, selectedDb } = useBrowserStore();
-  const { theme } = useTheme();
   const [value, setValue] = useState("");
   const [originalValue, setOriginalValue] = useState("");
   const [path, setPath] = useState("$");
@@ -1685,6 +1596,14 @@ function JsonViewer({
 
   const isDirty = value !== originalValue;
 
+  /** 在 JSON textarea 中按 Tab 插入两个空格，避免焦点跳出编辑区 */
+  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key !== "Tab") return;
+
+    e.preventDefault();
+    insertTextAtSelection(e.currentTarget, value, "  ", setValue);
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* 路径查询 + 操作栏 */}
@@ -1729,26 +1648,14 @@ function JsonViewer({
         )}
       </div>
 
-      {/* Monaco 编辑器 */}
-      <div className="flex-1">
-        <Editor
-          language="json"
+      {/* JSON 文本编辑区 */}
+      <div className="flex-1 min-h-0">
+        <textarea
           value={value}
-          onChange={(v) => setValue(v || "")}
-          theme={theme === "dark" ? "vs-dark" : "light"}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 13,
-            lineNumbers: "on",
-            wordWrap: "on",
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            formatOnPaste: true,
-            contextmenu: false,
-          }}
-          onMount={(editor) => {
-            setupJsonContextMenu(editor, true);
-          }}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleEditorKeyDown}
+          spellCheck={false}
+          className="h-full w-full resize-none border-0 bg-background p-4 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0"
         />
       </div>
     </div>

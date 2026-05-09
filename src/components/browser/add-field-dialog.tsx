@@ -21,7 +21,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { ChevronDown, Loader2 } from "lucide-react";
-import { toHexDump } from "./value-editor-utils";
+import { insertTextAtSelection, toHexDump } from "./value-editor-utils";
 
 /** 编辑器支持的格式 */
 type EditorFormat =
@@ -199,17 +199,7 @@ export function AddFieldDialog({
     if (e.key !== "Tab") return;
 
     e.preventDefault();
-    const textarea = e.currentTarget;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const indent = "  ";
-    const nextValue = value.slice(0, start) + indent + value.slice(end);
-    setValue(nextValue);
-
-    requestAnimationFrame(() => {
-      textarea.selectionStart = start + indent.length;
-      textarea.selectionEnd = start + indent.length;
-    });
+    insertTextAtSelection(e.currentTarget, value, "  ", setValue);
   };
 
   return (

@@ -14,8 +14,6 @@ function isEditableElement(el: EventTarget | null): boolean {
   const tag = el.tagName;
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
   if (el.isContentEditable) return true;
-  // Monaco Editor 的 textarea
-  if (el.closest(".monaco-editor")) return true;
   return false;
 }
 

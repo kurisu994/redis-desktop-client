@@ -39,3 +39,21 @@ export function toHexDump(
 
   return { content: lines.join("\n"), truncated };
 }
+
+/** 在 textarea 当前选区插入文本，并在 React 更新后恢复光标位置 */
+export function insertTextAtSelection(
+  textarea: HTMLTextAreaElement,
+  value: string,
+  text: string,
+  onChange: (value: string) => void,
+) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const nextValue = value.slice(0, start) + text + value.slice(end);
+  onChange(nextValue);
+
+  requestAnimationFrame(() => {
+    textarea.selectionStart = start + text.length;
+    textarea.selectionEnd = start + text.length;
+  });
+}
