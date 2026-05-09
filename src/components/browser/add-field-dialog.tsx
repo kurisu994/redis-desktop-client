@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -20,13 +21,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { ChevronDown, Loader2 } from "lucide-react";
-import Editor from "@monaco-editor/react";
-import type { OnMount } from "@monaco-editor/react";
-import { useTheme } from "next-themes";
-import { setupJsonContextMenu, toHexDump } from "./value-viewer";
-
-/** Monaco Editor 实例类型 */
-type MonacoEditorInstance = Parameters<OnMount>[0];
+import { toHexDump } from "./value-editor-utils";
 
 /** 编辑器支持的格式 */
 type EditorFormat =
@@ -41,21 +36,6 @@ type EditorFormat =
   | "typescript"
   | "sql"
   | "markdown";
-
-/** 格式 → Monaco 语言映射 */
-const EDITOR_FORMAT_LANGUAGE: Record<EditorFormat, string> = {
-  text: "plaintext",
-  json: "json",
-  hex: "plaintext",
-  xml: "xml",
-  yaml: "yaml",
-  html: "html",
-  css: "css",
-  javascript: "javascript",
-  typescript: "typescript",
-  sql: "sql",
-  markdown: "markdown",
-};
 
 /** 格式显示标签 */
 const EDITOR_FORMAT_LABELS: Record<EditorFormat, string> = {
@@ -145,7 +125,7 @@ function detectEditorFormat(val: string): EditorFormat {
   return "text";
 }
 
-/** 添加/编辑字段对话框 — 根据类型显示不同表单，value 使用 Monaco Editor + 格式切换 */
+/** 添加/编辑字段对话框 — 根据类型显示不同表单，value 使用原生文本编辑区 + 格式切换 */
 export function AddFieldDialog({
   isOpen,
   mode,
@@ -154,7 +134,6 @@ export function AddFieldDialog({
   onSave,
 }: AddFieldDialogProps) {
   const { t } = useTranslation();
-  const { theme } = useTheme();
   const isEdit = !!initialData;
   const [field, setField] = useState(initialData?.field ?? "");
   const [value, setValue] = useState(initialData?.value ?? "");
@@ -167,11 +146,6 @@ export function AddFieldDialog({
   );
   /** "更多格式" 下拉菜单 */
   const [showMoreFormats, setShowMoreFormats] = useState(false);
-  /** 当前格式的 ref（供右键菜单闭包动态读取） */
-  const formatRef = useRef(format);
-  formatRef.current = format;
-  /** Monaco editor 实例引用 */
-  const editorRef = useRef<MonacoEditorInstance | null>(null);
 
   const handleSave = async () => {
     setSaving(true);
@@ -203,13 +177,40 @@ export function AddFieldDialog({
         stream: t("valueEditor.addEntry"),
       }[mode];
 
-  const language = EDITOR_FORMAT_LANGUAGE[format];
   const isHex = format === "hex";
   /** Hex dump 内容（仅在 hex 模式时计算） */
   const hexResult = useMemo(
     () => (isHex ? toHexDump(value) : { content: "", truncated: false }),
     [isHex, value],
   );
+
+  /** 格式化当前 JSON 文本 */
+  const handleFormatJson = () => {
+    try {
+      const parsed = JSON.parse(value);
+      setValue(JSON.stringify(parsed, null, 2));
+    } catch {
+      toast.error(t("valueEditor.invalidJson"));
+    }
+  };
+
+  /** 在 textarea 中按 Tab 插入两个空格，避免焦点跳出编辑区 */
+  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key !== "Tab") return;
+
+    e.preventDefault();
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const indent = "  ";
+    const nextValue = value.slice(0, start) + indent + value.slice(end);
+    setValue(nextValue);
+
+    requestAnimationFrame(() => {
+      textarea.selectionStart = start + indent.length;
+      textarea.selectionEnd = start + indent.length;
+    });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -263,7 +264,7 @@ export function AddFieldDialog({
             </div>
           )}
 
-          {/* 所有类型都需要 value — 使用 Monaco Editor + 格式切换栏 */}
+          {/* 所有类型都需要 value — 使用原生编辑区 + 格式切换栏 */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>{t("valueEditor.value")}</Label>
@@ -326,59 +327,33 @@ export function AddFieldDialog({
                     </>
                   )}
                 </div>
+                {format === "json" && (
+                  <>
+                    <span className="text-border mx-0.5">|</span>
+                    <button
+                      type="button"
+                      className="px-2 py-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                      onClick={handleFormatJson}
+                    >
+                      {t("valueEditor.formatJson")}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
             <div className="h-56 border border-border rounded-md overflow-hidden">
               {isHex ? (
                 /* Hex dump 只读视图 */
-                <Editor
-                  key="dialog-hex"
-                  path="dialog-hex-view"
-                  language="plaintext"
-                  value={hexResult.content}
-                  theme={theme === "dark" ? "vs-dark" : "light"}
-                  options={{
-                    minimap: { enabled: false },
-                    fontSize: 13,
-                    fontFamily:
-                      "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace",
-                    lineNumbers: "off",
-                    wordWrap: "off",
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                    readOnly: true,
-                    renderLineHighlight: "none",
-                    contextmenu: false,
-                    folding: false,
-                    links: false,
-                    codeLens: false,
-                  }}
-                />
+                <pre className="h-full overflow-auto bg-background p-3 font-mono text-xs leading-5 text-foreground whitespace-pre">
+                  {hexResult.content}
+                </pre>
               ) : (
-                <Editor
-                  key="dialog-editor"
-                  path="dialog-editor"
-                  language={language}
+                <textarea
                   value={value}
-                  onChange={(v) => setValue(v || "")}
-                  theme={theme === "dark" ? "vs-dark" : "light"}
-                  options={{
-                    minimap: { enabled: false },
-                    fontSize: 13,
-                    lineNumbers: "on",
-                    wordWrap: "on",
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                    tabSize: 2,
-                    contextmenu: false,
-                  }}
-                  onMount={(editor) => {
-                    editorRef.current = editor;
-                    setupJsonContextMenu(
-                      editor,
-                      () => formatRef.current === "json",
-                    );
-                  }}
+                  onChange={(e) => setValue(e.target.value)}
+                  onKeyDown={handleEditorKeyDown}
+                  spellCheck={false}
+                  className="h-full w-full resize-none border-0 bg-background p-3 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0"
                 />
               )}
             </div>

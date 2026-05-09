@@ -44,6 +44,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { AddFieldDialog } from "./add-field-dialog";
+import { HEX_MAX_BYTES, toHexDump } from "./value-editor-utils";
 import Editor from "@monaco-editor/react";
 import type { OnMount } from "@monaco-editor/react";
 
@@ -68,9 +69,7 @@ import { useTheme } from "next-themes";
 const LARGE_VALUE_THRESHOLD = 1024 * 1024;
 /** 预览大小：前 1KB */
 const PREVIEW_SIZE = 1024;
-/** Hex dump 最大处理字节数（256KB），超出部分截断以避免 Monaco 渲染卡顿 */
-const HEX_MAX_BYTES = 256 * 1024;
-/** 大字符串阈值（50KB），超过时优化 Monaco 选项以减少渲染开销 */
+/** 大字符串阈值（50KB），超过时关闭自动换行以减少渲染开销 */
 const LARGE_STRING_THRESHOLD = 50 * 1024;
 /** 表格每页加载条数 */
 const TABLE_PAGE_SIZE = 100;
@@ -165,21 +164,6 @@ type ValueFormat =
   | "markdown"
   | "hex";
 
-/** 格式 → Monaco 语言映射 */
-const FORMAT_LANGUAGE: Record<ValueFormat, string> = {
-  text: "plaintext",
-  json: "json",
-  xml: "xml",
-  yaml: "yaml",
-  html: "html",
-  css: "css",
-  javascript: "javascript",
-  typescript: "typescript",
-  sql: "sql",
-  markdown: "markdown",
-  hex: "plaintext", // Hex 视图使用自定义渲染
-};
-
 /** 格式显示标签（不走 i18n 的技术名称） */
 const FORMAT_LABELS: Record<ValueFormat, string> = {
   text: "Text",
@@ -264,41 +248,6 @@ function detectFormat(val: string): ValueFormat {
   return "text";
 }
 
-/** 将字符串转换为 Hex dump 格式（地址 + 十六进制 + ASCII），支持截断 */
-export function toHexDump(
-  str: string,
-  maxBytes = HEX_MAX_BYTES,
-): { content: string; truncated: boolean } {
-  const lines: string[] = [];
-  const allBytes = new TextEncoder().encode(str);
-  const truncated = allBytes.length > maxBytes;
-  const bytes = truncated ? allBytes.slice(0, maxBytes) : allBytes;
-  for (let i = 0; i < bytes.length; i += 16) {
-    const chunk = bytes.slice(i, i + 16);
-    const addr = i.toString(16).padStart(8, "0");
-    const hexParts: string[] = [];
-    const asciiParts: string[] = [];
-    for (let j = 0; j < 16; j++) {
-      if (j < chunk.length) {
-        hexParts.push(chunk[j].toString(16).padStart(2, "0"));
-        asciiParts.push(
-          chunk[j] >= 0x20 && chunk[j] <= 0x7e
-            ? String.fromCharCode(chunk[j])
-            : ".",
-        );
-      } else {
-        hexParts.push("  ");
-        asciiParts.push(" ");
-      }
-    }
-    // 每 8 个字节加一个额外空格分隔
-    const hex =
-      hexParts.slice(0, 8).join(" ") + "  " + hexParts.slice(8).join(" ");
-    lines.push(`${addr}  ${hex}  |${asciiParts.join("")}|`);
-  }
-  return { content: lines.join("\n"), truncated };
-}
-
 /** 为 Monaco Editor 设置自定义右键菜单 — JSON 模式下添加"格式化 JSON"菜单项 */
 export function setupJsonContextMenu(
   editor: MonacoEditorInstance,
@@ -375,7 +324,7 @@ export function setupJsonContextMenu(
   });
 }
 
-// ============ String 查看器（含大值延迟加载 + 多格式语法高亮） ============
+// ============ String 查看器（含大值延迟加载 + 多格式显示） ============
 
 function StringViewer({
   keyName,
@@ -388,7 +337,6 @@ function StringViewer({
 }) {
   const { t } = useTranslation();
   const { connectionId, selectedDb } = useBrowserStore();
-  const { theme } = useTheme();
   const [value, setValue] = useState("");
   const [originalValue, setOriginalValue] = useState("");
   const [format, setFormat] = useState<ValueFormat>("text");
@@ -398,11 +346,6 @@ function StringViewer({
   const [loadingFull, setLoadingFull] = useState(false);
   /** "更多格式" 下拉菜单 */
   const [showMoreFormats, setShowMoreFormats] = useState(false);
-  /** Monaco editor 实例引用 */
-  const editorRef = useRef<MonacoEditorInstance | null>(null);
-  /** 当前格式的 ref（供右键菜单闭包动态读取） */
-  const formatRef = useRef(format);
-  formatRef.current = format;
 
   /** 判断是否为大值（使用 keyInfo.length —— String 的 STRLEN 字节长度） */
   const isLargeValue = keyInfo.length > LARGE_VALUE_THRESHOLD;
@@ -458,6 +401,34 @@ function StringViewer({
     onValueChanged();
   };
 
+  /** 格式化当前 JSON 文本 */
+  const handleFormatJson = () => {
+    try {
+      const parsed = JSON.parse(value);
+      setValue(JSON.stringify(parsed, null, 2));
+    } catch {
+      toast.error(t("valueEditor.invalidJson"));
+    }
+  };
+
+  /** 在 textarea 中按 Tab 插入两个空格，避免焦点跳出编辑区 */
+  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key !== "Tab") return;
+
+    e.preventDefault();
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const indent = "  ";
+    const nextValue = value.slice(0, start) + indent + value.slice(end);
+    setValue(nextValue);
+
+    requestAnimationFrame(() => {
+      textarea.selectionStart = start + indent.length;
+      textarea.selectionEnd = start + indent.length;
+    });
+  };
+
   /** 监听 redis:save 自定义事件（由 ⌘S 快捷键触发） */
   useEffect(() => {
     const handler = () => {
@@ -473,9 +444,8 @@ function StringViewer({
   }, [connectionId, selectedDb, keyName, value, originalValue, onValueChanged]);
 
   const isDirty = value !== originalValue;
-  const language = FORMAT_LANGUAGE[format];
   const isHex = format === "hex";
-  /** 值的字节长度（估算），用于决定 Monaco 优化选项 */
+  /** 值的字节长度（估算），用于决定 textarea 换行策略 */
   const valueSizeEstimate = value.length;
   const isLargeString = valueSizeEstimate > LARGE_STRING_THRESHOLD;
   /** Hex dump 内容（仅在 hex 模式时计算，使用 useMemo 避免重复计算） */
@@ -528,6 +498,7 @@ function StringViewer({
             {PRIMARY_FORMATS.map((f) => (
               <button
                 key={f}
+                type="button"
                 className={`px-2 py-0.5 rounded transition-colors ${
                   format === f
                     ? "text-primary bg-primary/10"
@@ -585,6 +556,18 @@ function StringViewer({
                 </>
               )}
             </div>
+            {format === "json" && (
+              <>
+                <span className="text-border mx-1">|</span>
+                <button
+                  type="button"
+                  className="px-2 py-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  onClick={handleFormatJson}
+                >
+                  {t("valueEditor.formatJson")}
+                </button>
+              </>
+            )}
           </>
         )}
         {isLargePreview && (
@@ -615,62 +598,22 @@ function StringViewer({
             </span>
           </div>
         )}
-        <div className="flex-1">
+        <div className="flex-1 min-h-0">
           {isHex ? (
-            /* Hex dump 只读视图 — 使用独立 path 避免与主编辑器的 model 冲突 */
-            <Editor
-              path="hex-view"
-              language="plaintext"
-              value={hexResult.content}
-              theme={theme === "dark" ? "vs-dark" : "light"}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 13,
-                fontFamily:
-                  "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace",
-                lineNumbers: "off",
-                wordWrap: "off",
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                readOnly: true,
-                renderLineHighlight: "none",
-                contextmenu: false,
-                folding: false,
-                links: false,
-                codeLens: false,
-              }}
-            />
+            /* Hex dump 只读视图 */
+            <pre className="h-full overflow-auto bg-background p-4 font-mono text-xs leading-5 text-foreground whitespace-pre">
+              {hexResult.content}
+            </pre>
           ) : (
-            /* 主编辑器 — 使用独立 path 避免与 hex 视图的 model 冲突 */
-            <Editor
-              path="string-editor"
-              language={language}
+            /* 主编辑区 — 原生 textarea 提供更直接的输入体验 */
+            <textarea
               value={value}
-              onChange={(v) => setValue(v || "")}
-              theme={theme === "dark" ? "vs-dark" : "light"}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 13,
-                lineNumbers: "on",
-                wordWrap: isLargeString ? "off" : "on",
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                readOnly: isLargePreview,
-                contextmenu: false,
-                // 大字符串时禁用高开销功能
-                folding: !isLargeString,
-                links: !isLargeString,
-                codeLens: false,
-                occurrencesHighlight: isLargeString ? "off" : "singleFile",
-                renderLineHighlight: isLargeString ? "none" : "line",
-              }}
-              onMount={(editor) => {
-                editorRef.current = editor;
-                setupJsonContextMenu(
-                  editor,
-                  () => formatRef.current === "json",
-                );
-              }}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={handleEditorKeyDown}
+              readOnly={isLargePreview}
+              wrap={isLargeString ? "off" : "soft"}
+              spellCheck={false}
+              className="h-full w-full resize-none border-0 bg-background p-4 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 read-only:cursor-default"
             />
           )}
         </div>
