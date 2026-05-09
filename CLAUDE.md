@@ -30,7 +30,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 应用为单页面（`src/app/page.tsx`），布局为：`TitleBar` + `Sidebar` + `TabBar` + 主内容区（`DataBrowser` / `CliConsole` / `MonitorPage` / `PubSubPage` / `SettingsPage` / `WelcomePage`），加上全局浮层 `ConnectionDialog`、`ErrorBoundary` 错误边界包裹主内容区。主内容区采用 Tab 页签管理（`browser` / `cli` / `monitor` / `pubsub` / `settings`），browser Tab 始终存在不可关闭，其余 Tab 可通过侧边栏按钮打开、通过 × 按钮关闭。设置入口在顶部 TitleBar 右侧，GitHub 仓库链接也在 TitleBar 中（通过 `tauri-plugin-opener` 打开外部链接）。
 
 **State（`src/stores/`）**
-- `app-store.ts`：全局 UI 状态（侧边栏折叠、Tab 页签管理 — tabs/activeTabId/openTab/closeTab/activateTab、键分隔符 keySeparator）
+- `app-store.ts`：全局 UI 状态（侧边栏折叠、Tab 页签管理 — tabs/activeTabId/openTab/closeTab/activateTab/closeAllClosableTabs、键分隔符 keySeparator）
 - `connection-store.ts`：连接配置列表（含 SSH/TLS/Sentinel/Cluster 字段）、活跃连接、连接状态、对话框状态
 - `browser-store.ts`：数据浏览器状态（Key 列表、SCAN 游标、选中 Key、DB 切换、视图模式、刷新版本号、多选 checkedKeys、收藏 favorites、收藏筛选 showFavoritesOnly）
 - `cli-store.ts`：CLI 控制台状态（多 Tab 管理、命令历史、输出日志）
@@ -71,8 +71,10 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 - Phase 5（高级功能：服务器监控、慢查询、Pub/Sub、数据导入导出）✅ 已完成
 - Phase 6（高级连接 & 完善：SSH/TLS/Sentinel/Cluster UI、连接导入导出、设置页、快捷键、错误边界）✅ 已完成
   - ✅ v0.2.0：常用命令面板（⌘K）、补充快捷键（⌘D/⌘S/F5/Delete）
-  - ✅ v0.3.0：值编辑器交互重构（表格行截断 + 展开 + 双击编辑 + 自定义右键菜单）+ 大字符串性能优化（Hex useMemo/截断 + Monaco 选项优化 + model 隔离）+ 表格分页加载（Hash/List/Set/ZSet/Stream 每页 200 条）
-  - 🔲 待办：SSH 隧道后端（Rust russh 库）、自动更新集成、macOS/Windows 签名
+  - ✅ v0.2.1：值编辑器交互重构（表格行截断 + 展开 + 双击编辑 + 自定义右键菜单）+ 大字符串性能优化（Hex useMemo/截断 + Monaco 选项优化 + model 隔离）+ 表格分页加载（Hash/List/Set/ZSet/Stream 每页 200 条）
+  - ✅ v0.2.2：应用内更新检查与提示（Tauri Updater Plugin + 进度条 + 设置页开关）
+  - ✅ 近期修复：断开连接自动清理 Tab/状态、TTL 倒计时到期自动标记过期、Loading 位置优化、重复点击同一 DB 不清空数据
+  - 🔲 待办：SSH 隧道后端（Rust russh 库）、macOS/Windows 签名
 
 详见 `docs/DEVELOPMENT_PLAN.md`。
 

@@ -8,6 +8,29 @@
 
 ## [Unreleased]
 
+### 🔧 改进
+
+#### 连接断开时自动清理状态
+
+- 断开连接时自动关闭 CLI、Pub/Sub、Monitor 等 Tab 页，回到 Browser Tab
+- 断开连接时清空选中的 Key 及浏览器状态（key 列表、keyInfo 等）
+- 断开连接时重置 CLI、Pub/Sub、Monitor 各 Store 状态
+- `app-store` 新增 `closeAllClosableTabs()` 方法
+
+#### TTL 倒计时到期交互修复
+
+- 修复 TTL 倒计时归零后停在 "0s" 不动的问题
+- TTL 倒计时到 0 时自动标记 Key 已过期，界面切换到过期提示状态
+
+#### Key 列表 Loading 位置优化
+
+- Key 树形视图和平铺列表的 Loading spinner 增加顶部内边距（`pt-12`），不再完全居中贴顶，视觉上更有呼吸感
+
+#### 重复点击同一 DB 不再清空数据
+
+- 修复点击当前已选中的 DB 时会触发 `resetBrowser()` 导致 Key 列表和详情数据消失的问题
+- 现在点击已激活的同一 DB 不做任何操作
+
 ---
 
 ## [0.2.2] — 2026-04-14
