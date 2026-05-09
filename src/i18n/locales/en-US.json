@@ -134,6 +134,7 @@
     "exportFailed": "Failed to export keys",
     "maxLoadKeysReached": "Loaded {{count}} keys. Use filter to narrow results.",
     "locateSelectedKey": "Locate current key",
+    "selectedKeyExpired": "Key expired or no longer exists",
     "selectedKeyHidden": "The current filters do not show this key"
   },
   "keyDetail": {
@@ -190,6 +191,7 @@
     "formatJson": "Format",
     "rawJsonView": "Raw JSON",
     "unsupportedType": "Unsupported data type: {{type}}",
+    "keyExpired": "This key has expired or no longer exists. Refresh the list.",
     "invalidJson": "Invalid JSON format",
     "jsonErrorTitle": "JSON validation failed",
     "jsonErrorLocation": "Line {{line}}, column {{column}}"

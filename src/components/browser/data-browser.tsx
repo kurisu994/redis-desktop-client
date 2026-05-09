@@ -253,15 +253,52 @@ export function DataBrowser() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectedId, selectedDb]);
 
+  /** 处理已过期或不存在的 Key，避免 TYPE none 落入不支持类型提示 */
+  const handleExpiredKey = useCallback(() => {
+    setSelectedKey(null);
+    setKeyInfo(null);
+    toast.info(t("browser.selectedKeyExpired"));
+    loadKeys(true);
+  }, [loadKeys, setKeyInfo, setSelectedKey, t]);
+
+  /** 判断 Key 信息是否表示 Redis 中已不存在 */
+  const isExpiredKeyInfo = useCallback(
+    (info: NonNullable<typeof keyInfo>) =>
+      info.key_type === "none" || info.ttl === -2,
+    [],
+  );
+
   /** 选中 Key 时加载详细信息 */
   useEffect(() => {
     // keyInfo 已在 setSelectedKey 中同步清空，避免旧类型导致 WRONGTYPE
     if (connectedId && selectedKey) {
+      let cancelled = false;
       getKeyInfo(connectedId, selectedDb, selectedKey)
-        .then(setKeyInfo)
-        .catch(() => toast.error(t("browser.loadKeyInfoFailed")));
+        .then((info) => {
+          if (cancelled) return;
+          if (isExpiredKeyInfo(info)) {
+            handleExpiredKey();
+            return;
+          }
+          setKeyInfo(info);
+        })
+        .catch(() => {
+          if (!cancelled) toast.error(t("browser.loadKeyInfoFailed"));
+        });
+
+      return () => {
+        cancelled = true;
+      };
     }
-  }, [connectedId, selectedDb, selectedKey, setKeyInfo, t]);
+  }, [
+    connectedId,
+    handleExpiredKey,
+    isExpiredKeyInfo,
+    selectedDb,
+    selectedKey,
+    setKeyInfo,
+    t,
+  ]);
 
   /** 刷新当前 Key 列表 */
   const handleRefresh = useCallback(() => {
@@ -283,10 +320,24 @@ export function DataBrowser() {
   const handleValueChanged = useCallback(() => {
     if (connectedId && selectedKey) {
       getKeyInfo(connectedId, selectedDb, selectedKey)
-        .then(setKeyInfo)
+        .then((info) => {
+          if (isExpiredKeyInfo(info)) {
+            handleExpiredKey();
+            return;
+          }
+          setKeyInfo(info);
+        })
         .catch(() => toast.error(t("browser.loadKeyInfoFailed")));
     }
-  }, [connectedId, selectedDb, selectedKey, setKeyInfo, t]);
+  }, [
+    connectedId,
+    handleExpiredKey,
+    isExpiredKeyInfo,
+    selectedDb,
+    selectedKey,
+    setKeyInfo,
+    t,
+  ]);
 
   /** Key 被删除后的回调 */
   const handleKeyDeleted = useCallback(() => {

@@ -134,6 +134,7 @@
     "exportFailed": "导出 Key 失败",
     "maxLoadKeysReached": "已加载 {{count}} 个 Key，请使用过滤器缩小范围。",
     "locateSelectedKey": "定位当前 Key",
+    "selectedKeyExpired": "Key 已过期或不存在",
     "selectedKeyHidden": "当前筛选条件下未显示该 Key"
   },
   "keyDetail": {
@@ -190,6 +191,7 @@
     "formatJson": "格式化",
     "rawJsonView": "原始 JSON",
     "unsupportedType": "不支持的数据类型: {{type}}",
+    "keyExpired": "该 Key 已过期或不存在，请刷新列表。",
     "invalidJson": "JSON 格式无效",
     "jsonErrorTitle": "JSON 校验失败",
     "jsonErrorLocation": "第 {{line}} 行，第 {{column}} 列"

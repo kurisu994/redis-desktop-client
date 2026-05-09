@@ -93,6 +93,14 @@ export function ValueViewer({
 }: ValueViewerProps) {
   const { t } = useTranslation();
   const totalCount = keyInfo.length;
+  if (keyInfo.key_type === "none" || keyInfo.ttl === -2) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-muted-foreground">
+        {t("valueEditor.keyExpired")}
+      </div>
+    );
+  }
+
   switch (keyInfo.key_type) {
     case "string":
       return (
