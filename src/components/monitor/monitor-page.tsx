@@ -121,6 +121,18 @@ export function MonitorPage() {
     resetMonitor();
   }, [activeConnectionId, resetMonitor]);
 
+  // 组件卸载时自动停止后台监控
+  useEffect(() => {
+    return () => {
+      const monitoring = useMonitorStore.getState().monitoring;
+      const connId = useConnectionStore.getState().activeConnectionId;
+      if (monitoring && connId) {
+        stopMonitor(connId).catch(() => {});
+        useMonitorStore.getState().setMonitoring(false);
+      }
+    };
+  }, []);
+
   // 初始加载
   useEffect(() => {
     fetchServerInfo();
@@ -144,16 +156,24 @@ export function MonitorPage() {
   // 监听 MONITOR 日志事件
   useEffect(() => {
     let unlisten: (() => void) | undefined;
+    let active = true;
     const setupListener = async () => {
-      unlisten = await listen<string>("redis://monitor", (event) => {
+      const fn = await listen<string>("redis://monitor", (event) => {
+        if (!active) return;
         addLogEntry({
           timestamp: Date.now(),
           message: event.payload,
         });
       });
+      if (active) {
+        unlisten = fn;
+      } else {
+        fn();
+      }
     };
     setupListener();
     return () => {
+      active = false;
       if (unlisten) unlisten();
     };
   }, [addLogEntry]);
