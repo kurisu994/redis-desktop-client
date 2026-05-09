@@ -132,7 +132,9 @@
     "deleteFailed": "Failed to delete key",
     "batchDeleteFailed": "Failed to batch delete keys",
     "exportFailed": "Failed to export keys",
-    "maxLoadKeysReached": "Loaded {{count}} keys. Use filter to narrow results."
+    "maxLoadKeysReached": "Loaded {{count}} keys. Use filter to narrow results.",
+    "locateSelectedKey": "Locate current key",
+    "selectedKeyHidden": "The current filters do not show this key"
   },
   "keyDetail": {
     "type": "Type",

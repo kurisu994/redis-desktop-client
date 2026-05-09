@@ -1,8 +1,9 @@
 "use client";
 
+import { forwardRef, useImperativeHandle, useRef } from "react";
 import type { KeyEntry } from "@/stores/browser-store";
 import { useBrowserStore } from "@/stores/browser-store";
-import { Virtuoso } from "react-virtuoso";
+import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { Star, Loader2 } from "lucide-react";
 
 /** Key 类型对应的颜色 */
@@ -42,19 +43,44 @@ interface KeyListProps {
   loading?: boolean;
 }
 
+export interface KeyListHandle {
+  /** 滚动到当前选中的 Key */
+  locateSelectedKey: () => void;
+}
+
 /** 平铺 Key 列表 — 虚拟滚动，支持多选和收藏 */
-export function KeyList({
-  keys,
-  selectedKey,
-  onSelectKey,
-  loading,
-}: KeyListProps) {
+export const KeyList = forwardRef<KeyListHandle, KeyListProps>(function KeyList(
+  { keys, selectedKey, onSelectKey, loading },
+  ref,
+) {
   const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } =
     useBrowserStore();
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
+
+  /** 定位到当前选中的 Key，并滚动到列表中间 */
+  useImperativeHandle(
+    ref,
+    () => ({
+      locateSelectedKey: () => {
+        if (!selectedKey) return;
+
+        const index = keys.findIndex((entry) => entry.key === selectedKey);
+        if (index < 0) return;
+
+        virtuosoRef.current?.scrollToIndex({
+          index,
+          align: "center",
+          behavior: "smooth",
+        });
+      },
+    }),
+    [keys, selectedKey],
+  );
 
   return (
     <div className="relative h-full">
       <Virtuoso
+        ref={virtuosoRef}
         data={keys}
         itemContent={(_, entry) => {
           const isSelected = selectedKey === entry.key;
@@ -128,4 +154,4 @@ export function KeyList({
       )}
     </div>
   );
-}
+});

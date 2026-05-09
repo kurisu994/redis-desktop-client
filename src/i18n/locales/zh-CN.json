@@ -132,7 +132,9 @@
     "deleteFailed": "删除 Key 失败",
     "batchDeleteFailed": "批量删除 Key 失败",
     "exportFailed": "导出 Key 失败",
-    "maxLoadKeysReached": "已加载 {{count}} 个 Key，请使用过滤器缩小范围。"
+    "maxLoadKeysReached": "已加载 {{count}} 个 Key，请使用过滤器缩小范围。",
+    "locateSelectedKey": "定位当前 Key",
+    "selectedKeyHidden": "当前筛选条件下未显示该 Key"
   },
   "keyDetail": {
     "type": "类型",

@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { KeyEntry } from "@/stores/browser-store";
 import { useBrowserStore } from "@/stores/browser-store";
 import { ChevronRight, ChevronDown, Folder, Star, Loader2 } from "lucide-react";
@@ -39,10 +45,28 @@ interface KeyTreeProps {
   loading?: boolean;
 }
 
+export interface KeyTreeHandle {
+  /** 展开父级目录并滚动到当前选中的 Key */
+  locateSelectedKey: () => void;
+}
+
+/** 获取 Key 的所有父级目录路径 */
+function getParentPaths(key: string) {
+  const parts = key.split(":");
+  return parts
+    .slice(0, -1)
+    .map((_, index) => parts.slice(0, index + 1).join(":"));
+}
+
 /** 树形 Key 浏览器 — 按 : 分隔符构建命名空间层级，支持多选和收藏 */
-export function KeyTree({ keys, selectedKey, onSelectKey, loading }: KeyTreeProps) {
+export const KeyTree = forwardRef<KeyTreeHandle, KeyTreeProps>(function KeyTree(
+  { keys, selectedKey, onSelectKey, loading },
+  ref,
+) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } = useBrowserStore();
+  const leafRefs = useRef(new Map<string, HTMLDivElement>());
+  const { checkedKeys, toggleCheckedKey, favorites, toggleFavorite } =
+    useBrowserStore();
 
   /** 构建树结构 */
   const tree = useMemo(() => {
@@ -95,6 +119,33 @@ export function KeyTree({ keys, selectedKey, onSelectKey, loading }: KeyTreeProp
     });
   };
 
+  /** 定位时自动展开父级目录，并在渲染完成后滚动到叶子节点 */
+  useImperativeHandle(
+    ref,
+    () => ({
+      locateSelectedKey: () => {
+        if (!selectedKey) return;
+
+        const parentPaths = getParentPaths(selectedKey);
+        setExpanded((prev) => {
+          const next = new Set(prev);
+          parentPaths.forEach((path) => next.add(path));
+          return next;
+        });
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            leafRefs.current.get(selectedKey)?.scrollIntoView({
+              block: "center",
+              behavior: "smooth",
+            });
+          });
+        });
+      },
+    }),
+    [selectedKey],
+  );
+
   /** 渲染文件夹节点 */
   const renderFolder = (node: TreeNode, depth: number) => {
     const isExpanded = expanded.has(node.fullPath);
@@ -114,17 +165,24 @@ export function KeyTree({ keys, selectedKey, onSelectKey, loading }: KeyTreeProp
           )}
           <Folder className="w-4 h-4 text-yellow-500/80 shrink-0" />
           <span className="truncate text-foreground/80">{node.name}</span>
-          <span className="text-muted-foreground text-xs ml-auto shrink-0">{childCount}</span>
+          <span className="text-muted-foreground text-xs ml-auto shrink-0">
+            {childCount}
+          </span>
         </button>
 
         {isExpanded && (
-          <div className="border-l border-border/50 pl-0.5" style={{ marginLeft: "10px" }}>
+          <div
+            className="border-l border-border/50 pl-0.5"
+            style={{ marginLeft: "10px" }}
+          >
             {/* 子文件夹 */}
             {Array.from(node.children.values())
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((child) => renderFolder(child, depth + 1))}
             {/* 叶子节点 Key */}
-            {node.keys.sort((a, b) => a.key.localeCompare(b.key)).map((entry) => renderLeaf(entry))}
+            {node.keys
+              .sort((a, b) => a.key.localeCompare(b.key))
+              .map((entry) => renderLeaf(entry))}
           </div>
         )}
       </div>
@@ -142,8 +200,17 @@ export function KeyTree({ keys, selectedKey, onSelectKey, loading }: KeyTreeProp
     return (
       <div
         key={entry.key}
+        ref={(node) => {
+          if (node) {
+            leafRefs.current.set(entry.key, node);
+          } else {
+            leafRefs.current.delete(entry.key);
+          }
+        }}
         className={`flex items-center gap-1 w-full py-1.5 px-2 rounded-md cursor-pointer text-sm transition-colors group ${
-          isSelected ? "bg-primary/15 text-primary" : "hover:bg-white/5 text-foreground/70"
+          isSelected
+            ? "bg-primary/15 text-primary"
+            : "hover:bg-white/5 text-foreground/70"
         }`}
         style={{ paddingLeft: "12px" }}
       >
@@ -157,7 +224,10 @@ export function KeyTree({ keys, selectedKey, onSelectKey, loading }: KeyTreeProp
           }}
           className="w-3.5 h-3.5 shrink-0 accent-primary cursor-pointer"
         />
-        <button className="flex items-center gap-2 flex-1 min-w-0" onClick={() => onSelectKey(entry.key)}>
+        <button
+          className="flex items-center gap-2 flex-1 min-w-0"
+          onClick={() => onSelectKey(entry.key)}
+        >
           <span
             className={`w-2 h-2 rounded-full shrink-0 ${
               TYPE_COLORS[entry.key_type] || "bg-muted-foreground"
@@ -199,7 +269,9 @@ export function KeyTree({ keys, selectedKey, onSelectKey, loading }: KeyTreeProp
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((child) => renderFolder(child, 0))}
       {/* 根级 Key（无命名空间） */}
-      {tree.keys.sort((a, b) => a.key.localeCompare(b.key)).map((entry) => renderLeaf(entry))}
+      {tree.keys
+        .sort((a, b) => a.key.localeCompare(b.key))
+        .map((entry) => renderLeaf(entry))}
       {loading && keys.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center">
           <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -207,4 +279,4 @@ export function KeyTree({ keys, selectedKey, onSelectKey, loading }: KeyTreeProp
       )}
     </div>
   );
-}
+});

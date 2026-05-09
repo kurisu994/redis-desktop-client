@@ -23,6 +23,7 @@ import {
   X,
   Loader2,
   Star,
+  Crosshair,
 } from "lucide-react";
 import { KeyDialog } from "./key-dialog";
 import { ExportDialog } from "./export-dialog";
@@ -31,10 +32,15 @@ import { ImportDialog } from "./import-dialog";
 interface KeyToolbarProps {
   onRefresh: () => void;
   onSearch: () => void;
+  onLocateSelectedKey: () => void;
 }
 
 /** 工具栏 — db 选择器 + 刷新 + 搜索 + 视图切换 + 新建 Key */
-export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
+export function KeyToolbar({
+  onRefresh,
+  onSearch,
+  onLocateSelectedKey,
+}: KeyToolbarProps) {
   const { t } = useTranslation();
   const {
     selectedDb,
@@ -45,6 +51,7 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
     setViewMode,
     filterPattern,
     setFilterPattern,
+    selectedKey,
     loading,
     resetBrowser,
     showFavoritesOnly,
@@ -148,6 +155,19 @@ export function KeyToolbar({ onRefresh, onSearch }: KeyToolbarProps) {
         </div>
 
         <div className="flex-1" />
+
+        {/* 定位当前选中的 Key */}
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={onLocateSelectedKey}
+          disabled={!selectedKey}
+          aria-label={t("browser.locateSelectedKey")}
+          title={t("browser.locateSelectedKey")}
+          className="h-8 w-8"
+        >
+          <Crosshair className="w-4 h-4" />
+        </Button>
 
         {/* 视图切换 */}
         <div className="flex border border-border rounded-lg overflow-hidden">

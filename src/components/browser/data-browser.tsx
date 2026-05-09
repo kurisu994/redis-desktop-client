@@ -12,8 +12,8 @@ import {
   exportKeys,
 } from "@/lib/tauri-api";
 import { KeyToolbar } from "./key-toolbar";
-import { KeyTree } from "./key-tree";
-import { KeyList } from "./key-list";
+import { KeyTree, type KeyTreeHandle } from "./key-tree";
+import { KeyList, type KeyListHandle } from "./key-list";
 import { KeyDetail } from "./key-detail";
 import { ValueViewer } from "./value-viewer";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,8 @@ export function DataBrowser() {
 
   const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
   const [showDeleteKeyConfirm, setShowDeleteKeyConfirm] = useState(false);
+  const keyTreeRef = useRef<KeyTreeHandle>(null);
+  const keyListRef = useRef<KeyListHandle>(null);
 
   /** 左栏宽度（可拖拽调节） */
   const [panelWidth, setPanelWidth] = useState(288);
@@ -204,7 +206,9 @@ export function DataBrowser() {
             setScanComplete(cursor === 0 || totalLoaded >= MAX_LOAD_KEYS);
           }
           if (totalLoaded >= MAX_LOAD_KEYS && cursor !== 0) {
-            toast.info(t("browser.maxLoadKeysReached", { count: MAX_LOAD_KEYS }));
+            toast.info(
+              t("browser.maxLoadKeysReached", { count: MAX_LOAD_KEYS }),
+            );
           }
         } else if (!scanComplete) {
           // 手动触发继续加载（兜底，正常不会用到）
@@ -324,6 +328,23 @@ export function DataBrowser() {
     return keys.filter((k) => favorites.has(k.key));
   }, [keys, showFavoritesOnly, favorites]);
 
+  /** 定位当前选中的 Key；树形模式会由 KeyTree 自动展开父级目录 */
+  const handleLocateSelectedKey = useCallback(() => {
+    if (!selectedKey) return;
+
+    const visible = displayKeys.some((entry) => entry.key === selectedKey);
+    if (!visible) {
+      toast.info(t("browser.selectedKeyHidden"));
+      return;
+    }
+
+    if (viewMode === "tree") {
+      keyTreeRef.current?.locateSelectedKey();
+    } else {
+      keyListRef.current?.locateSelectedKey();
+    }
+  }, [displayKeys, selectedKey, t, viewMode]);
+
   /** 批量删除 */
   const handleBatchDelete = useCallback(async () => {
     if (!connectedId || checkedKeys.size === 0) return;
@@ -394,7 +415,11 @@ export function DataBrowser() {
   return (
     <div className="flex-1 flex flex-col min-w-0">
       {/* 工具栏 */}
-      <KeyToolbar onRefresh={handleRefresh} onSearch={handleSearch} />
+      <KeyToolbar
+        onRefresh={handleRefresh}
+        onSearch={handleSearch}
+        onLocateSelectedKey={handleLocateSelectedKey}
+      />
 
       {/* 左右分栏 */}
       <div className="flex-1 flex overflow-hidden">
@@ -406,6 +431,7 @@ export function DataBrowser() {
           <div className="flex-1 overflow-y-auto">
             {viewMode === "tree" ? (
               <KeyTree
+                ref={keyTreeRef}
                 keys={displayKeys}
                 selectedKey={selectedKey}
                 onSelectKey={setSelectedKey}
@@ -413,6 +439,7 @@ export function DataBrowser() {
               />
             ) : (
               <KeyList
+                ref={keyListRef}
                 keys={displayKeys}
                 selectedKey={selectedKey}
                 onSelectKey={setSelectedKey}
