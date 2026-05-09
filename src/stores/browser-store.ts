@@ -45,6 +45,8 @@ interface BrowserState {
   selectedKey: string | null;
   /** 当前 Key 的详细信息 */
   keyInfo: KeyInfo | null;
+  /** 当前选中的 Key 是否已过期 */
+  keyExpired: boolean;
   /** 视图模式（树形 / 平铺） */
   viewMode: ViewMode;
   /** 搜索/过滤模式 */
@@ -70,6 +72,7 @@ interface BrowserState {
   setScanComplete: (complete: boolean) => void;
   setSelectedKey: (key: string | null) => void;
   setKeyInfo: (info: KeyInfo | null) => void;
+  setKeyExpired: (expired: boolean) => void;
   setViewMode: (mode: ViewMode) => void;
   setFilterPattern: (pattern: string) => void;
   setLoading: (loading: boolean) => void;
@@ -102,6 +105,7 @@ export const useBrowserStore = create<BrowserState>((set) => ({
   scanComplete: false,
   selectedKey: null,
   keyInfo: null,
+  keyExpired: false,
   viewMode: "tree",
   filterPattern: "",
   loading: false,
@@ -123,8 +127,13 @@ export const useBrowserStore = create<BrowserState>((set) => ({
     }),
   setScanCursor: (cursor) => set({ scanCursor: cursor }),
   setScanComplete: (complete) => set({ scanComplete: complete }),
-  setSelectedKey: (key) => set({ selectedKey: key, keyInfo: null }),
+  setSelectedKey: (key) =>
+    set((state) => {
+      if (state.selectedKey === key) return state;
+      return { selectedKey: key, keyInfo: null, keyExpired: false };
+    }),
   setKeyInfo: (info) => set({ keyInfo: info }),
+  setKeyExpired: (expired) => set({ keyExpired: expired }),
   setViewMode: (mode) => set({ viewMode: mode }),
   setFilterPattern: (pattern) => set({ filterPattern: pattern }),
   setLoading: (loading) => set({ loading }),
@@ -135,6 +144,7 @@ export const useBrowserStore = create<BrowserState>((set) => ({
       scanComplete: false,
       selectedKey: null,
       keyInfo: null,
+      keyExpired: false,
       filterPattern: "",
       loading: false,
       checkedKeys: new Set(),

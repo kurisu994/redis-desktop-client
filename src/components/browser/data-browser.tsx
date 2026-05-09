@@ -39,6 +39,7 @@ export function DataBrowser() {
   const scanComplete = useBrowserStore((s) => s.scanComplete);
   const selectedKey = useBrowserStore((s) => s.selectedKey);
   const keyInfo = useBrowserStore((s) => s.keyInfo);
+  const keyExpired = useBrowserStore((s) => s.keyExpired);
   const viewMode = useBrowserStore((s) => s.viewMode);
   const filterPattern = useBrowserStore((s) => s.filterPattern);
   const loading = useBrowserStore((s) => s.loading);
@@ -54,6 +55,7 @@ export function DataBrowser() {
   const setScanCursor = useBrowserStore((s) => s.setScanCursor);
   const setScanComplete = useBrowserStore((s) => s.setScanComplete);
   const setSelectedKey = useBrowserStore((s) => s.setSelectedKey);
+  const setKeyExpired = useBrowserStore((s) => s.setKeyExpired);
   const setKeyInfo = useBrowserStore((s) => s.setKeyInfo);
   const setLoading = useBrowserStore((s) => s.setLoading);
   const setDbList = useBrowserStore((s) => s.setDbList);
@@ -253,13 +255,12 @@ export function DataBrowser() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectedId, selectedDb]);
 
-  /** 处理已过期或不存在的 Key，避免 TYPE none 落入不支持类型提示 */
+  /** 处理已过期或不存在的 Key — 仅标记过期状态，不自动刷新列表 */
   const handleExpiredKey = useCallback(() => {
-    setSelectedKey(null);
     setKeyInfo(null);
+    setKeyExpired(true);
     toast.info(t("browser.selectedKeyExpired"));
-    loadKeys(true);
-  }, [loadKeys, setKeyInfo, setSelectedKey, t]);
+  }, [setKeyInfo, setKeyExpired, t]);
 
   /** 判断 Key 信息是否表示 Redis 中已不存在 */
   const isExpiredKeyInfo = useCallback(
@@ -270,7 +271,6 @@ export function DataBrowser() {
 
   /** 选中 Key 时加载详细信息 */
   useEffect(() => {
-    // keyInfo 已在 setSelectedKey 中同步清空，避免旧类型导致 WRONGTYPE
     if (connectedId && selectedKey) {
       let cancelled = false;
       getKeyInfo(connectedId, selectedDb, selectedKey)
@@ -281,6 +281,7 @@ export function DataBrowser() {
             return;
           }
           setKeyInfo(info);
+          setKeyExpired(false);
         })
         .catch(() => {
           if (!cancelled) toast.error(t("browser.loadKeyInfoFailed"));
@@ -297,6 +298,7 @@ export function DataBrowser() {
     selectedDb,
     selectedKey,
     setKeyInfo,
+    setKeyExpired,
     t,
   ]);
 
@@ -326,6 +328,7 @@ export function DataBrowser() {
             return;
           }
           setKeyInfo(info);
+          setKeyExpired(false);
         })
         .catch(() => toast.error(t("browser.loadKeyInfoFailed")));
     }
@@ -336,6 +339,7 @@ export function DataBrowser() {
     selectedDb,
     selectedKey,
     setKeyInfo,
+    setKeyExpired,
     t,
   ]);
 
@@ -343,8 +347,9 @@ export function DataBrowser() {
   const handleKeyDeleted = useCallback(() => {
     setSelectedKey(null);
     setKeyInfo(null);
+    setKeyExpired(false);
     loadKeys(true);
-  }, [setSelectedKey, setKeyInfo, loadKeys]);
+  }, [setSelectedKey, setKeyInfo, setKeyExpired, loadKeys]);
 
   /** 快捷键删除选中 Key（⌘D / Delete） */
   const handleDeleteSelectedKey = useCallback(async () => {
@@ -403,6 +408,7 @@ export function DataBrowser() {
     clearCheckedKeys();
     setSelectedKey(null);
     setKeyInfo(null);
+    setKeyExpired(false);
     loadKeys(true);
     if (connectedId) {
       getDbInfo(connectedId)
@@ -416,6 +422,7 @@ export function DataBrowser() {
     clearCheckedKeys,
     setSelectedKey,
     setKeyInfo,
+    setKeyExpired,
     loadKeys,
     setDbList,
     t,
@@ -539,6 +546,11 @@ export function DataBrowser() {
                 onValueChanged={handleValueChanged}
               />
             </>
+          ) : selectedKey && keyExpired ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
+              <Database className="w-12 h-12 opacity-20" />
+              <p className="text-sm">{t("browser.selectedKeyExpired")}</p>
+            </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
               <Database className="w-12 h-12 opacity-20" />
