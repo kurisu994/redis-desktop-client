@@ -217,7 +217,9 @@ export function KeyDetail({
               onClick={() => setShowTtl(true)}
             >
               <Clock className="w-3.5 h-3.5" />
-              {formatTtl(remainingTtl)}
+              <span className={remainingTtl >= 0 ? "text-amber-500 font-semibold" : ""}>
+                {formatTtl(remainingTtl)}
+              </span>
             </Button>
             <Button
               size="sm"

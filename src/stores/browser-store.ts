@@ -129,7 +129,10 @@ export const useBrowserStore = create<BrowserState>((set) => ({
   setScanComplete: (complete) => set({ scanComplete: complete }),
   setSelectedKey: (key) =>
     set((state) => {
-      if (state.selectedKey === key) return state;
+      if (state.selectedKey === key) {
+        // 点击同一 Key 时刷新详情：递增 refreshVersion 触发重新加载
+        return { keyInfo: null, keyExpired: false, refreshVersion: state.refreshVersion + 1 };
+      }
       return { selectedKey: key, keyInfo: null, keyExpired: false };
     }),
   setKeyInfo: (info) => set({ keyInfo: info }),

@@ -24,6 +24,7 @@ import {
   X,
   CheckSquare,
   Square,
+  Loader2,
 } from "lucide-react";
 import { ConfirmDangerDialog } from "@/components/confirm-danger-dialog";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ export function DataBrowser() {
   const viewMode = useBrowserStore((s) => s.viewMode);
   const filterPattern = useBrowserStore((s) => s.filterPattern);
   const loading = useBrowserStore((s) => s.loading);
+  const refreshVersion = useBrowserStore((s) => s.refreshVersion);
   const checkedKeys = useBrowserStore((s) => s.checkedKeys);
   const clearCheckedKeys = useBrowserStore((s) => s.clearCheckedKeys);
   const setCheckedKeys = useBrowserStore((s) => s.setCheckedKeys);
@@ -297,6 +299,7 @@ export function DataBrowser() {
     isExpiredKeyInfo,
     selectedDb,
     selectedKey,
+    refreshVersion,
     setKeyInfo,
     setKeyExpired,
     t,
@@ -550,6 +553,11 @@ export function DataBrowser() {
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
               <Database className="w-12 h-12 opacity-20" />
               <p className="text-sm">{t("browser.selectedKeyExpired")}</p>
+            </div>
+          ) : selectedKey ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
+              <Loader2 className="w-8 h-8 animate-spin opacity-40" />
+              <p className="text-sm">{t("browser.scanning")}</p>
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
