@@ -131,6 +131,16 @@
 
   --chart-5: oklch(0.769 0.188 70.08);
 
+  --json-key-name-color: #a00595;
+
+  --json-string-color: #006915;
+
+  --json-number-color: #00677e;
+
+  --json-boolean-color: #9e6600;
+
+  --json-null-color: #395984;
+
   --sidebar: oklch(0.985 0.002 247);
 
   --sidebar-foreground: oklch(0.145 0.005 247);
@@ -194,6 +204,16 @@
   --chart-4: oklch(0.627 0.265 303.9);
 
   --chart-5: oklch(0.645 0.246 16.439);
+
+  --json-key-name-color: #c678dd;
+
+  --json-string-color: #98c379;
+
+  --json-number-color: #5da8e5;
+
+  --json-boolean-color: #d19a66;
+
+  --json-null-color: #c6ccd8;
 
   --sidebar: oklch(0.17 0.006 285);
 

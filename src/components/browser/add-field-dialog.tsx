@@ -21,6 +21,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { ChevronDown, Loader2 } from "lucide-react";
+import { JsonHighlightEditor } from "./json-highlight-editor";
 import { JsonValidationError } from "./json-validation-error";
 import {
   focusJsonIssue,
@@ -365,19 +366,26 @@ export function AddFieldDialog({
                 </pre>
               ) : (
                 <div className="flex h-full flex-col">
-                  <textarea
-                    ref={textAreaRef}
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    onKeyDown={handleEditorKeyDown}
-                    spellCheck={false}
-                    aria-invalid={!!jsonIssue}
-                    className={`min-h-0 flex-1 resize-none border-0 bg-background p-3 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 ${
-                      jsonIssue
-                        ? "bg-destructive/5 ring-1 ring-inset ring-destructive/50"
-                        : ""
-                    }`}
-                  />
+                  {format === "json" ? (
+                    <JsonHighlightEditor
+                      ref={textAreaRef}
+                      value={value}
+                      onValueChange={setValue}
+                      onKeyDown={handleEditorKeyDown}
+                      invalid={!!jsonIssue}
+                      paddingClassName="p-3"
+                      className="min-h-0 flex-1"
+                    />
+                  ) : (
+                    <textarea
+                      ref={textAreaRef}
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
+                      onKeyDown={handleEditorKeyDown}
+                      spellCheck={false}
+                      className="min-h-0 flex-1 resize-none border-0 bg-background p-3 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0"
+                    />
+                  )}
                   <JsonValidationError issue={jsonIssue} />
                 </div>
               )}

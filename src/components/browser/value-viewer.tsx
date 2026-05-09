@@ -44,6 +44,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { AddFieldDialog } from "./add-field-dialog";
+import { JsonHighlightEditor } from "./json-highlight-editor";
 import { JsonValidationError } from "./json-validation-error";
 import {
   focusJsonIssue,
@@ -559,22 +560,31 @@ function StringViewer({
             </pre>
           ) : (
             <div className="flex h-full flex-col">
-              {/* 主编辑区 — 原生 textarea 提供更直接的输入体验 */}
-              <textarea
-                ref={textAreaRef}
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                onKeyDown={handleEditorKeyDown}
-                readOnly={isLargePreview}
-                wrap={isLargeString ? "off" : "soft"}
-                spellCheck={false}
-                aria-invalid={!!jsonIssue}
-                className={`min-h-0 flex-1 resize-none border-0 bg-background p-4 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 read-only:cursor-default ${
-                  jsonIssue
-                    ? "bg-destructive/5 ring-1 ring-inset ring-destructive/50"
-                    : ""
-                }`}
-              />
+              {format === "json" ? (
+                <JsonHighlightEditor
+                  ref={textAreaRef}
+                  value={value}
+                  onValueChange={setValue}
+                  onKeyDown={handleEditorKeyDown}
+                  readOnly={isLargePreview}
+                  wrap={isLargeString ? "off" : "soft"}
+                  invalid={!!jsonIssue}
+                  paddingClassName="p-4"
+                  className="min-h-0 flex-1"
+                />
+              ) : (
+                /* 主编辑区 — 原生 textarea 提供更直接的输入体验 */
+                <textarea
+                  ref={textAreaRef}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  onKeyDown={handleEditorKeyDown}
+                  readOnly={isLargePreview}
+                  wrap={isLargeString ? "off" : "soft"}
+                  spellCheck={false}
+                  className="min-h-0 flex-1 resize-none border-0 bg-background p-4 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 read-only:cursor-default"
+                />
+              )}
               <JsonValidationError issue={jsonIssue} />
             </div>
           )}
@@ -1715,18 +1725,14 @@ function JsonViewer({
       {/* JSON 文本编辑区 */}
       <div className="flex-1 min-h-0">
         <div className="flex h-full flex-col">
-          <textarea
+          <JsonHighlightEditor
             ref={textAreaRef}
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onValueChange={setValue}
             onKeyDown={handleEditorKeyDown}
-            spellCheck={false}
-            aria-invalid={!!jsonIssue}
-            className={`min-h-0 flex-1 resize-none border-0 bg-background p-4 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 ${
-              jsonIssue
-                ? "bg-destructive/5 ring-1 ring-inset ring-destructive/50"
-                : ""
-            }`}
+            invalid={!!jsonIssue}
+            paddingClassName="p-4"
+            className="min-h-0 flex-1"
           />
           <JsonValidationError issue={jsonIssue} />
         </div>
