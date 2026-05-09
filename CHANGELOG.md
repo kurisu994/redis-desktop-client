@@ -10,6 +10,22 @@
 
 ### 🔧 改进
 
+#### 值查看器组件结构重构
+
+- 将 `value-viewer.tsx`（1783 行）按数据类型拆分为独立模块，移入 `viewers/` 子目录
+- 新增 `string-viewer.tsx`、`hash-viewer.tsx`、`list-viewer.tsx`、`set-viewer.tsx`、`zset-viewer.tsx`、`stream-viewer.tsx`、`json-viewer.tsx`、`table-view.tsx`
+- `value-viewer.tsx` 精简为路由入口（110 行），按 Key 类型分发到对应 Viewer
+- `add-field-dialog.tsx`、`json-highlight-editor.tsx`、`json-validation-error.tsx`、`value-editor-utils.ts` 同步移入 `viewers/`
+
+#### MONITOR 日志 Tab
+
+- 监控页面新增 MONITOR 日志 Tab，实时展示 Redis MONITOR 命令输出
+- 修复 MONITOR 事件监听竞态条件及后台任务泄漏问题
+
+#### 布局修复
+
+- 修复监控和 Pub/Sub 页面内容未填满宽度的问题
+
 #### 连接断开时自动清理状态
 
 - 断开连接时自动关闭 CLI、Pub/Sub、Monitor 等 Tab 页，回到 Browser Tab

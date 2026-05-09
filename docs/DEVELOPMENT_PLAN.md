@@ -458,6 +458,10 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 | 32 | TTL 倒计时到期处理 | ✅ | TTL 归零时自动标记 Key 已过期，界面切换到过期提示，不再停在 "0s" |
 | 33 | Loading 位置优化 | ✅ | Key 树形/平铺列表 Loading spinner 增加 `pt-12` 顶部间距，视觉更舒适 |
 | 34 | 重复点击同一 DB 修复 | ✅ | 点击已激活的同一 DB 不再触发 `resetBrowser()`，Key 列表和详情数据不会消失 |
+| 35 | MONITOR 日志 Tab | ✅ | 监控页面新增 MONITOR 日志 Tab，实时展示 Redis MONITOR 命令输出 |
+| 36 | MONITOR 竞态修复 | ✅ | 修复 MONITOR 事件监听竞态条件及后台任务泄漏问题 |
+| 37 | 监控/PubSub 布局修复 | ✅ | 修复监控和 Pub/Sub 页面内容未填满宽度的问题 |
+| 38 | 值查看器重构 | ✅ | 将 `value-viewer.tsx`（1783 行）按数据类型拆分为独立模块，移入 `viewers/` 子目录 |
 
 #### 6.6 Release 流水线 & 打包发布
 
@@ -487,6 +491,9 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 - ✅ TTL 倒计时到期自动标记 Key 过期
 - ✅ Loading 位置视觉优化
 - ✅ 重复点击同一 DB 不清空数据修复
+- ✅ MONITOR 日志 Tab + 竞态条件修复
+- ✅ 监控/PubSub 页面布局宽度修复
+- ✅ 值查看器组件结构重构（按类型拆分为独立模块）
 
 ---
 

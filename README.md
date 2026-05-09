@@ -74,14 +74,18 @@ src/                        # 前端源码
 ├── components/             # React 组件
 │   ├── providers.tsx       # 全局 Provider（主题 + Tooltip + Toast + i18n）
 │   ├── error-boundary.tsx  # 错误边界
-│   ├── ui/                 # shadcn/ui 基础组件（17 个）
+│   ├── command-palette.tsx # ⌘K 命令面板
+│   ├── update-dialog.tsx   # 应用更新弹窗
+│   ├── confirm-danger-dialog.tsx # FLUSHDB 等危险操作确认
+│   ├── ui/                 # shadcn/ui 基础组件（19 个）
 │   ├── layout/             # 布局组件（TitleBar, Sidebar, TabBar, Settings 等）
-│   ├── browser/            # 数据浏览器（key-list, key-tree, value-viewer 等）
+│   ├── browser/            # 数据浏览器（key-list, key-tree, key-detail 等）
+│   │   └── viewers/        # 值查看器（按类型拆分：string/hash/list/set/zset/stream/json/table）
 │   ├── cli/                # CLI 终端
-│   ├── connection/         # 连接对话框
-│   ├── monitor/            # 服务器监控（INFO, 实时图表, 慢查询）
+│   ├── connection/         # 连接对话框（含导入导出）
+│   ├── monitor/            # 服务器监控（INFO, 实时图表, 慢查询, MONITOR 日志）
 │   └── pubsub/             # 发布订阅
-├── hooks/                  # 自定义 Hooks（全局快捷键、拖拽连接排序等）
+├── hooks/                  # 自定义 Hooks（全局快捷键、拖拽排序、更新检查）
 ├── lib/                    # 工具函数（Tauri IPC 封装 + cn 工具）
 ├── stores/                 # Zustand 状态仓库（app, connection, browser, cli, monitor, pubsub）
 └── i18n/                   # 国际化配置与翻译文件

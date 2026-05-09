@@ -41,12 +41,13 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 所有 Tauri 后端调用都通过此文件封装。在浏览器（`just dev-web`）环境中自动走 mock 实现，Tauri 环境中调用真实后端。新增后端命令时需同步在此文件添加函数和 mock 实现。
 
 **组件（`src/components/`）**
-按功能模块组织：`browser/`（数据浏览器：add-field-dialog、data-browser、export-dialog、import-dialog、key-detail、key-dialog、key-list、key-toolbar、key-tree、ttl-dialog、value-viewer 等 11 个文件）、`cli/`（CLI 终端）、`connection/`（连接对话框）、`layout/`（布局组件：title-bar、sidebar、sidebar-nav-button、connection-item、tab-bar、settings-page、welcome-page、language-switcher）、`monitor/`（服务器监控：server-info、realtime-charts、slow-log、monitor-page）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件，17 个）。
-全局组件：`providers.tsx`（NextThemes + TooltipProvider + Toaster）、`error-boundary.tsx`、`confirm-danger-dialog.tsx`、`command-palette.tsx`（⌘K 命令面板）。
+按功能模块组织：`browser/`（数据浏览器：data-browser、export-dialog、import-dialog、key-detail、key-dialog、key-list、key-toolbar、key-tree、ttl-dialog + `viewers/` 子目录含 string-viewer、hash-viewer、list-viewer、set-viewer、zset-viewer、stream-viewer、json-viewer、table-view、value-viewer 路由入口、add-field-dialog、json-highlight-editor、json-validation-error、value-editor-utils）、`cli/`（CLI 终端）、`connection/`（连接对话框含导入导出）、`layout/`（布局组件：title-bar、sidebar、sidebar-nav-button、connection-item、tab-bar、settings-page、welcome-page、language-switcher）、`monitor/`（服务器监控：server-info、realtime-charts、slow-log、log-panel、monitor-page）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件，19 个）。
+全局组件：`providers.tsx`（NextThemes + TooltipProvider + Toaster）、`error-boundary.tsx`、`confirm-danger-dialog.tsx`、`command-palette.tsx`（⌘K 命令面板）、`update-dialog.tsx`（应用更新弹窗）。
 
 **Hooks（`src/hooks/`）**
 - `use-global-shortcuts.ts`：注册全局快捷键（⌘N/T/F/R/K/D/S/,/F5/Delete）
 - `use-connection-drag.ts`：连接列表拖拽排序逻辑（HTML5 Drag and Drop）
+- `use-update-checker.ts`：应用更新检查逻辑（启动延迟检查 + 24h 间隔 + 手动检查）
 
 **国际化（`src/i18n/`）**
 翻译文件：`src/i18n/locales/en-US.json` 和 `zh-CN.json`，按功能模块分 key（两层嵌套）。修改 UI 文案后运行 `just i18n-check` 确认 key 同步。
@@ -73,7 +74,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
   - ✅ v0.2.0：常用命令面板（⌘K）、补充快捷键（⌘D/⌘S/F5/Delete）
   - ✅ v0.2.1：值编辑器交互重构（表格行截断 + 展开 + 双击编辑 + 自定义右键菜单）+ 大字符串性能优化（Hex useMemo/截断 + Monaco 选项优化 + model 隔离）+ 表格分页加载（Hash/List/Set/ZSet/Stream 每页 200 条）
   - ✅ v0.2.2：应用内更新检查与提示（Tauri Updater Plugin + 进度条 + 设置页开关）
-  - ✅ 近期修复：断开连接自动清理 Tab/状态、TTL 倒计时到期自动标记过期、Loading 位置优化、重复点击同一 DB 不清空数据
+  - ✅ 近期修复：断开连接自动清理 Tab/状态、TTL 倒计时到期自动标记过期、Loading 位置优化、重复点击同一 DB 不清空数据、MONITOR 日志 Tab + 竞态修复、监控/PubSub 布局宽度修复、值查看器组件结构重构（按类型拆分为独立模块）
   - 🔲 待办：SSH 隧道后端（Rust russh 库）、macOS/Windows 签名
 
 详见 `docs/DEVELOPMENT_PLAN.md`。
