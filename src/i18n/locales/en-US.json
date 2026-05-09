@@ -188,7 +188,9 @@
     "formatJson": "Format",
     "rawJsonView": "Raw JSON",
     "unsupportedType": "Unsupported data type: {{type}}",
-    "invalidJson": "Invalid JSON format"
+    "invalidJson": "Invalid JSON format",
+    "jsonErrorTitle": "JSON validation failed",
+    "jsonErrorLocation": "Line {{line}}, column {{column}}"
   },
   "keyDialog": {
     "createKey": "Create New Key",

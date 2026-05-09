@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -21,7 +21,14 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { ChevronDown, Loader2 } from "lucide-react";
-import { insertTextAtSelection, toHexDump } from "./value-editor-utils";
+import { JsonValidationError } from "./json-validation-error";
+import {
+  focusJsonIssue,
+  formatJsonWithValidation,
+  insertTextAtSelection,
+  toHexDump,
+  validateJson,
+} from "./value-editor-utils";
 
 /** 编辑器支持的格式 */
 type EditorFormat =
@@ -146,8 +153,19 @@ export function AddFieldDialog({
   );
   /** "更多格式" 下拉菜单 */
   const [showMoreFormats, setShowMoreFormats] = useState(false);
+  /** 值编辑区引用，用于 JSON 错误定位 */
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSave = async () => {
+    if (format === "json") {
+      const result = validateJson(value);
+      if (!result.ok) {
+        focusJsonIssue(textAreaRef.current, result.issue);
+        toast.error(t("valueEditor.invalidJson"));
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       // 如果是 hash 编辑模式且 field 改了名，传入 oldField
@@ -178,6 +196,13 @@ export function AddFieldDialog({
       }[mode];
 
   const isHex = format === "hex";
+  /** JSON 模式下实时校验当前文本，空白内容交给保存/格式化时提示 */
+  const jsonValidation = useMemo(
+    () => (format === "json" && value.trim() ? validateJson(value) : null),
+    [format, value],
+  );
+  const jsonIssue =
+    jsonValidation && !jsonValidation.ok ? jsonValidation.issue : null;
   /** Hex dump 内容（仅在 hex 模式时计算） */
   const hexResult = useMemo(
     () => (isHex ? toHexDump(value) : { content: "", truncated: false }),
@@ -186,10 +211,11 @@ export function AddFieldDialog({
 
   /** 格式化当前 JSON 文本 */
   const handleFormatJson = () => {
-    try {
-      const parsed = JSON.parse(value);
-      setValue(JSON.stringify(parsed, null, 2));
-    } catch {
+    const result = formatJsonWithValidation(value);
+    if (result.ok) {
+      setValue(result.formatted);
+    } else {
+      focusJsonIssue(textAreaRef.current, result.issue);
       toast.error(t("valueEditor.invalidJson"));
     }
   };
@@ -338,13 +364,22 @@ export function AddFieldDialog({
                   {hexResult.content}
                 </pre>
               ) : (
-                <textarea
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                  onKeyDown={handleEditorKeyDown}
-                  spellCheck={false}
-                  className="h-full w-full resize-none border-0 bg-background p-3 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0"
-                />
+                <div className="flex h-full flex-col">
+                  <textarea
+                    ref={textAreaRef}
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    onKeyDown={handleEditorKeyDown}
+                    spellCheck={false}
+                    aria-invalid={!!jsonIssue}
+                    className={`min-h-0 flex-1 resize-none border-0 bg-background p-3 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 ${
+                      jsonIssue
+                        ? "bg-destructive/5 ring-1 ring-inset ring-destructive/50"
+                        : ""
+                    }`}
+                  />
+                  <JsonValidationError issue={jsonIssue} />
+                </div>
               )}
             </div>
           </div>

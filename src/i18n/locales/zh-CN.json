@@ -188,7 +188,9 @@
     "formatJson": "格式化",
     "rawJsonView": "原始 JSON",
     "unsupportedType": "不支持的数据类型: {{type}}",
-    "invalidJson": "JSON 格式无效"
+    "invalidJson": "JSON 格式无效",
+    "jsonErrorTitle": "JSON 校验失败",
+    "jsonErrorLocation": "第 {{line}} 行，第 {{column}} 列"
   },
   "keyDialog": {
     "createKey": "新建键",

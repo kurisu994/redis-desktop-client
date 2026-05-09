@@ -44,10 +44,14 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { AddFieldDialog } from "./add-field-dialog";
+import { JsonValidationError } from "./json-validation-error";
 import {
+  focusJsonIssue,
+  formatJsonWithValidation,
   HEX_MAX_BYTES,
   insertTextAtSelection,
   toHexDump,
+  validateJson,
 } from "./value-editor-utils";
 
 /** 在 useEffect 中安全调用数据加载函数，避免 react-hooks/set-state-in-effect */
@@ -268,6 +272,8 @@ function StringViewer({
   const [loadingFull, setLoadingFull] = useState(false);
   /** "更多格式" 下拉菜单 */
   const [showMoreFormats, setShowMoreFormats] = useState(false);
+  /** 主文本编辑区引用，用于 JSON 错误定位 */
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   /** 判断是否为大值（使用 keyInfo.length —— String 的 STRLEN 字节长度） */
   const isLargeValue = keyInfo.length > LARGE_VALUE_THRESHOLD;
@@ -318,6 +324,15 @@ function StringViewer({
 
   const handleSave = async () => {
     if (!connectionId) return;
+    if (format === "json") {
+      const result = validateJson(value);
+      if (!result.ok) {
+        focusJsonIssue(textAreaRef.current, result.issue);
+        toast.error(t("valueEditor.invalidJson"));
+        return;
+      }
+    }
+
     await setStringValue(connectionId, selectedDb, keyName, value);
     setOriginalValue(value);
     onValueChanged();
@@ -325,10 +340,11 @@ function StringViewer({
 
   /** 格式化当前 JSON 文本 */
   const handleFormatJson = () => {
-    try {
-      const parsed = JSON.parse(value);
-      setValue(JSON.stringify(parsed, null, 2));
-    } catch {
+    const result = formatJsonWithValidation(value);
+    if (result.ok) {
+      setValue(result.formatted);
+    } else {
+      focusJsonIssue(textAreaRef.current, result.issue);
       toast.error(t("valueEditor.invalidJson"));
     }
   };
@@ -345,6 +361,15 @@ function StringViewer({
   useEffect(() => {
     const handler = () => {
       if (value !== originalValue && connectionId) {
+        if (format === "json") {
+          const result = validateJson(value);
+          if (!result.ok) {
+            focusJsonIssue(textAreaRef.current, result.issue);
+            toast.error(t("valueEditor.invalidJson"));
+            return;
+          }
+        }
+
         setStringValue(connectionId, selectedDb, keyName, value).then(() => {
           setOriginalValue(value);
           onValueChanged();
@@ -353,13 +378,29 @@ function StringViewer({
     };
     window.addEventListener("redis:save", handler);
     return () => window.removeEventListener("redis:save", handler);
-  }, [connectionId, selectedDb, keyName, value, originalValue, onValueChanged]);
+  }, [
+    connectionId,
+    selectedDb,
+    keyName,
+    value,
+    originalValue,
+    format,
+    t,
+    onValueChanged,
+  ]);
 
   const isDirty = value !== originalValue;
   const isHex = format === "hex";
   /** 值的字节长度（估算），用于决定 textarea 换行策略 */
   const valueSizeEstimate = value.length;
   const isLargeString = valueSizeEstimate > LARGE_STRING_THRESHOLD;
+  /** JSON 模式下实时校验当前文本，空白内容交给保存/格式化时提示 */
+  const jsonValidation = useMemo(
+    () => (format === "json" && value.trim() ? validateJson(value) : null),
+    [format, value],
+  );
+  const jsonIssue =
+    jsonValidation && !jsonValidation.ok ? jsonValidation.issue : null;
   /** Hex dump 内容（仅在 hex 模式时计算，使用 useMemo 避免重复计算） */
   const hexResult = useMemo(
     () => (isHex ? toHexDump(value) : { content: "", truncated: false }),
@@ -517,16 +558,25 @@ function StringViewer({
               {hexResult.content}
             </pre>
           ) : (
-            /* 主编辑区 — 原生 textarea 提供更直接的输入体验 */
-            <textarea
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={handleEditorKeyDown}
-              readOnly={isLargePreview}
-              wrap={isLargeString ? "off" : "soft"}
-              spellCheck={false}
-              className="h-full w-full resize-none border-0 bg-background p-4 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 read-only:cursor-default"
-            />
+            <div className="flex h-full flex-col">
+              {/* 主编辑区 — 原生 textarea 提供更直接的输入体验 */}
+              <textarea
+                ref={textAreaRef}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={handleEditorKeyDown}
+                readOnly={isLargePreview}
+                wrap={isLargeString ? "off" : "soft"}
+                spellCheck={false}
+                aria-invalid={!!jsonIssue}
+                className={`min-h-0 flex-1 resize-none border-0 bg-background p-4 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 read-only:cursor-default ${
+                  jsonIssue
+                    ? "bg-destructive/5 ring-1 ring-inset ring-destructive/50"
+                    : ""
+                }`}
+              />
+              <JsonValidationError issue={jsonIssue} />
+            </div>
           )}
         </div>
       </div>
@@ -1490,6 +1540,8 @@ function JsonViewer({
   const [path, setPath] = useState("$");
   const [pathInput, setPathInput] = useState("$");
   const [loading, setLoading] = useState(false);
+  /** JSON 全文编辑区引用，用于错误定位 */
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   /** 加载 JSON 值 */
   const loadValue = useCallback(
@@ -1543,43 +1595,47 @@ function JsonViewer({
 
   /** 格式化 JSON */
   const handleFormat = () => {
-    try {
-      const parsed = JSON.parse(value);
-      setValue(JSON.stringify(parsed, null, 2));
-    } catch {
-      // 非法 JSON 不格式化
+    const result = formatJsonWithValidation(value);
+    if (result.ok) {
+      setValue(result.formatted);
+    } else {
+      focusJsonIssue(textAreaRef.current, result.issue);
+      toast.error(t("valueEditor.invalidJson"));
     }
   };
 
   /** 保存修改 */
   const handleSave = async () => {
     if (!connectionId) return;
-    try {
-      // 验证是否为合法 JSON
-      JSON.parse(value);
-      await setJsonValue(connectionId, selectedDb, keyName, path, value);
-      setOriginalValue(value);
-      onValueChanged();
-    } catch {
+    const result = validateJson(value);
+    if (!result.ok) {
+      focusJsonIssue(textAreaRef.current, result.issue);
       toast.error(t("valueEditor.invalidJson"));
+      return;
     }
+
+    await setJsonValue(connectionId, selectedDb, keyName, path, value);
+    setOriginalValue(value);
+    onValueChanged();
   };
 
   /** 监听 redis:save 自定义事件（由 ⌘S 快捷键触发） */
   useEffect(() => {
     const handler = () => {
       if (value !== originalValue && connectionId) {
-        try {
-          JSON.parse(value);
-          setJsonValue(connectionId, selectedDb, keyName, path, value).then(
-            () => {
-              setOriginalValue(value);
-              onValueChanged();
-            },
-          );
-        } catch {
-          // 非法 JSON 不保存
+        const result = validateJson(value);
+        if (!result.ok) {
+          focusJsonIssue(textAreaRef.current, result.issue);
+          toast.error(t("valueEditor.invalidJson"));
+          return;
         }
+
+        setJsonValue(connectionId, selectedDb, keyName, path, value).then(
+          () => {
+            setOriginalValue(value);
+            onValueChanged();
+          },
+        );
       }
     };
     window.addEventListener("redis:save", handler);
@@ -1591,10 +1647,18 @@ function JsonViewer({
     path,
     value,
     originalValue,
+    t,
     onValueChanged,
   ]);
 
   const isDirty = value !== originalValue;
+  /** RedisJSON 编辑器始终按 JSON 规则实时校验，空白内容交给保存/格式化时提示 */
+  const jsonValidation = useMemo(
+    () => (value.trim() ? validateJson(value) : null),
+    [value],
+  );
+  const jsonIssue =
+    jsonValidation && !jsonValidation.ok ? jsonValidation.issue : null;
 
   /** 在 JSON textarea 中按 Tab 插入两个空格，避免焦点跳出编辑区 */
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -1650,13 +1714,22 @@ function JsonViewer({
 
       {/* JSON 文本编辑区 */}
       <div className="flex-1 min-h-0">
-        <textarea
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleEditorKeyDown}
-          spellCheck={false}
-          className="h-full w-full resize-none border-0 bg-background p-4 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0"
-        />
+        <div className="flex h-full flex-col">
+          <textarea
+            ref={textAreaRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={handleEditorKeyDown}
+            spellCheck={false}
+            aria-invalid={!!jsonIssue}
+            className={`min-h-0 flex-1 resize-none border-0 bg-background p-4 font-mono text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 ${
+              jsonIssue
+                ? "bg-destructive/5 ring-1 ring-inset ring-destructive/50"
+                : ""
+            }`}
+          />
+          <JsonValidationError issue={jsonIssue} />
+        </div>
       </div>
     </div>
   );
