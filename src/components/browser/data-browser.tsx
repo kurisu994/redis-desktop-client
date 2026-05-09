@@ -15,7 +15,7 @@ import { KeyToolbar } from "./key-toolbar";
 import { KeyTree, type KeyTreeHandle } from "./key-tree";
 import { KeyList, type KeyListHandle } from "./key-list";
 import { KeyDetail } from "./key-detail";
-import { ValueViewer } from "./value-viewer";
+import { ValueViewer } from "./viewers/value-viewer";
 import { Button } from "@/components/ui/button";
 import {
   Database,
