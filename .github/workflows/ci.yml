@@ -3,6 +3,14 @@ name: CI
 on:
   push:
     branches: [main]
+    tags-ignore:
+      - "v*"
+    paths-ignore:
+      - "*.md"
+      - "docs/**"
+      - "CHANGELOG.md"
+      - "LICENSE"
+      - ".gstack/**"
   pull_request:
     branches: [main]
 
