@@ -12,6 +12,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useBrowserStore } from "@/stores/browser-store";
+import type { KeyEntry } from "@/stores/browser-store";
 import {
   Search,
   RefreshCw,
@@ -33,6 +34,7 @@ interface KeyToolbarProps {
   onRefresh: () => void;
   onSearch: () => void;
   onLocateSelectedKey: () => void;
+  onKeyCreated: (entry: KeyEntry) => void;
 }
 
 /** 工具栏 — db 选择器 + 刷新 + 搜索 + 视图切换 + 新建 Key */
@@ -40,6 +42,7 @@ export function KeyToolbar({
   onRefresh,
   onSearch,
   onLocateSelectedKey,
+  onKeyCreated,
 }: KeyToolbarProps) {
   const { t } = useTranslation();
   const {
@@ -248,9 +251,9 @@ export function KeyToolbar({
         <KeyDialog
           isOpen={showNewKey}
           onClose={() => setShowNewKey(false)}
-          onCreated={() => {
+          onCreated={(entry) => {
             setShowNewKey(false);
-            onRefresh();
+            onKeyCreated(entry);
           }}
         />
       )}

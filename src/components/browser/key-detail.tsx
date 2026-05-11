@@ -34,7 +34,9 @@ const TYPE_DOT: Record<string, string> = {
 interface KeyDetailProps {
   keyName: string;
   keyInfo: KeyInfo;
-  onDeleted: () => void;
+  onDeleted: (key: string, deletedCount: number) => void;
+  onRenamed: (oldKey: string, newKey: string) => void;
+  onCopied: (key: string, keyType: string) => void;
   onRefresh: () => void;
 }
 
@@ -43,6 +45,8 @@ export function KeyDetail({
   keyName,
   keyInfo,
   onDeleted,
+  onRenamed,
+  onCopied,
   onRefresh,
 }: KeyDetailProps) {
   const { t } = useTranslation();
@@ -110,8 +114,8 @@ export function KeyDetail({
   /** 确认删除 Key */
   const handleConfirmDelete = async () => {
     if (!connectionId) return;
-    await deleteKeys(connectionId, selectedDb, [keyName]);
-    onDeleted();
+    const deletedCount = await deleteKeys(connectionId, selectedDb, [keyName]);
+    onDeleted(keyName, deletedCount);
   };
 
   /** 复制 Key */
@@ -120,15 +124,16 @@ export function KeyDetail({
     const dst = prompt(t("keyDetail.destinationKey"), `${keyName}:copy`);
     if (!dst) return;
     await copyKey(connectionId, selectedDb, keyName, dst);
-    onRefresh();
+    onCopied(dst, keyInfo.key_type);
   };
 
   /** 重命名 Key */
   const handleRename = async () => {
     if (!connectionId || !newName.trim()) return;
-    await renameKey(connectionId, selectedDb, keyName, newName.trim());
+    const trimmedName = newName.trim();
+    await renameKey(connectionId, selectedDb, keyName, trimmedName);
     setRenaming(false);
-    onDeleted(); // 触发重新加载
+    onRenamed(keyName, trimmedName);
   };
 
   /** 格式化字节大小 */
@@ -226,7 +231,11 @@ export function KeyDetail({
               onClick={() => setShowTtl(true)}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span className={remainingTtl >= 0 ? "text-amber-500 font-semibold" : ""}>
+              <span
+                className={
+                  remainingTtl >= 0 ? "text-amber-500 font-semibold" : ""
+                }
+              >
                 {formatTtl(remainingTtl)}
               </span>
             </Button>
@@ -302,7 +311,11 @@ export function KeyDetail({
         title={t("keyDetail.deleteConfirmTitle")}
         message={
           <span className="text-sm text-muted-foreground">
-            确定要删除键 <code className="bg-muted px-1 py-0.5 rounded text-primary font-mono text-xs">{keyName}</code> 吗？
+            确定要删除键{" "}
+            <code className="bg-muted px-1 py-0.5 rounded text-primary font-mono text-xs">
+              {keyName}
+            </code>{" "}
+            吗？
           </span>
         }
       />

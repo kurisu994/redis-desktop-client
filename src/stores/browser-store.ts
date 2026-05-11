@@ -67,6 +67,14 @@ interface BrowserState {
   setSelectedDb: (db: number) => void;
   setDbList: (list: DbSize[], count: number) => void;
   setKeys: (keys: KeyEntry[]) => void;
+  /** 本地新增或更新单个 Key 条目 */
+  upsertKey: (entry: KeyEntry) => void;
+  /** 本地删除一组 Key 条目 */
+  removeKeys: (keys: string[]) => void;
+  /** 本地重命名 Key 条目 */
+  renameKeyEntry: (oldKey: string, newKey: string) => void;
+  /** 本地增减指定 db 的 Key 数量 */
+  updateDbSize: (db: number, delta: number) => void;
   appendKeys: (keys: KeyEntry[]) => void;
   setScanCursor: (cursor: number) => void;
   setScanComplete: (complete: boolean) => void;
@@ -118,6 +126,76 @@ export const useBrowserStore = create<BrowserState>((set) => ({
   setSelectedDb: (db) => set({ selectedDb: db }),
   setDbList: (list, count) => set({ dbList: list, dbCount: count }),
   setKeys: (keys) => set({ keys }),
+  upsertKey: (entry) =>
+    set((state) => {
+      const existingIndex = state.keys.findIndex(
+        (item) => item.key === entry.key,
+      );
+      if (existingIndex >= 0) {
+        const keys = [...state.keys];
+        keys[existingIndex] = entry;
+        return { keys };
+      }
+      return { keys: [entry, ...state.keys] };
+    }),
+  removeKeys: (keys) =>
+    set((state) => {
+      const removingKeys = new Set(keys);
+      const nextCheckedKeys = new Set(state.checkedKeys);
+      const nextFavorites = new Set(state.favorites);
+      removingKeys.forEach((key) => {
+        nextCheckedKeys.delete(key);
+        nextFavorites.delete(key);
+      });
+
+      return {
+        keys: state.keys.filter((entry) => !removingKeys.has(entry.key)),
+        checkedKeys: nextCheckedKeys,
+        favorites: nextFavorites,
+      };
+    }),
+  renameKeyEntry: (oldKey, newKey) =>
+    set((state) => {
+      const oldEntry = state.keys.find((entry) => entry.key === oldKey);
+      if (!oldEntry) return {};
+
+      const renamedEntry = { ...oldEntry, key: newKey };
+      const keys = state.keys
+        .filter((entry) => entry.key !== oldKey && entry.key !== newKey)
+        .concat(renamedEntry);
+      const nextCheckedKeys = new Set(state.checkedKeys);
+      if (nextCheckedKeys.delete(oldKey)) {
+        nextCheckedKeys.add(newKey);
+      }
+      const nextFavorites = new Set(state.favorites);
+      if (nextFavorites.delete(oldKey)) {
+        nextFavorites.add(newKey);
+      }
+
+      return {
+        keys,
+        checkedKeys: nextCheckedKeys,
+        favorites: nextFavorites,
+      };
+    }),
+  updateDbSize: (db, delta) =>
+    set((state) => {
+      if (delta === 0) return {};
+
+      const existing = state.dbList.find((item) => item.db === db);
+      if (!existing) {
+        if (delta <= 0) return {};
+        return { dbList: [...state.dbList, { db, size: delta }] };
+      }
+
+      return {
+        dbList: state.dbList.map((item) =>
+          item.db === db
+            ? { ...item, size: Math.max(0, item.size + delta) }
+            : item,
+        ),
+      };
+    }),
   appendKeys: (newKeys) =>
     set((state) => {
       // SCAN 可能返回重复的 key，需去重
@@ -131,7 +209,11 @@ export const useBrowserStore = create<BrowserState>((set) => ({
     set((state) => {
       if (state.selectedKey === key) {
         // 点击同一 Key 时刷新详情：递增 refreshVersion 触发重新加载
-        return { keyInfo: null, keyExpired: false, refreshVersion: state.refreshVersion + 1 };
+        return {
+          keyInfo: null,
+          keyExpired: false,
+          refreshVersion: state.refreshVersion + 1,
+        };
       }
       return { selectedKey: key, keyInfo: null, keyExpired: false };
     }),

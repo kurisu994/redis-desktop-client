@@ -22,7 +22,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { useBrowserStore } from "@/stores/browser-store";
+import { useBrowserStore, type KeyEntry } from "@/stores/browser-store";
 import { createKey } from "@/lib/tauri-api";
 import { focusJsonIssue, validateJson } from "./viewers/value-editor-utils";
 import {
@@ -33,7 +33,7 @@ import {
 interface KeyDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (entry: KeyEntry) => void;
 }
 
 const KEY_TYPES = [
@@ -54,6 +54,11 @@ function getInitialValueLabel(t: TFunction, keyType: KeyType) {
   if (keyType === "set" || keyType === "zset")
     return t("keyDialog.initialMember");
   return t("keyDialog.initialValue");
+}
+
+/** 将创建表单中的 Redis 类型名转换为列表展示使用的类型名 */
+function toKeyEntryType(keyType: KeyType) {
+  return keyType === "ReJSON-RL" ? "rejson" : keyType;
 }
 
 /** 新建 Key 对话框 */
@@ -109,10 +114,11 @@ export function KeyDialog({ isOpen, onClose, onCreated }: KeyDialogProps) {
     setSaving(true);
     try {
       const parsedTtl = ttl.trim() ? parseInt(ttl, 10) : undefined;
+      const trimmedKeyName = keyName.trim();
       await createKey({
         id: connectionId,
         db: selectedDb,
-        key: keyName.trim(),
+        key: trimmedKeyName,
         keyType,
         value: value || "",
         ttl: Number.isNaN(parsedTtl) ? undefined : parsedTtl,
@@ -120,7 +126,7 @@ export function KeyDialog({ isOpen, onClose, onCreated }: KeyDialogProps) {
         score: keyType === "zset" ? parseFloat(score) || 0 : undefined,
         position: keyType === "list" ? position : undefined,
       });
-      onCreated();
+      onCreated({ key: trimmedKeyName, key_type: toKeyEntryType(keyType) });
     } catch (err) {
       console.error("创建 Key 失败:", err);
     } finally {

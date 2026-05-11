@@ -2,7 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useBrowserStore } from "@/stores/browser-store";
+import { useBrowserStore, type KeyEntry } from "@/stores/browser-store";
 import { useConnectionStore } from "@/stores/connection-store";
 import {
   scanKeys,
@@ -29,6 +29,28 @@ import {
 import { ConfirmDangerDialog } from "@/components/confirm-danger-dialog";
 import { toast } from "sonner";
 
+/** 将 Redis MATCH glob 转为前端正则，用于判断新增 Key 是否应出现在当前过滤列表 */
+function globPatternToRegExp(pattern: string) {
+  let regex = "^";
+  for (const char of pattern) {
+    if (char === "*") {
+      regex += ".*";
+    } else if (char === "?") {
+      regex += ".";
+    } else {
+      regex += char.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&");
+    }
+  }
+  return new RegExp(`${regex}$`);
+}
+
+/** 判断 Key 是否匹配当前过滤模式 */
+function matchesFilterPattern(key: string, pattern: string) {
+  const normalizedPattern = pattern.trim() || "*";
+  if (normalizedPattern === "*") return true;
+  return globPatternToRegExp(normalizedPattern).test(key);
+}
+
 /** 数据浏览器主容器 — 工具栏 + 左右分栏（Key 列表 + 值编辑器） */
 export function DataBrowser() {
   const { t } = useTranslation();
@@ -53,6 +75,10 @@ export function DataBrowser() {
   const setFavorites = useBrowserStore((s) => s.setFavorites);
   const setConnectionId = useBrowserStore((s) => s.setConnectionId);
   const setKeys = useBrowserStore((s) => s.setKeys);
+  const upsertKey = useBrowserStore((s) => s.upsertKey);
+  const removeKeysFromStore = useBrowserStore((s) => s.removeKeys);
+  const renameKeyEntry = useBrowserStore((s) => s.renameKeyEntry);
+  const updateDbSize = useBrowserStore((s) => s.updateDbSize);
   const appendKeys = useBrowserStore((s) => s.appendKeys);
   const setScanCursor = useBrowserStore((s) => s.setScanCursor);
   const setScanComplete = useBrowserStore((s) => s.setScanComplete);
@@ -346,29 +372,97 @@ export function DataBrowser() {
     t,
   ]);
 
-  /** Key 被删除后的回调 */
-  const handleKeyDeleted = useCallback(() => {
-    setSelectedKey(null);
-    setKeyInfo(null);
-    setKeyExpired(false);
-    loadKeys(true);
-  }, [setSelectedKey, setKeyInfo, setKeyExpired, loadKeys]);
+  /** 新建或复制 Key 后只更新本地列表，避免重新 SCAN 整个库 */
+  const handleKeyCreated = useCallback(
+    (entry: KeyEntry) => {
+      const existedInLoadedKeys = keys.some((item) => item.key === entry.key);
+      if (matchesFilterPattern(entry.key, filterPattern)) {
+        upsertKey(entry);
+      }
+      if (!existedInLoadedKeys) {
+        updateDbSize(selectedDb, 1);
+      }
+      setSelectedKey(entry.key);
+      setKeyInfo(null);
+      setKeyExpired(false);
+    },
+    [
+      filterPattern,
+      keys,
+      selectedDb,
+      setKeyExpired,
+      setKeyInfo,
+      setSelectedKey,
+      updateDbSize,
+      upsertKey,
+    ],
+  );
+
+  /** 删除 Key 后只移除本地列表项，并按 Redis 返回数量修正 db 计数 */
+  const handleKeysDeleted = useCallback(
+    (deletedKeys: string[], deletedCount: number) => {
+      const deletedSet = new Set(deletedKeys);
+      removeKeysFromStore(deletedKeys);
+      if (deletedSet.has(selectedKey ?? "")) {
+        setSelectedKey(null);
+        setKeyInfo(null);
+        setKeyExpired(false);
+      }
+      updateDbSize(selectedDb, -deletedCount);
+    },
+    [
+      removeKeysFromStore,
+      selectedDb,
+      selectedKey,
+      setKeyExpired,
+      setKeyInfo,
+      setSelectedKey,
+      updateDbSize,
+    ],
+  );
+
+  /** 重命名 Key 后只替换本地列表项，目标名若已存在则同步修正计数 */
+  const handleKeyRenamed = useCallback(
+    (oldKey: string, newKey: string) => {
+      const targetAlreadyLoaded = keys.some((entry) => entry.key === newKey);
+      if (matchesFilterPattern(newKey, filterPattern)) {
+        renameKeyEntry(oldKey, newKey);
+      } else {
+        removeKeysFromStore([oldKey]);
+      }
+      if (targetAlreadyLoaded && oldKey !== newKey) {
+        updateDbSize(selectedDb, -1);
+      }
+      setSelectedKey(newKey);
+      setKeyInfo(null);
+      setKeyExpired(false);
+    },
+    [
+      filterPattern,
+      keys,
+      removeKeysFromStore,
+      renameKeyEntry,
+      selectedDb,
+      setKeyExpired,
+      setKeyInfo,
+      setSelectedKey,
+      updateDbSize,
+    ],
+  );
 
   /** 快捷键删除选中 Key（⌘D / Delete） */
   const handleDeleteSelectedKey = useCallback(async () => {
     if (!connectedId || !selectedKey) return;
     try {
-      await deleteKeys(connectedId, selectedDb, [selectedKey]);
+      const deletedCount = await deleteKeys(connectedId, selectedDb, [
+        selectedKey,
+      ]);
       toast.success(t("keyDetail.deleteConfirmTitle"));
-      handleKeyDeleted();
-      // 刷新 db 信息
-      getDbInfo(connectedId)
-        .then((info) => setDbList(info.db_sizes, info.db_count))
-        .catch(() => toast.error(t("browser.scanFailed")));
+      handleKeysDeleted([selectedKey], deletedCount);
     } catch {
       toast.error(t("browser.deleteFailed"));
     }
-  }, [connectedId, selectedDb, selectedKey, handleKeyDeleted, setDbList, t]);
+  }, [connectedId, selectedDb, selectedKey, handleKeysDeleted, t]);
 
   /** 监听 redis:delete-key 自定义事件（由全局快捷键或命令面板触发） */
   useEffect(() => {
@@ -407,28 +501,16 @@ export function DataBrowser() {
   /** 批量删除 */
   const handleBatchDelete = useCallback(async () => {
     if (!connectedId || checkedKeys.size === 0) return;
-    await deleteKeys(connectedId, selectedDb, Array.from(checkedKeys));
+    const deletedKeys = Array.from(checkedKeys);
+    const deletedCount = await deleteKeys(connectedId, selectedDb, deletedKeys);
     clearCheckedKeys();
-    setSelectedKey(null);
-    setKeyInfo(null);
-    setKeyExpired(false);
-    loadKeys(true);
-    if (connectedId) {
-      getDbInfo(connectedId)
-        .then((info) => setDbList(info.db_sizes, info.db_count))
-        .catch(() => toast.error(t("browser.scanFailed")));
-    }
+    handleKeysDeleted(deletedKeys, deletedCount);
   }, [
     connectedId,
     selectedDb,
     checkedKeys,
     clearCheckedKeys,
-    setSelectedKey,
-    setKeyInfo,
-    setKeyExpired,
-    loadKeys,
-    setDbList,
-    t,
+    handleKeysDeleted,
   ]);
 
   /** 批量导出 */
@@ -480,6 +562,7 @@ export function DataBrowser() {
         onRefresh={handleRefresh}
         onSearch={handleSearch}
         onLocateSelectedKey={handleLocateSelectedKey}
+        onKeyCreated={handleKeyCreated}
       />
 
       {/* 左右分栏 */}
@@ -539,7 +622,13 @@ export function DataBrowser() {
               <KeyDetail
                 keyName={selectedKey}
                 keyInfo={keyInfo}
-                onDeleted={handleKeyDeleted}
+                onDeleted={(key, deletedCount) =>
+                  handleKeysDeleted([key], deletedCount)
+                }
+                onRenamed={handleKeyRenamed}
+                onCopied={(key, keyType) =>
+                  handleKeyCreated({ key, key_type: keyType })
+                }
                 onRefresh={handleValueChanged}
               />
               <ValueViewer
