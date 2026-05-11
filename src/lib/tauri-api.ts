@@ -1,5 +1,6 @@
 import type { ConnectionConfig, TestResult } from "@/stores/connection-store";
 import type { KeyEntry, KeyInfo, DbSize } from "@/stores/browser-store";
+import { getActiveUpdateProxyUrl } from "@/lib/update-settings";
 
 /**
  * Tauri IPC 调用封装
@@ -859,6 +860,12 @@ export type DownloadEvent =
   | { event: "Progress"; data: { chunkLength: number } }
   | { event: "Finished" };
 
+/** 获取更新检查选项 */
+function getUpdaterCheckOptions(): { proxy?: string } | undefined {
+  const proxy = getActiveUpdateProxyUrl();
+  return proxy ? { proxy } : undefined;
+}
+
 /** 检查应用更新 */
 export async function checkUpdate(): Promise<UpdateInfo | null> {
   if (!isTauri()) {
@@ -866,7 +873,7 @@ export async function checkUpdate(): Promise<UpdateInfo | null> {
     return null;
   }
   const { check } = await import("@tauri-apps/plugin-updater");
-  const update = await check();
+  const update = await check(getUpdaterCheckOptions());
   if (!update) return null;
   return {
     version: update.version,
@@ -881,8 +888,10 @@ export async function downloadAndInstallUpdate(
 ): Promise<void> {
   if (!isTauri()) return;
   const { check } = await import("@tauri-apps/plugin-updater");
-  const update = await check();
-  if (!update) return;
+  const update = await check(getUpdaterCheckOptions());
+  if (!update) {
+    throw new Error("未找到可下载的更新，请重新检查。");
+  }
   await update.downloadAndInstall((event) => {
     onProgress?.(event as DownloadEvent);
   });

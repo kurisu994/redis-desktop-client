@@ -47,12 +47,14 @@ export interface UseUpdateCheckerReturn {
   updateAvailable: UpdateInfo | null;
   /** 是否正在检查 */
   checking: boolean;
+  /** 最近一次检查错误 */
+  checkError: string | null;
   /** 自动检查开关 */
   autoUpdateEnabled: boolean;
   /** 切换自动检查开关 */
   setAutoUpdate: (enabled: boolean) => void;
   /** 手动触发检查 */
-  manualCheck: () => Promise<void>;
+  manualCheck: () => Promise<boolean>;
   /** 关闭更新弹窗 */
   dismissUpdate: () => void;
 }
@@ -68,6 +70,7 @@ export function useUpdateChecker(): UseUpdateCheckerReturn {
     null,
   );
   const [checking, setChecking] = useState(false);
+  const [checkError, setCheckError] = useState<string | null>(null);
   const [autoUpdateEnabled, setAutoUpdateEnabledState] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -77,16 +80,20 @@ export function useUpdateChecker(): UseUpdateCheckerReturn {
   }, []);
 
   /** 执行检查更新 */
-  const doCheck = useCallback(async () => {
+  const doCheck = useCallback(async (): Promise<boolean> => {
     setChecking(true);
+    setCheckError(null);
     try {
       const info = await checkUpdate();
       if (info) {
         setUpdateAvailable(info);
       }
       setLastCheckTime(Date.now());
+      return true;
     } catch (err) {
       console.warn("[更新检查] 检查失败:", err);
+      setCheckError(err instanceof Error ? err.message : String(err));
+      return false;
     } finally {
       setChecking(false);
     }
@@ -116,7 +123,7 @@ export function useUpdateChecker(): UseUpdateCheckerReturn {
   /** 手动检查 */
   const manualCheck = useCallback(async () => {
     setUpdateAvailable(null);
-    await doCheck();
+    return doCheck();
   }, [doCheck]);
 
   /** 切换自动检查开关 */
@@ -133,6 +140,7 @@ export function useUpdateChecker(): UseUpdateCheckerReturn {
   return {
     updateAvailable,
     checking,
+    checkError,
     autoUpdateEnabled,
     setAutoUpdate,
     manualCheck,

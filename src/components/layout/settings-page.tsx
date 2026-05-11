@@ -18,6 +18,15 @@ import { useAppStore } from "@/stores/app-store";
 import { useUpdateChecker } from "@/hooks/use-update-checker";
 import { UpdateDialog } from "@/components/update-dialog";
 import {
+  getUpdateProxyConfig,
+  setUpdateProxyConfig,
+  validateUpdateProxyUrl,
+} from "@/lib/update-settings";
+import type {
+  UpdateProxyConfig,
+  UpdateProxyValidationError,
+} from "@/lib/update-settings";
+import {
   Settings,
   Globe,
   Palette,
@@ -25,6 +34,7 @@ import {
   ArrowDownToLine,
   RefreshCw,
   CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 
 /** 当前应用版本号（构建时内联） */
@@ -38,19 +48,40 @@ export function SettingsPage() {
   const {
     updateAvailable,
     checking,
+    checkError,
     autoUpdateEnabled,
     setAutoUpdate,
     manualCheck,
     dismissUpdate,
   } = useUpdateChecker();
   const [manualCheckDone, setManualCheckDone] = useState(false);
+  const [updateProxyConfig, setUpdateProxyConfigState] =
+    useState<UpdateProxyConfig>(() => getUpdateProxyConfig());
+  const { enabled: updateProxyEnabled, url: updateProxyUrl } =
+    updateProxyConfig;
+
+  /** 持久化更新代理配置 */
+  const persistUpdateProxyConfig = (enabled: boolean, url: string) => {
+    const nextConfig = { enabled, url };
+    setManualCheckDone(false);
+    setUpdateProxyConfigState(nextConfig);
+    setUpdateProxyConfig(nextConfig);
+  };
+
+  const proxyValidationError = updateProxyEnabled
+    ? validateUpdateProxyUrl(updateProxyUrl)
+    : null;
+  const proxyValidationMessage = getProxyValidationMessage(
+    proxyValidationError,
+    t,
+  );
 
   /** 手动检查更新 */
   const handleManualCheck = async () => {
     setManualCheckDone(false);
-    await manualCheck();
+    const success = await manualCheck();
     // 如果没有可用更新，显示"已是最新"
-    setManualCheckDone(true);
+    setManualCheckDone(success);
   };
 
   return (
@@ -126,12 +157,43 @@ export function SettingsPage() {
               onCheckedChange={setAutoUpdate}
             />
           </SettingRow>
+          <SettingRow label={t("settings.updateProxy")}>
+            <Switch
+              checked={updateProxyEnabled}
+              onCheckedChange={(enabled) =>
+                persistUpdateProxyConfig(enabled, updateProxyUrl)
+              }
+            />
+          </SettingRow>
+          {updateProxyEnabled && (
+            <div className="flex flex-col gap-1">
+              <SettingRow label={t("settings.updateProxyUrl")}>
+                <Input
+                  value={updateProxyUrl}
+                  onChange={(e) =>
+                    persistUpdateProxyConfig(updateProxyEnabled, e.target.value)
+                  }
+                  placeholder={t("settings.updateProxyPlaceholder")}
+                  className="w-72 font-mono"
+                />
+              </SettingRow>
+              <div
+                className={`ml-auto w-72 text-xs ${
+                  proxyValidationMessage
+                    ? "text-destructive"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {proxyValidationMessage ?? t("settings.updateProxyHint")}
+              </div>
+            </div>
+          )}
           <SettingRow label={t("settings.checkUpdate")}>
             <Button
               variant="outline"
               size="sm"
               onClick={handleManualCheck}
-              disabled={checking}
+              disabled={checking || proxyValidationError !== null}
             >
               {checking ? (
                 <>
@@ -148,6 +210,15 @@ export function SettingsPage() {
             <div className="flex items-center gap-2 text-sm text-green-500">
               <CheckCircle size={14} />
               {t("settings.upToDate")}
+            </div>
+          )}
+          {checkError && !checking && (
+            <div className="flex items-start gap-2 text-sm text-destructive">
+              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+              <div>
+                <div>{t("settings.updateCheckFailed")}</div>
+                <div className="text-xs opacity-80 break-all">{checkError}</div>
+              </div>
             </div>
           )}
         </div>
@@ -191,6 +262,23 @@ export function SettingsPage() {
       <UpdateDialog updateInfo={updateAvailable} onDismiss={dismissUpdate} />
     </div>
   );
+}
+
+/** 获取更新代理校验提示文案 */
+function getProxyValidationMessage(
+  error: UpdateProxyValidationError | null,
+  t: (key: string) => string,
+): string | null {
+  switch (error) {
+    case "empty":
+      return t("settings.updateProxyRequired");
+    case "invalidUrl":
+      return t("settings.updateProxyInvalid");
+    case "unsupportedProtocol":
+      return t("settings.updateProxyUnsupported");
+    default:
+      return null;
+  }
 }
 
 /** 设置区域标题 */
@@ -240,4 +328,3 @@ function ShortcutRow({ label, keys }: { label: string; keys: string[] }) {
     </div>
   );
 }
-
