@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Select,
@@ -17,6 +17,7 @@ import { useTheme } from "next-themes";
 import { useAppStore } from "@/stores/app-store";
 import { useUpdateChecker } from "@/hooks/use-update-checker";
 import { UpdateDialog } from "@/components/update-dialog";
+import { getAppVersion } from "@/lib/tauri-api";
 import {
   getUpdateProxyConfig,
   setUpdateProxyConfig,
@@ -38,7 +39,7 @@ import {
 } from "lucide-react";
 
 /** 当前应用版本号（构建时内联） */
-const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "0.2.1";
+const FALLBACK_APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "-";
 
 /** 设置页面 */
 export function SettingsPage() {
@@ -55,10 +56,29 @@ export function SettingsPage() {
     dismissUpdate,
   } = useUpdateChecker();
   const [manualCheckDone, setManualCheckDone] = useState(false);
+  const [appVersion, setAppVersion] = useState(FALLBACK_APP_VERSION);
   const [updateProxyConfig, setUpdateProxyConfigState] =
     useState<UpdateProxyConfig>(() => getUpdateProxyConfig());
   const { enabled: updateProxyEnabled, url: updateProxyUrl } =
     updateProxyConfig;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getAppVersion()
+      .then((version) => {
+        if (!cancelled && version) {
+          setAppVersion(version);
+        }
+      })
+      .catch((err) => {
+        console.warn("[设置] 获取当前版本失败:", err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   /** 持久化更新代理配置 */
   const persistUpdateProxyConfig = (enabled: boolean, url: string) => {
@@ -254,7 +274,7 @@ export function SettingsPage() {
           title={t("settings.about")}
         />
         <div className="text-sm text-muted-foreground">
-          <p>{t("settings.currentVersion")}: {APP_VERSION}</p>
+          <p>{t("settings.currentVersion")}: {appVersion}</p>
         </div>
       </div>
 

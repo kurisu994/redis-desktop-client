@@ -910,3 +910,19 @@ export async function relaunchApp(): Promise<void> {
   const { relaunch } = await import("@tauri-apps/plugin-process");
   await relaunch();
 }
+
+/** 获取当前应用版本 */
+export async function getAppVersion(): Promise<string> {
+  const fallbackVersion = process.env.NEXT_PUBLIC_APP_VERSION || "";
+  if (!isTauri()) {
+    return fallbackVersion;
+  }
+
+  try {
+    const { getVersion } = await import("@tauri-apps/api/app");
+    return await getVersion();
+  } catch (err) {
+    console.warn("[应用版本] 获取 Tauri 版本失败:", err);
+    return fallbackVersion;
+  }
+}
