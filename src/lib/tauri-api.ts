@@ -406,7 +406,7 @@ export async function renameKey(
   oldKey: string,
   newKey: string,
 ): Promise<void> {
-  return invoke("rename_key", { id, db, old_key: oldKey, new_key: newKey });
+  return invoke("rename_key", { id, db, oldKey, newKey });
 }
 
 /** 设置 Key TTL */
@@ -631,7 +631,7 @@ export async function deleteStreamEntry(
   key: string,
   entryId: string,
 ): Promise<void> {
-  return invoke("delete_stream_entry", { id, db, key, entry_id: entryId });
+  return invoke("delete_stream_entry", { id, db, key, entryId });
 }
 
 /** 创建新 Key */
@@ -647,7 +647,7 @@ export async function createKey(
     id,
     db,
     key,
-    key_type: keyType,
+    keyType,
     value,
     ttl: ttl ?? null,
   });
@@ -662,7 +662,7 @@ export async function exportConnections(
 ): Promise<string> {
   return invoke("export_connections", {
     ids: ids ?? null,
-    include_password: includePassword,
+    includePassword,
   });
 }
 
@@ -678,7 +678,7 @@ export async function importConnections(
 }> {
   return invoke("import_connections", {
     json,
-    conflict_strategy: conflictStrategy,
+    conflictStrategy,
   });
 }
 
@@ -817,7 +817,7 @@ export async function importKeys(
     id,
     db,
     json,
-    conflict_strategy: conflictStrategy,
+    conflictStrategy,
   });
 }
 

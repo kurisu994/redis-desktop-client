@@ -8,6 +8,7 @@ import { useBrowserStore } from "@/stores/browser-store";
 import { deleteKeys, setKeyTtl, copyKey, renameKey } from "@/lib/tauri-api";
 import { Clock, Trash2, MoreVertical, Copy, Pencil, Star } from "lucide-react";
 import { TtlDialog } from "./ttl-dialog";
+import { ConfirmDangerDialog } from "@/components/confirm-danger-dialog";
 
 /** 类型标签配色 */
 const TYPE_BADGE: Record<string, string> = {
@@ -53,6 +54,7 @@ export function KeyDetail({
   const [showMore, setShowMore] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   /** 实时倒计时：基于 keyInfo.ttl 记录加载时刻，每秒递减 */
   const ttlLoadedAtRef = useRef(0);
@@ -101,9 +103,13 @@ export function KeyDetail({
   }, []);
 
   /** 删除 Key */
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  /** 确认删除 Key */
+  const handleConfirmDelete = async () => {
     if (!connectionId) return;
-    if (!confirm(t("keyDetail.deleteConfirm", { key: keyName }))) return;
     await deleteKeys(connectionId, selectedDb, [keyName]);
     onDeleted();
   };
@@ -287,6 +293,19 @@ export function KeyDetail({
           }}
         />
       )}
+
+      {/* 删除确认对话框 */}
+      <ConfirmDangerDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title={t("keyDetail.deleteConfirmTitle")}
+        message={
+          <span className="text-sm text-muted-foreground">
+            确定要删除键 <code className="bg-muted px-1 py-0.5 rounded text-primary font-mono text-xs">{keyName}</code> 吗？
+          </span>
+        }
+      />
     </>
   );
 }

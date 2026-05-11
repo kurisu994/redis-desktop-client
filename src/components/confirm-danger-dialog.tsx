@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import type { ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,9 +22,9 @@ interface ConfirmDangerDialogProps {
   /** 对话框标题 */
   title: string;
   /** 提示信息 */
-  message: string;
-  /** 需要用户输入的确认文本 */
-  confirmText: string;
+  message: ReactNode;
+  /** 需要用户输入的确认文本（可选，不传则直接点击确认即可） */
+  confirmText?: string;
 }
 
 /** 危险操作确认对话框 — 用户需输入确认文本才能执行 */
@@ -39,7 +40,7 @@ export function ConfirmDangerDialog({
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isMatch = input === confirmText;
+  const isMatch = confirmText ? input === confirmText : true;
 
   const handleConfirm = useCallback(async () => {
     if (!isMatch) return;
@@ -51,9 +52,9 @@ export function ConfirmDangerDialog({
       console.error("操作失败:", err);
     } finally {
       setLoading(false);
-      setInput("");
+      if (confirmText) setInput("");
     }
-  }, [isMatch, onConfirm, onClose]);
+  }, [isMatch, onConfirm, onClose, confirmText]);
 
   const handleClose = () => {
     setInput("");
@@ -70,16 +71,20 @@ export function ConfirmDangerDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">{message}</p>
-          <p className="text-sm text-muted-foreground">
-            {t("confirm.typeToConfirm", { text: confirmText })}
-          </p>
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={confirmText}
-            className={input && !isMatch ? "border-destructive" : ""}
-          />
+          <div className="text-sm text-muted-foreground">{message}</div>
+          {confirmText && (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {t("confirm.typeToConfirm", { text: confirmText })}
+              </p>
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={confirmText}
+                className={input && !isMatch ? "border-destructive" : ""}
+              />
+            </>
+          )}
         </div>
         <DialogFooter>
           <Button variant="secondary" onClick={handleClose}>
