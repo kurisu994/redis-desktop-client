@@ -300,10 +300,10 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 以下基础设施已在前序 Phase 中完成，Phase 5 可直接复用：
 
 | 已有基础         | 说明                                                                              |
-| ---------------- | --------------------------------------------------------------------------------- | ----- | --------- | -------- | ----------- |
+| ---------------- | --------------------------------------------------------------------------------- |
 | 侧边栏导航       | `sidebar.tsx` 底部 Monitor、Pub/Sub 按钮已绑定 `SidebarNavButton`，支持视图切换   |
 | i18n 完整 key    | 所有 monitor、pubsub、dataExport、dataImport 相关翻译 key 已添加（en-US + zh-CN） |
-| MainView 类型    | `app-store.ts` 中 `TabType = "browser"                                            | "cli" | "monitor" | "pubsub" | "settings"` |
+| MainView 类型    | `app-store.ts` 中 `TabType = "browser" \| "cli" \| "monitor" \| "pubsub" \| "settings"` |
 | IPC 封装模式     | `lib/tauri-api.ts` 已添加所有 Phase 5 API 函数 + Mock 实现                        |
 | Tauri Event 机制 | Pub/Sub 订阅消息通过 `redis://pubsub` Event 推送                                  |
 | Tauri 文件插件   | 已安装 `tauri-plugin-dialog` + `tauri-plugin-fs`，用于导入导出文件对话框          |
@@ -443,41 +443,41 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 | #   | 任务                      | 状态 | 说明                                                                    |
 | --- | ------------------------- | ---- | ----------------------------------------------------------------------- |
-| 19  | 集成 Tauri Updater Plugin | ✅   | `tauri-plugin-updater` + `tauri-plugin-process`，Ed25519 签名密钥已配置 |
-| 20  | 更新检查逻辑              | ✅   | 启动时检查 + 可配置检查频率（24h 间隔 + 开关控制 + 手动检查）           |
-| 21  | 更新提示 UI               | ✅   | 发现新版本弹窗（版本信息 + 更新说明 + 下载进度 + 安装/重启）            |
-| 22  | 更新源配置                | ✅   | 指向 GitHub Releases 的 `latest.json`（`tauri-action` 自动生成）        |
-| 23  | 设置项                    | ✅   | 设置页面支持自动检查开关、手动检查、HTTP/HTTPS 更新代理配置             |
+| 20  | 集成 Tauri Updater Plugin | ✅   | `tauri-plugin-updater` + `tauri-plugin-process`，Ed25519 签名密钥已配置 |
+| 21  | 更新检查逻辑              | ✅   | 启动时检查 + 可配置检查频率（24h 间隔 + 开关控制 + 手动检查）           |
+| 22  | 更新提示 UI               | ✅   | 发现新版本弹窗（版本信息 + 更新说明 + 下载进度 + 安装/重启）            |
+| 23  | 更新源配置                | ✅   | 指向 GitHub Releases 的 `latest.json`（`tauri-action` 自动生成）        |
+| 24  | 设置项                    | ✅   | 设置页面支持自动检查开关、手动检查、HTTP/HTTPS 更新代理配置             |
 
 #### 6.6 Release 流水线 & 打包发布
 
 | #   | 任务                    | 状态 | 说明                                                                       |
 | --- | ----------------------- | ---- | -------------------------------------------------------------------------- |
-| 24  | Release 工作流          | ✅   | GitHub Actions：Tag 触发，三平台并行构建 Tauri 应用（已在 Phase 1 完成）   |
-| 25  | macOS 打包 & 签名       | 🔲   | 需配置 Apple Developer 证书                                                |
-| 26  | Windows 打包 & 签名     | 🔲   | 需配置代码签名证书                                                         |
-| 27  | Linux 打包              | ✅   | `.deb` / `.AppImage` 已在 Release 工作流中配置                             |
-| 28  | 自动发布 GitHub Release | ✅   | tauri-action 自动上传产物到 GitHub Release                                 |
-| 29  | 版本号统一管理          | ✅   | `scripts/bump-version.js` 同步 Cargo.toml / package.json / tauri.conf.json |
-| 30  | 应用图标 & 品牌         | ✅   | 基础构建已准备好 `logo.png`                                                |
+| 25  | Release 工作流          | ✅   | GitHub Actions：Tag 触发，三平台并行构建 Tauri 应用（已在 Phase 1 完成）   |
+| 26  | macOS 打包 & 签名       | 🔲   | 需配置 Apple Developer 证书                                                |
+| 27  | Windows 打包 & 签名     | 🔲   | 需配置代码签名证书                                                         |
+| 28  | Linux 打包              | ✅   | `.deb` / `.AppImage` 已在 Release 工作流中配置                             |
+| 29  | 自动发布 GitHub Release | ✅   | tauri-action 自动上传产物到 GitHub Release                                 |
+| 30  | 版本号统一管理          | ✅   | `scripts/bump-version.js` 同步 Cargo.toml / package.json / tauri.conf.json |
+| 31  | 应用图标 & 品牌         | ✅   | 基础构建已准备好 `logo.png`                                                |
 
 #### 6.7 交互体验修复（Post-Release）
 
 | #   | 任务                 | 状态 | 说明                                                                             |
 | --- | -------------------- | ---- | -------------------------------------------------------------------------------- |
-| 31  | 断开连接自动清理     | ✅   | 断开时关闭 CLI/Pub/Sub/Monitor Tab，清空 browser 状态，重置各 Store              |
-| 32  | TTL 倒计时到期处理   | ✅   | TTL 归零时自动标记 Key 已过期，界面切换到过期提示，不再停在 "0s"                 |
-| 33  | Loading 位置优化     | ✅   | Key 树形/平铺列表 Loading spinner 增加 `pt-12` 顶部间距，视觉更舒适              |
-| 34  | 重复点击同一 DB 修复 | ✅   | 点击已激活的同一 DB 不再触发 `resetBrowser()`，Key 列表和详情数据不会消失        |
-| 35  | MONITOR 日志 Tab     | ✅   | 监控页面新增 MONITOR 日志 Tab，实时展示 Redis MONITOR 命令输出                   |
-| 36  | MONITOR 竞态修复     | ✅   | 修复 MONITOR 事件监听竞态条件及后台任务泄漏问题                                  |
-| 37  | 监控/PubSub 布局修复 | ✅   | 修复监控和 Pub/Sub 页面内容未填满宽度的问题                                      |
-| 38  | 值查看器重构         | ✅   | 将 `value-viewer.tsx`（1783 行）按数据类型拆分为独立模块，移入 `viewers/` 子目录 |
-| 39  | 更新代理配置         | ✅   | 设置页支持更新代理开关和 HTTP/HTTPS 代理地址，仅影响检查更新和下载更新包         |
-| 40  | 新建 Key 初始值优化  | ✅   | 新建弹窗加宽，按 Key 类型联动字段/成员/分数/插入位置，并复用多格式值编辑器       |
-| 41  | Key 列表局部更新     | ✅   | 新增、复制、重命名、删除后更新本地列表状态，避免重新扫描导致列表区域闪烁         |
-| 42  | 危险确认弹窗扩展     | ✅   | 删除 Key、批量删除等操作从原生确认迁移到统一确认弹窗                             |
-| 43  | 输入框系统辅助关闭   | ✅   | 全局输入控件关闭自动大写、自动纠错和拼写检查                                     |
+| 32  | 断开连接自动清理     | ✅   | 断开时关闭 CLI/Pub/Sub/Monitor Tab，清空 browser 状态，重置各 Store              |
+| 33  | TTL 倒计时到期处理   | ✅   | TTL 归零时自动标记 Key 已过期，界面切换到过期提示，不再停在 "0s"                 |
+| 34  | Loading 位置优化     | ✅   | Key 树形/平铺列表 Loading spinner 增加 `pt-12` 顶部间距，视觉更舒适              |
+| 35  | 重复点击同一 DB 修复 | ✅   | 点击已激活的同一 DB 不再触发 `resetBrowser()`，Key 列表和详情数据不会消失        |
+| 36  | MONITOR 日志 Tab     | ✅   | 监控页面新增 MONITOR 日志 Tab，实时展示 Redis MONITOR 命令输出                   |
+| 37  | MONITOR 竞态修复     | ✅   | 修复 MONITOR 事件监听竞态条件及后台任务泄漏问题                                  |
+| 38  | 监控/PubSub 布局修复 | ✅   | 修复监控和 Pub/Sub 页面内容未填满宽度的问题                                      |
+| 39  | 值查看器重构         | ✅   | 将 `value-viewer.tsx`（1783 行）按数据类型拆分为独立模块，移入 `viewers/` 子目录 |
+| 40  | 更新代理配置         | ✅   | 设置页支持更新代理开关和 HTTP/HTTPS 代理地址，仅影响检查更新和下载更新包         |
+| 41  | 新建 Key 初始值优化  | ✅   | 新建弹窗加宽，按 Key 类型联动字段/成员/分数/插入位置，并复用多格式值编辑器       |
+| 42  | Key 列表局部更新     | ✅   | 新增、复制、重命名、删除后更新本地列表状态，避免重新扫描导致列表区域闪烁         |
+| 43  | 危险确认弹窗扩展     | ✅   | 删除 Key、批量删除等操作从原生确认迁移到统一确认弹窗                             |
+| 44  | 输入框系统辅助关闭   | ✅   | 全局输入控件关闭自动大写、自动纠错和拼写检查                                     |
 
 ### 交付物
 
@@ -499,10 +499,12 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 - ✅ MONITOR 日志 Tab + 竞态条件修复
 - ✅ 监控/PubSub 页面布局宽度修复
 - ✅ 值查看器组件结构重构（按类型拆分为独立模块）
-- ✅ 新建 Key 类型联动初始值输入 + 多格式编辑器复用
+- ✅ 新建 Key 类型联动初始值输入 + 多格式编辑器复用（含 RedisJSON 默认 JSON 模式与格式校验）
 - ✅ Key 列表新增/删除/重命名局部更新，减少刷新闪烁
 - ✅ 删除/批量删除统一危险确认弹窗
 - ✅ 输入框关闭自动纠错/自动大写/拼写检查
+- ✅ 设置页版本号动态读取（`NEXT_PUBLIC_APP_VERSION`）
+- ✅ 更新弹窗说明文案与重启逻辑修复（v0.2.4）
 
 ---
 

@@ -11,7 +11,7 @@
 | 层级         | 技术                                    | 说明                                                                 |
 | ------------ | --------------------------------------- | -------------------------------------------------------------------- |
 | 桌面框架     | **Tauri v2**                            | Rust 后端，负责 Redis 连接管理、数据操作、系统集成                   |
-| 前端框架     | **Next.js 16** (App Router + Turbopack) | React 19 前端，负责 UI 渲染与交互逻辑                                |
+| 前端框架     | **Next.js 16.1** (App Router + Turbopack) | React 19.2 前端，负责 UI 渲染与交互逻辑                              |
 | UI 组件库    | **shadcn/ui**                           | 基于 Radix UI + Tailwind CSS 的组件库，提供美观一致的界面            |
 | 样式         | **Tailwind CSS v4**                     | CSS-first 配置模式                                                   |
 | 图标         | **lucide-react**                        | React SVG 图标组件库                                                 |
@@ -55,7 +55,7 @@
 
 #### 2.1.3 连接组织
 
-- 支持连接分组（文件夹方式组织）
+- 支持连接分组（文件夹方式组织）🔲 待实现
 - 支持拖拽排序
 - 支持导入/导出连接配置
 
@@ -304,6 +304,8 @@ src/
 │   ├── providers.tsx       # 全局 Provider（主题 + Tooltip + Toast + i18n）
 │   ├── error-boundary.tsx  # 错误边界组件
 │   ├── confirm-danger-dialog.tsx # 删除/批量删除/FLUSHDB 等危险操作确认
+│   ├── command-palette.tsx # ⌘K 常用命令面板
+│   ├── update-dialog.tsx   # 应用更新提示弹窗
 │   ├── ui/                 # shadcn/ui 基础组件
 │   ├── layout/             # 布局组件（TitleBar, Sidebar, TabBar, Settings 等）
 │   ├── browser/            # 数据浏览器组件（含 viewers/value-format-editor）
@@ -311,7 +313,10 @@ src/
 │   ├── connection/         # 连接对话框组件
 │   ├── monitor/            # 服务器监控组件
 │   └── pubsub/             # 发布订阅组件
-├── hooks/                  # 自定义 Hooks（全局快捷键等）
+├── hooks/                  # 自定义 Hooks
+│   ├── use-global-shortcuts.ts  # 全局快捷键注册
+│   ├── use-connection-drag.ts   # 连接列表拖拽排序
+│   └── use-update-checker.ts    # 应用更新检查逻辑
 ├── lib/                    # 工具函数
 │   ├── tauri-api.ts        # Tauri IPC 封装（含浏览器环境 mock）
 │   ├── update-settings.ts  # 更新代理设置
@@ -331,6 +336,7 @@ src-tauri/
 │   ├── main.rs             # 应用入口
 │   ├── lib.rs              # 库入口（插件注册、Command 注册）
 │   ├── commands/           # Tauri 命令
+│   │   ├── mod.rs          # 命令模块入口
 │   │   ├── connection.rs   # 连接管理命令
 │   │   ├── keys.rs         # Key 操作命令
 │   │   ├── values.rs       # 值操作命令
@@ -396,17 +402,18 @@ src-tauri/
 
 ### 5.3 快捷键
 
-| 快捷键         | 功能          |
-| -------------- | ------------- |
-| `Cmd/Ctrl + N` | 新建连接      |
-| `Cmd/Ctrl + T` | 新建 CLI Tab  |
-| `Cmd/Ctrl + F` | 搜索/过滤 Key |
-| `Cmd/Ctrl + R` | 刷新当前视图  |
-| `Cmd/Ctrl + D` | 删除选中 Key  |
-| `Cmd/Ctrl + S` | 保存编辑      |
-| `Cmd/Ctrl + ,` | 打开设置      |
-| `F5`           | 刷新 Key 列表 |
-| `Delete`       | 删除选中项    |
+| 快捷键         | 功能            |
+| -------------- | --------------- |
+| `Cmd/Ctrl + N` | 新建连接        |
+| `Cmd/Ctrl + T` | 新建 CLI Tab    |
+| `Cmd/Ctrl + F` | 搜索/过滤 Key   |
+| `Cmd/Ctrl + R` | 刷新当前视图    |
+| `Cmd/Ctrl + K` | 打开命令面板    |
+| `Cmd/Ctrl + D` | 删除选中 Key    |
+| `Cmd/Ctrl + S` | 保存编辑        |
+| `Cmd/Ctrl + ,` | 打开设置        |
+| `F5`           | 刷新 Key 列表   |
+| `Delete`       | 删除选中项      |
 
 ---
 
@@ -453,7 +460,10 @@ src-tauri/
 - 国际化
 - 性能优化与打包发布
 
-### Phase 7 — CI/CD & 自动更新
+### Phase 7 — CI/CD & 自动更新（已并入 Phase 1 和 Phase 6）
+
+> 注：CI/CD 基础流水线已在 **Phase 1** 完成（代码检查 + 三平台构建验证 + Conventional Commits）。
+> 自动更新功能已在 **Phase 6** 完成（Tauri Updater Plugin + 更新提示 UI + Release 流水线）。
 
 - GitHub Actions 工作流（测试、构建、打包、发布）
 - Tauri 自动更新集成
