@@ -2,9 +2,9 @@
 
 ## 项目结构与模块组织
 
-本项目是基于 Tauri 2 和 Next.js 16 的 Redis 桌面客户端。前端源码位于 `src/`：`app/` 存放 App Router 入口，`components/` 存放功能组件和 shadcn/ui 组件（19 个），`hooks/` 存放通用 React Hooks（全局快捷键、拖拽排序、更新检查），`stores/` 存放 Zustand 状态（6 个领域 Store），`lib/` 存放工具函数与 Tauri API 封装，`i18n/` 存放国际化配置。Rust 后端位于 `src-tauri/src/`，按 `commands/`、`redis/`、`config/` 分层。静态资源在 `public/`，项目文档在 `docs/`。
+本项目是基于 Tauri 2 和 Next.js 16 的 Redis 桌面客户端。前端源码位于 `src/`：`app/` 存放 App Router 入口，`components/` 存放功能组件和 shadcn/ui 组件（18 个），`hooks/` 存放通用 React Hooks（全局快捷键、拖拽排序、更新检查），`stores/` 存放 Zustand 状态（6 个领域 Store），`lib/` 存放工具函数、Tauri API 封装与更新代理配置，`i18n/` 存放国际化配置。Rust 后端位于 `src-tauri/src/`，按 `commands/`、`redis/`、`config/` 分层。静态资源在 `public/`，项目文档在 `docs/`。
 
-前端组件按功能模块组织：`browser/`（数据浏览器，含 `viewers/` 子目录存放按类型拆分的值查看器：string-viewer、hash-viewer、list-viewer、set-viewer、zset-viewer、stream-viewer、json-viewer、table-view、value-viewer 路由入口）、`cli/`（CLI 终端）、`connection/`（连接对话框含导入导出）、`layout/`（布局组件）、`monitor/`（服务器监控含 MONITOR 日志）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件）。全局组件包括 `providers.tsx`、`error-boundary.tsx`、`confirm-danger-dialog.tsx`、`command-palette.tsx`（⌘K 命令面板）、`update-dialog.tsx`（应用更新弹窗）。
+前端组件按功能模块组织：`browser/`（数据浏览器，含 `viewers/` 子目录存放按类型拆分的值查看/编辑器：string-viewer、hash-viewer、list-viewer、set-viewer、zset-viewer、stream-viewer、json-viewer、table-view、value-viewer 路由入口、value-format-editor 多格式编辑器及 JSON 辅助组件）、`cli/`（CLI 终端）、`connection/`（连接对话框含导入导出）、`layout/`（布局组件）、`monitor/`（服务器监控含 MONITOR 日志）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件）。全局组件包括 `providers.tsx`、`error-boundary.tsx`、`confirm-danger-dialog.tsx`（删除/批量删除/FLUSHDB 等危险操作确认）、`command-palette.tsx`（⌘K 命令面板）、`update-dialog.tsx`（应用更新弹窗）。
 
 ## 构建、测试与开发命令
 

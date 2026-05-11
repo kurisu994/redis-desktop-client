@@ -30,9 +30,10 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 应用为单页面（`src/app/page.tsx`），布局为：`TitleBar` + `Sidebar` + `TabBar` + 主内容区（`DataBrowser` / `CliConsole` / `MonitorPage` / `PubSubPage` / `SettingsPage` / `WelcomePage`），加上全局浮层 `ConnectionDialog`、`ErrorBoundary` 错误边界包裹主内容区。主内容区采用 Tab 页签管理（`browser` / `cli` / `monitor` / `pubsub` / `settings`），browser Tab 始终存在不可关闭，其余 Tab 可通过侧边栏按钮打开、通过 × 按钮关闭。设置入口在顶部 TitleBar 右侧，GitHub 仓库链接也在 TitleBar 中（通过 `tauri-plugin-opener` 打开外部链接）。
 
 **State（`src/stores/`）**
+
 - `app-store.ts`：全局 UI 状态（侧边栏折叠、Tab 页签管理 — tabs/activeTabId/openTab/closeTab/activateTab/closeAllClosableTabs、键分隔符 keySeparator）
 - `connection-store.ts`：连接配置列表（含 SSH/TLS/Sentinel/Cluster 字段）、活跃连接、连接状态、对话框状态
-- `browser-store.ts`：数据浏览器状态（Key 列表、SCAN 游标、选中 Key、DB 切换、视图模式、刷新版本号、多选 checkedKeys、收藏 favorites、收藏筛选 showFavoritesOnly）
+- `browser-store.ts`：数据浏览器状态（Key 列表、SCAN 游标、选中 Key、DB 切换、视图模式、刷新版本号、多选 checkedKeys、收藏 favorites、收藏筛选 showFavoritesOnly，以及新增/删除/重命名后的本地列表更新）
 - `cli-store.ts`：CLI 控制台状态（多 Tab 管理、命令历史、输出日志）
 - `monitor-store.ts`：服务器监控状态（INFO 数据、实时图表快照、慢查询日志、刷新间隔）
 - `pubsub-store.ts`：Pub/Sub 状态（订阅频道、消息列表、暂停/过滤）
@@ -41,10 +42,11 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 所有 Tauri 后端调用都通过此文件封装。在浏览器（`just dev-web`）环境中自动走 mock 实现，Tauri 环境中调用真实后端。新增后端命令时需同步在此文件添加函数和 mock 实现。
 
 **组件（`src/components/`）**
-按功能模块组织：`browser/`（数据浏览器：data-browser、export-dialog、import-dialog、key-detail、key-dialog、key-list、key-toolbar、key-tree、ttl-dialog + `viewers/` 子目录含 string-viewer、hash-viewer、list-viewer、set-viewer、zset-viewer、stream-viewer、json-viewer、table-view、value-viewer 路由入口、add-field-dialog、json-highlight-editor、json-validation-error、value-editor-utils）、`cli/`（CLI 终端）、`connection/`（连接对话框含导入导出）、`layout/`（布局组件：title-bar、sidebar、sidebar-nav-button、connection-item、tab-bar、settings-page、welcome-page、language-switcher）、`monitor/`（服务器监控：server-info、realtime-charts、slow-log、log-panel、monitor-page）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件，19 个）。
-全局组件：`providers.tsx`（NextThemes + TooltipProvider + Toaster）、`error-boundary.tsx`、`confirm-danger-dialog.tsx`、`command-palette.tsx`（⌘K 命令面板）、`update-dialog.tsx`（应用更新弹窗）。
+按功能模块组织：`browser/`（数据浏览器：data-browser、export-dialog、import-dialog、key-detail、key-dialog、key-list、key-toolbar、key-tree、ttl-dialog + `viewers/` 子目录含 string-viewer、hash-viewer、list-viewer、set-viewer、zset-viewer、stream-viewer、json-viewer、table-view、value-viewer 路由入口、add-field-dialog、value-format-editor、json-highlight-editor、json-validation-error、value-editor-utils）、`cli/`（CLI 终端）、`connection/`（连接对话框含导入导出）、`layout/`（布局组件：title-bar、sidebar、sidebar-nav-button、connection-item、tab-bar、settings-page、welcome-page、language-switcher）、`monitor/`（服务器监控：server-info、realtime-charts、slow-log、log-panel、monitor-page）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件，18 个）。
+全局组件：`providers.tsx`（NextThemes + TooltipProvider + Toaster，并关闭文本输入自动纠错/自动大写）、`error-boundary.tsx`、`confirm-danger-dialog.tsx`（删除/批量删除/FLUSHDB 等危险操作确认）、`command-palette.tsx`（⌘K 命令面板）、`update-dialog.tsx`（应用更新弹窗）。
 
 **Hooks（`src/hooks/`）**
+
 - `use-global-shortcuts.ts`：注册全局快捷键（⌘N/T/F/R/K/D/S/,/F5/Delete）
 - `use-connection-drag.ts`：连接列表拖拽排序逻辑（HTML5 Drag and Drop）
 - `use-update-checker.ts`：应用更新检查逻辑（启动延迟检查 + 24h 间隔 + 手动检查）
@@ -68,13 +70,14 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 ## 开发进度
 
 - Phase 1-4（基础框架、连接管理、数据浏览、CLI 控制台）✅ 已完成
-  - Phase 3 延后功能已全部补完：大值延迟加载、批量操作工具栏、收藏/标记 Key、Diff 对比视图、Monaco 多格式语法高亮、RedisJSON 数据类型支持
+  - Phase 3 延后功能已全部补完：大值延迟加载、批量操作工具栏、收藏/标记 Key、内置多格式值编辑器、JSON 高亮、Hex dump、RedisJSON 数据类型支持
 - Phase 5（高级功能：服务器监控、慢查询、Pub/Sub、数据导入导出）✅ 已完成
 - Phase 6（高级连接 & 完善：SSH/TLS/Sentinel/Cluster UI、连接导入导出、设置页、快捷键、错误边界）✅ 已完成
   - ✅ v0.2.0：常用命令面板（⌘K）、补充快捷键（⌘D/⌘S/F5/Delete）
-  - ✅ v0.2.1：值编辑器交互重构（表格行截断 + 展开 + 双击编辑 + 自定义右键菜单）+ 大字符串性能优化（Hex useMemo/截断 + Monaco 选项优化 + model 隔离）+ 表格分页加载（Hash/List/Set/ZSet/Stream 每页 200 条）
+  - ✅ v0.2.1：值编辑器交互重构（表格行截断 + 展开 + 双击编辑 + JSON 格式化）+ 大字符串性能优化（Hex useMemo/截断 + 大值渲染优化）+ 表格分页加载（Hash/List/Set/ZSet/Stream 每页 200 条）
   - ✅ v0.2.2：应用内更新检查与提示（Tauri Updater Plugin + 进度条 + 设置页开关）
   - ✅ 近期修复：断开连接自动清理 Tab/状态、TTL 倒计时到期自动标记过期、Loading 位置优化、重复点击同一 DB 不清空数据、MONITOR 日志 Tab + 竞态修复、监控/PubSub 布局宽度修复、值查看器组件结构重构（按类型拆分为独立模块）
+  - ✅ 近期改进：更新代理配置、自定义危险确认弹窗、新建 Key 类型联动与多格式初始值编辑、Key 列表新增/删除/重命名局部更新、输入框关闭自动纠错
   - 🔲 待办：SSH 隧道后端（Rust russh 库）、macOS/Windows 签名
 
 详见 `docs/DEVELOPMENT_PLAN.md`。
@@ -91,10 +94,12 @@ If GSTACK_MISSING: STOP. Do not proceed. Tell the user:
 
 > gstack is required for all AI-assisted work in this repo.
 > Install it:
+>
 > ```bash
 > git clone --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
 > cd ~/.claude/skills/gstack && ./setup --team
 > ```
+>
 > Then restart your AI coding tool.
 
 Do not skip skills, ignore gstack errors, or work around missing gstack.

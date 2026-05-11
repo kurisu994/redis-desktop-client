@@ -12,7 +12,8 @@
 - **国际化**：i18next + react-i18next（中/英）
 - **图标**：lucide-react
 - **后端**：Rust (Edition 2021) + Tokio + redis-rs
-- **自动更新**：Tauri Updater Plugin（Ed25519 签名校验）
+- **值编辑器**：原生 textarea + JSON 高亮叠层 + Hex dump（按格式切换）
+- **自动更新**：Tauri Updater Plugin（Ed25519 签名校验，支持 HTTP/HTTPS 更新代理）
 
 ## 开发环境准备
 
@@ -52,19 +53,19 @@ just build-web
 
 ## 常用命令
 
-| 命令 | 说明 |
-|------|------|
-| `just dev` | 启动 Tauri 开发模式 |
-| `just dev-web` | 仅启动前端 |
-| `just build` | 生产环境构建应用（自动加载 `.env` 生成带签名的自动更新包） |
-| `just build-web` | 仅构建 Next.js 前端资源 |
-| `just lint` | 完整代码检查（ESLint + tsc + Clippy） |
-| `just fmt` | 格式化全部代码 |
-| `just test-rust` | Rust 单元测试 |
-| `just version <ver>` | 仅同步更新项目各配置版本号（如：`just version 0.2.1`）|
-| `just release <tag>` | 🚀 **一键发布**：自动更新版本号、Commit 变更、打 Tag 并推送 GitHub 触发自动化构建打包（如：`just release v0.2.1`）|
-| `just i18n-check` | 检查翻译 key 完整性 |
-| `just clean` | 清理构建产物 |
+| 命令                 | 说明                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `just dev`           | 启动 Tauri 开发模式                                                                                                |
+| `just dev-web`       | 仅启动前端                                                                                                         |
+| `just build`         | 生产环境构建应用（自动加载 `.env` 生成带签名的自动更新包）                                                         |
+| `just build-web`     | 仅构建 Next.js 前端资源                                                                                            |
+| `just lint`          | 完整代码检查（ESLint + tsc + Clippy）                                                                              |
+| `just fmt`           | 格式化全部代码                                                                                                     |
+| `just test-rust`     | Rust 单元测试                                                                                                      |
+| `just version <ver>` | 仅同步更新项目各配置版本号（如：`just version 0.2.1`）                                                             |
+| `just release <tag>` | 🚀 **一键发布**：自动更新版本号、Commit 变更、打 Tag 并推送 GitHub 触发自动化构建打包（如：`just release v0.2.1`） |
+| `just i18n-check`    | 检查翻译 key 完整性                                                                                                |
+| `just clean`         | 清理构建产物                                                                                                       |
 
 ## 项目结构
 
@@ -76,17 +77,17 @@ src/                        # 前端源码
 │   ├── error-boundary.tsx  # 错误边界
 │   ├── command-palette.tsx # ⌘K 命令面板
 │   ├── update-dialog.tsx   # 应用更新弹窗
-│   ├── confirm-danger-dialog.tsx # FLUSHDB 等危险操作确认
-│   ├── ui/                 # shadcn/ui 基础组件（19 个）
+│   ├── confirm-danger-dialog.tsx # 删除/批量删除/FLUSHDB 等危险操作确认
+│   ├── ui/                 # shadcn/ui 基础组件（18 个）
 │   ├── layout/             # 布局组件（TitleBar, Sidebar, TabBar, Settings 等）
 │   ├── browser/            # 数据浏览器（key-list, key-tree, key-detail 等）
-│   │   └── viewers/        # 值查看器（按类型拆分：string/hash/list/set/zset/stream/json/table）
+│   │   └── viewers/        # 值查看/编辑器（string/hash/list/set/zset/stream/json/table/value-format-editor）
 │   ├── cli/                # CLI 终端
 │   ├── connection/         # 连接对话框（含导入导出）
 │   ├── monitor/            # 服务器监控（INFO, 实时图表, 慢查询, MONITOR 日志）
 │   └── pubsub/             # 发布订阅
 ├── hooks/                  # 自定义 Hooks（全局快捷键、拖拽排序、更新检查）
-├── lib/                    # 工具函数（Tauri IPC 封装 + cn 工具）
+├── lib/                    # 工具函数（Tauri IPC 封装 + 更新代理设置 + cn 工具）
 ├── stores/                 # Zustand 状态仓库（app, connection, browser, cli, monitor, pubsub）
 └── i18n/                   # 国际化配置与翻译文件
 
@@ -101,17 +102,21 @@ src-tauri/                  # Rust 后端
 docs/                       # 项目文档
 ├── REQUIREMENTS.md         # 产品需求文档
 └── DEVELOPMENT_PLAN.md     # 开发计划
+
+AGENTS.md                   # AI 助手协作规范
+CLAUDE.md                   # Claude/GStack 协作规范
+CHANGELOG.md                # 变更日志
 ```
 
 ## 安装
 
 前往 [Releases](https://github.com/kurisu994/redis-desktop-client/releases) 下载最新版本。
 
-| 平台 | 文件 |
-|------|------|
-| macOS (Apple Silicon) | `.dmg` |
-| Windows (x64) | `.exe` 安装包 或 `.msi` |
-| Linux (x64) | `.AppImage` / `.deb` / `.rpm` |
+| 平台                  | 文件                          |
+| --------------------- | ----------------------------- |
+| macOS (Apple Silicon) | `.dmg`                        |
+| Windows (x64)         | `.exe` 安装包 或 `.msi`       |
+| Linux (x64)           | `.AppImage` / `.deb` / `.rpm` |
 
 > [!NOTE]
 > 本项目暂未配置代码签名证书，macOS 和 Windows 首次打开时可能会弹出安全提示。请按以下方式处理。
