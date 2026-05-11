@@ -201,6 +201,10 @@
     "keyName": "Key Name",
     "keyType": "Key Type",
     "initialValue": "Initial Value",
+    "initialField": "Initial Field",
+    "initialElement": "Initial Element",
+    "initialMember": "Initial Member",
+    "streamField": "Stream Field",
     "ttlOptional": "TTL (optional, seconds)"
   },
   "cli": {

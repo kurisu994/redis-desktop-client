@@ -24,9 +24,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html
+      lang="zh-CN"
+      suppressHydrationWarning
+      autoCapitalize="off"
+      autoCorrect="off"
+      spellCheck={false}
+    >
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        autoCapitalize="off"
+        autoCorrect="off"
+        spellCheck={false}
       >
         <Providers>{children}</Providers>
       </body>

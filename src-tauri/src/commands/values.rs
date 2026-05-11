@@ -1,6 +1,6 @@
 use crate::redis::client::RedisClientManager;
 use redis::AsyncCommands;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::State;
 
 // ============ 通用数据结构 ============
@@ -37,6 +37,21 @@ pub struct ZSetMember {
 pub struct StreamEntry {
     pub id: String,
     pub fields: Vec<(String, String)>,
+}
+
+/// 创建 Key 的请求参数
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateKeyPayload {
+    pub id: String,
+    pub db: u32,
+    pub key: String,
+    pub key_type: String,
+    pub value: String,
+    pub ttl: Option<i64>,
+    pub field: Option<String>,
+    pub score: Option<f64>,
+    pub position: Option<String>,
 }
 
 // ============ 辅助宏：SELECT 数据库 ============
@@ -561,13 +576,19 @@ pub async fn delete_stream_entry(
 #[tauri::command]
 pub async fn create_key(
     pool: State<'_, RedisClientManager>,
-    id: String,
-    db: u32,
-    key: String,
-    key_type: String,
-    value: String,
-    ttl: Option<i64>,
+    payload: CreateKeyPayload,
 ) -> Result<(), String> {
+    let CreateKeyPayload {
+        id,
+        db,
+        key,
+        key_type,
+        value,
+        ttl,
+        field,
+        score,
+        position,
+    } = payload;
     let mut conn = pool.get_connection(&id).await?;
     select_db(&mut conn, db).await?;
 
@@ -578,14 +599,21 @@ pub async fn create_key(
                 .map_err(|e| e.to_string())?;
         }
         "hash" => {
-            conn.hset::<_, _, _, ()>(&key, "field1", &value)
+            let field_name = non_empty_or_default(field, "field1");
+            conn.hset::<_, _, _, ()>(&key, field_name, &value)
                 .await
                 .map_err(|e| e.to_string())?;
         }
         "list" => {
-            conn.rpush::<_, _, ()>(&key, &value)
-                .await
-                .map_err(|e| e.to_string())?;
+            if position.as_deref() == Some("head") {
+                conn.lpush::<_, _, ()>(&key, &value)
+                    .await
+                    .map_err(|e| e.to_string())?;
+            } else {
+                conn.rpush::<_, _, ()>(&key, &value)
+                    .await
+                    .map_err(|e| e.to_string())?;
+            }
         }
         "set" => {
             conn.sadd::<_, _, ()>(&key, &value)
@@ -593,15 +621,16 @@ pub async fn create_key(
                 .map_err(|e| e.to_string())?;
         }
         "zset" => {
-            conn.zadd::<_, _, _, ()>(&key, &value, 0.0f64)
+            conn.zadd::<_, _, _, ()>(&key, &value, score.unwrap_or(0.0))
                 .await
                 .map_err(|e| e.to_string())?;
         }
         "stream" => {
+            let field_name = non_empty_or_default(field, "data");
             redis::cmd("XADD")
                 .arg(&key)
                 .arg("*")
-                .arg("data")
+                .arg(field_name)
                 .arg(&value)
                 .query_async::<String>(&mut conn)
                 .await
@@ -630,6 +659,13 @@ pub async fn create_key(
     }
 
     Ok(())
+}
+
+/// 返回非空字符串，否则使用默认值。
+fn non_empty_or_default(value: Option<String>, default_value: &str) -> String {
+    value
+        .filter(|item| !item.trim().is_empty())
+        .unwrap_or_else(|| default_value.to_string())
 }
 
 // ============ RedisJSON 命令 ============

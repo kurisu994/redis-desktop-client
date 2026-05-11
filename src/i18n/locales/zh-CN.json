@@ -201,6 +201,10 @@
     "keyName": "键名",
     "keyType": "键类型",
     "initialValue": "初始值",
+    "initialField": "初始字段",
+    "initialElement": "初始元素",
+    "initialMember": "初始成员",
+    "streamField": "Stream 字段",
     "ttlOptional": "TTL（可选，秒）"
   },
   "cli": {

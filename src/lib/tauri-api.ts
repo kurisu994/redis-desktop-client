@@ -635,22 +635,29 @@ export async function deleteStreamEntry(
   return invoke("delete_stream_entry", { id, db, key, entryId });
 }
 
+/** 创建新 Key 的参数 */
+export interface CreateKeyParams {
+  id: string;
+  db: number;
+  key: string;
+  keyType: string;
+  value: string;
+  ttl?: number;
+  field?: string;
+  score?: number;
+  position?: "head" | "tail";
+}
+
 /** 创建新 Key */
-export async function createKey(
-  id: string,
-  db: number,
-  key: string,
-  keyType: string,
-  value: string,
-  ttl?: number,
-): Promise<void> {
+export async function createKey(params: CreateKeyParams): Promise<void> {
   return invoke("create_key", {
-    id,
-    db,
-    key,
-    keyType,
-    value,
-    ttl: ttl ?? null,
+    payload: {
+      ...params,
+      ttl: params.ttl ?? null,
+      field: params.field ?? null,
+      score: params.score ?? null,
+      position: params.position ?? null,
+    },
   });
 }
 
