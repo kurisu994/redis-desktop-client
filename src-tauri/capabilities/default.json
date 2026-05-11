@@ -9,6 +9,7 @@
     "core:default",
     "dialog:default",
     "updater:default",
+    "process:allow-restart",
     "opener:allow-open-url",
     "fs:allow-appdata-read",
     "fs:allow-appdata-write"
