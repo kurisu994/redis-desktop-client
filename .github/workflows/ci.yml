@@ -9,6 +9,7 @@ on:
       - "*.md"
       - "docs/**"
       - "CHANGELOG.md"
+      - "*.lock"
       - "LICENSE"
       - ".gstack/**"
   pull_request:
