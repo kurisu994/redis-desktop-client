@@ -238,7 +238,7 @@ export const KeyTree = forwardRef<KeyTreeHandle, KeyTreeProps>(function KeyTree(
             ? "bg-primary/15 text-primary"
             : "hover:bg-white/5 text-foreground/70"
         }`}
-        style={{ paddingLeft: "12px" }}
+        style={{ paddingLeft: "30px" }}
       >
         {/* 多选 Checkbox */}
         <input
