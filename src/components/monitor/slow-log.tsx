@@ -60,9 +60,7 @@ export function SlowLog({
                   <td className="p-2 text-right font-mono text-yellow-500">
                     {entry.duration_us.toLocaleString()}μs
                   </td>
-                  <td className="p-2 font-mono truncate">
-                    {entry.command}
-                  </td>
+                  <td className="p-2 font-mono truncate">{entry.command}</td>
                   <td className="p-2 text-muted-foreground">
                     {entry.client_addr}
                   </td>

@@ -172,9 +172,9 @@ export function validateJson(value: string): JsonValidationResult {
 }
 
 /** 格式化 JSON；失败时返回校验错误，不修改原文 */
-export function formatJsonWithValidation(value: string):
-  | { ok: true; formatted: string }
-  | { ok: false; issue: JsonValidationIssue } {
+export function formatJsonWithValidation(
+  value: string,
+): { ok: true; formatted: string } | { ok: false; issue: JsonValidationIssue } {
   const result = validateJson(value);
   if (!result.ok) return result;
 

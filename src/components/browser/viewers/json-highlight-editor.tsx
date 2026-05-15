@@ -173,8 +173,7 @@ export const JsonHighlightEditor = forwardRef<
       if (typeof forwardedRef === "function") {
         forwardedRef(node);
       } else if (forwardedRef) {
-        (forwardedRef as RefObject<HTMLTextAreaElement | null>).current =
-          node;
+        (forwardedRef as RefObject<HTMLTextAreaElement | null>).current = node;
       }
     },
     [forwardedRef],

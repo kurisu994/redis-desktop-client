@@ -3,11 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { useCallback, useState } from "react";
 import { useBrowserStore } from "@/stores/browser-store";
-import {
-  getSetValue,
-  addSetMember,
-  deleteSetMember,
-} from "@/lib/tauri-api";
+import { getSetValue, addSetMember, deleteSetMember } from "@/lib/tauri-api";
 import { TableView, RowActions, TruncatedValue } from "./table-view";
 import { AddFieldDialog } from "./add-field-dialog";
 import { useLoadEffect, DEFAULT_TABLE_PAGE_SIZE } from "./value-viewer";

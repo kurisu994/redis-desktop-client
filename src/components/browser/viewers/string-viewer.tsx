@@ -11,12 +11,7 @@ import {
   setStringValue,
 } from "@/lib/tauri-api";
 import { Button } from "@/components/ui/button";
-import {
-  Save,
-  AlertTriangle,
-  Download,
-  ChevronDown,
-} from "lucide-react";
+import { Save, AlertTriangle, Download, ChevronDown } from "lucide-react";
 import { JsonHighlightEditor } from "./json-highlight-editor";
 import { JsonValidationError } from "./json-validation-error";
 import {

@@ -10,7 +10,11 @@ import { X } from "lucide-react";
 import { usePubSubStore } from "@/stores/pubsub-store";
 import { useConnectionStore } from "@/stores/connection-store";
 import type { PubSubMessage } from "@/lib/tauri-api";
-import { subscribeChannels, unsubscribeChannels, publishMessage } from "@/lib/tauri-api";
+import {
+  subscribeChannels,
+  unsubscribeChannels,
+  publishMessage,
+} from "@/lib/tauri-api";
 import { MessageList } from "./message-list";
 
 /** Pub/Sub 主页面 */
@@ -52,11 +56,14 @@ export function PubSubPage() {
     const setup = async () => {
       if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
         const { listen } = await import("@tauri-apps/api/event");
-        const handler = await listen<PubSubMessage>("redis://pubsub", (event) => {
-          if (!usePubSubStore.getState().paused) {
-            usePubSubStore.getState().addMessage(event.payload);
-          }
-        });
+        const handler = await listen<PubSubMessage>(
+          "redis://pubsub",
+          (event) => {
+            if (!usePubSubStore.getState().paused) {
+              usePubSubStore.getState().addMessage(event.payload);
+            }
+          },
+        );
         if (mounted) {
           unlisten = handler;
         } else {

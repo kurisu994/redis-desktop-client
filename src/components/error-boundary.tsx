@@ -42,7 +42,9 @@ export class ErrorBoundary extends Component<
       return (
         <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
           <AlertTriangle size={48} className="text-yellow-500" />
-          <h2 className="text-lg font-semibold">{i18n.t("errorBoundary.title")}</h2>
+          <h2 className="text-lg font-semibold">
+            {i18n.t("errorBoundary.title")}
+          </h2>
           <p className="text-sm text-muted-foreground text-center max-w-md">
             {i18n.t("errorBoundary.description")}
           </p>
@@ -58,7 +60,9 @@ export class ErrorBoundary extends Component<
               </pre>
             </details>
           )}
-          <Button onClick={this.handleReload}>{i18n.t("errorBoundary.reload")}</Button>
+          <Button onClick={this.handleReload}>
+            {i18n.t("errorBoundary.reload")}
+          </Button>
         </div>
       );
     }

@@ -12,10 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import {
-  downloadAndInstallUpdate,
-  relaunchApp,
-} from "@/lib/tauri-api";
+import { downloadAndInstallUpdate, relaunchApp } from "@/lib/tauri-api";
 import type { UpdateInfo, DownloadEvent } from "@/lib/tauri-api";
 import { ArrowDownToLine, RefreshCw, Sparkles } from "lucide-react";
 
@@ -149,7 +146,9 @@ function UpdateDialogInner({
           <div className="space-y-2">
             <Progress value={progress} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{t("settings.downloading")} {progress}%</span>
+              <span>
+                {t("settings.downloading")} {progress}%
+              </span>
               {totalSize > 0 && (
                 <span>
                   {formatSize(downloadedSize)} / {formatSize(totalSize)}
@@ -198,9 +197,7 @@ function UpdateDialogInner({
               <Button variant="outline" onClick={onDismiss}>
                 {t("actions.close")}
               </Button>
-              <Button onClick={handleDownload}>
-                {t("update.retry")}
-              </Button>
+              <Button onClick={handleDownload}>{t("update.retry")}</Button>
             </>
           )}
         </DialogFooter>
@@ -282,9 +279,7 @@ function ReleaseNotesMarkdown({ content }: { content: string }) {
           className="ml-4 list-disc space-y-1 text-sm leading-relaxed text-foreground"
         >
           {items.map((item, itemIndex) => (
-            <li key={`${item}-${itemIndex}`}>
-              {renderInlineMarkdown(item)}
-            </li>
+            <li key={`${item}-${itemIndex}`}>{renderInlineMarkdown(item)}</li>
           ))}
         </ul>,
       );
@@ -296,9 +291,7 @@ function ReleaseNotesMarkdown({ content }: { content: string }) {
       const items: string[] = [];
 
       while (index < lines.length) {
-        const itemMatch = (lines[index] ?? "")
-          .trim()
-          .match(/^\d+[.)]\s+(.+)$/);
+        const itemMatch = (lines[index] ?? "").trim().match(/^\d+[.)]\s+(.+)$/);
         if (!itemMatch) break;
         items.push(itemMatch[1]);
         index += 1;
@@ -310,9 +303,7 @@ function ReleaseNotesMarkdown({ content }: { content: string }) {
           className="ml-4 list-decimal space-y-1 text-sm leading-relaxed text-foreground"
         >
           {items.map((item, itemIndex) => (
-            <li key={`${item}-${itemIndex}`}>
-              {renderInlineMarkdown(item)}
-            </li>
+            <li key={`${item}-${itemIndex}`}>{renderInlineMarkdown(item)}</li>
           ))}
         </ol>,
       );
@@ -349,10 +340,7 @@ function ReleaseNotesMarkdown({ content }: { content: string }) {
     }
 
     nodes.push(
-      <p
-        key={`p-${index}`}
-        className="text-sm leading-relaxed text-foreground"
-      >
+      <p key={`p-${index}`} className="text-sm leading-relaxed text-foreground">
         {renderInlineMarkdown(paragraphLines.join(" "))}
       </p>,
     );

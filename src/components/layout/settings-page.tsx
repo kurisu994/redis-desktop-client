@@ -274,7 +274,9 @@ export function SettingsPage() {
           title={t("settings.about")}
         />
         <div className="text-sm text-muted-foreground">
-          <p>{t("settings.currentVersion")}: {appVersion}</p>
+          <p>
+            {t("settings.currentVersion")}: {appVersion}
+          </p>
         </div>
       </div>
 

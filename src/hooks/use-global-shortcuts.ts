@@ -129,11 +129,5 @@ export function useGlobalShortcuts() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    openTab,
-    activateTab,
-    openDialog,
-    refreshKeys,
-    setCommandPaletteOpen,
-  ]);
+  }, [openTab, activateTab, openDialog, refreshKeys, setCommandPaletteOpen]);
 }

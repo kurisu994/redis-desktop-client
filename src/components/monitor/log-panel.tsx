@@ -77,9 +77,7 @@ export function LogPanel({
       >
         {entries.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
-            {monitoring
-              ? t("monitor.waitingLog")
-              : t("monitor.noLog")}
+            {monitoring ? t("monitor.waitingLog") : t("monitor.noLog")}
           </div>
         ) : (
           entries.map((entry, idx) => (
