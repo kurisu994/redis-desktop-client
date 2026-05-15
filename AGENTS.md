@@ -13,12 +13,20 @@
 - `just install`：安装 pnpm 依赖并拉取 Cargo crates。
 - `just dev`：启动完整 Tauri 开发环境，支持前后端热重载。
 - `just dev-web`：仅启动 Next.js 前端开发服务。
-- `just build`：构建生产版桌面应用。
+- `just build`：构建生产版桌面应用（自动加载 `.env` 生成带签名的自动更新包）。
 - `just build-web`：仅构建 Next.js 前端。
-- `just lint`：运行 ESLint、TypeScript 类型检查和 Rust Clippy。
+- `just build-debug`：构建含调试符号的 Debug 版本。
+- `just lint`：运行全部代码检查（前端 + 后端）。
+- `just lint-web`：ESLint + TypeScript 类型检查。
+- `just lint-rust`：cargo clippy。
 - `just fmt`：使用 Prettier 和 `cargo fmt` 格式化代码。
+- `just fmt-web`：仅格式化前端代码。
+- `just fmt-rust`：仅格式化 Rust 代码。
 - `just test-rust`：运行 Rust 测试。
 - `just i18n-check`：检查 `en-US` 与 `zh-CN` 翻译 key 是否一致。
+- `just version <ver>`：同步更新项目各配置文件的版本号。
+- `just release <tag>`：一键发布（更新版本号 → Commit → 打 Tag → 推送触发 CI 构建）。
+- `just clean`：清理构建产物（out/ + .next/ + cargo clean）。
 
 ## 编码风格与命名约定
 

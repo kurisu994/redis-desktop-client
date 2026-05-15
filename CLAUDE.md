@@ -13,13 +13,19 @@ Tauri 2 + Next.js 16（静态导出）+ React 19 + TypeScript + shadcn/ui + Tail
 ```bash
 just dev          # 启动 Tauri 完整开发环境（前后端热重载）
 just dev-web      # 仅启动 Next.js 前端（localhost:3000，含 mock 数据）
-just lint         # ESLint + tsc --noEmit + cargo clippy
+just build        # 生产构建（桌面应用，自动加载 .env 生成带签名的自动更新包）
+just build-web    # 仅构建 Next.js 前端
+just build-debug  # 构建 Debug 版本（含调试符号）
+just lint         # 全部代码检查（前端 + 后端）
 just lint-web     # pnpm lint + pnpm exec tsc --noEmit
 just lint-rust    # cargo clippy --all-targets --all-features -- -D warnings
 just fmt          # prettier + cargo fmt
+just fmt-web      # 仅格式化前端代码
+just fmt-rust     # 仅格式化 Rust 代码
 just test-rust    # cargo test --all-features
 just i18n-check   # 检查 en-US/zh-CN 翻译 key 完整性
-just build        # 生产构建（桌面应用）
+just version <v>  # 同步更新项目各配置文件的版本号
+just release <tag># 一键发布（版本号 → Commit → Tag → 推送触发 CI）
 just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 ```
 
@@ -42,7 +48,7 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 所有 Tauri 后端调用都通过此文件封装。在浏览器（`just dev-web`）环境中自动走 mock 实现，Tauri 环境中调用真实后端。新增后端命令时需同步在此文件添加函数和 mock 实现。
 
 **组件（`src/components/`）**
-按功能模块组织：`browser/`（数据浏览器：data-browser、export-dialog、import-dialog、key-detail、key-dialog、key-list、key-toolbar、key-tree、ttl-dialog + `viewers/` 子目录含 string-viewer、hash-viewer、list-viewer、set-viewer、zset-viewer、stream-viewer、json-viewer、table-view、value-viewer 路由入口、add-field-dialog、value-format-editor、json-highlight-editor、json-validation-error、value-editor-utils）、`cli/`（CLI 终端）、`connection/`（连接对话框含导入导出）、`layout/`（布局组件：title-bar、sidebar、sidebar-nav-button、connection-item、tab-bar、settings-page、welcome-page、language-switcher）、`monitor/`（服务器监控：server-info、realtime-charts、slow-log、log-panel、monitor-page）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件，18 个）。
+按功能模块组织：`browser/`（数据浏览器：data-browser、export-dialog、import-dialog、key-detail、key-dialog、key-list、key-toolbar、key-tree、ttl-dialog + `viewers/` 子目录含 string-viewer、hash-viewer、list-viewer、set-viewer、zset-viewer、stream-viewer、json-viewer、table-view、value-viewer 路由入口、add-field-dialog、value-format-editor、json-highlight-editor、json-validation-error、value-editor-utils）、`cli/`（CLI 终端：cli-console、command-input、terminal-output）、`connection/`（连接对话框含导入导出）、`layout/`（布局组件：title-bar、sidebar、sidebar-nav-button、connection-item、tab-bar、settings-page、welcome-page、language-switcher）、`monitor/`（服务器监控：server-info、realtime-charts、slow-log、log-panel、monitor-page）、`pubsub/`（发布订阅：pubsub-page、message-list）、`ui/`（shadcn/ui 基础组件，18 个）。
 全局组件：`providers.tsx`（NextThemes + TooltipProvider + Toaster，并关闭文本输入自动纠错/自动大写）、`error-boundary.tsx`、`confirm-danger-dialog.tsx`（删除/批量删除/FLUSHDB 等危险操作确认）、`command-palette.tsx`（⌘K 命令面板）、`update-dialog.tsx`（应用更新弹窗）。
 
 **Hooks（`src/hooks/`）**
@@ -74,10 +80,11 @@ just clean        # 清理构建产物（out/ + .next/ + cargo clean）
 - Phase 5（高级功能：服务器监控、慢查询、Pub/Sub、数据导入导出）✅ 已完成
 - Phase 6（高级连接 & 完善：SSH/TLS/Sentinel/Cluster UI、连接导入导出、设置页、快捷键、错误边界）✅ 已完成
   - ✅ v0.2.0：常用命令面板（⌘K）、补充快捷键（⌘D/⌘S/F5/Delete）
-  - ✅ v0.2.1：值编辑器交互重构（表格行截断 + 展开 + 双击编辑 + JSON 格式化）+ 大字符串性能优化（Hex useMemo/截断 + 大值渲染优化）+ 表格分页加载（Hash/List/Set/ZSet/Stream 每页 200 条）
-  - ✅ v0.2.2：应用内更新检查与提示（Tauri Updater Plugin + 进度条 + 设置页开关）
-  - ✅ 近期修复：断开连接自动清理 Tab/状态、TTL 倒计时到期自动标记过期、Loading 位置优化、重复点击同一 DB 不清空数据、MONITOR 日志 Tab + 竞态修复、监控/PubSub 布局宽度修复、值查看器组件结构重构（按类型拆分为独立模块）
-  - ✅ 近期改进：更新代理配置、自定义危险确认弹窗、新建 Key 类型联动与多格式初始值编辑、Key 列表新增/删除/重命名局部更新、输入框关闭自动纠错
+  - ✅ v0.2.1：值编辑器交互重构（表格行截断 + 展开 + 双击编辑 + JSON 格式化）+ 大字符串性能优化（Hex useMemo/截断 + 大值渲染优化）+ 表格分页加载（Hash/List/Set/ZSet/Stream 每页 200 条）+ 应用自动更新（Tauri Updater Plugin + Ed25519 签名）
+  - ✅ v0.2.2：应用内更新检查与提示（启动延迟检查 + 24h 间隔 + 设置页开关 + 进度条 + 重启）
+  - ✅ v0.2.3：值查看器组件结构重构（按类型拆分为独立模块）+ MONITOR 日志 Tab + 布局宽度修复 + 断开连接自动清理状态 + TTL 倒计时到期交互修复 + Loading 位置优化 + 重复点击同一 DB 不清空数据
+  - ✅ v0.2.4：新建 Key 类型联动与多格式初始值编辑 + 更新代理配置 + Key 列表局部更新（新增/删除/重命名不再全量扫描）+ 自定义危险确认弹窗 + 输入框关闭自动纠错
+  - ✅ v0.2.5：Key 树形视图叶子节点缩进对齐优化
   - 🔲 待办：SSH 隧道后端（Rust russh 库）、macOS/Windows 签名
 
 详见 `docs/DEVELOPMENT_PLAN.md`。
