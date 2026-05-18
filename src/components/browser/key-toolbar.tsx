@@ -75,6 +75,7 @@ export function KeyToolbar({
 
   /** 搜索提交 */
   const handleSearchSubmit = (e: React.KeyboardEvent) => {
+    if (loading) return;
     if (e.key === "Enter") {
       onSearch(filterPattern);
     }
@@ -142,11 +143,14 @@ export function KeyToolbar({
             value={filterPattern}
             onChange={(e) => setFilterPattern(e.target.value)}
             onKeyDown={handleSearchSubmit}
+            disabled={loading}
             data-search-input="true"
           />
           {filterPattern && (
             <button
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              type="button"
+              disabled={loading}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
               onClick={() => {
                 setFilterPattern("");
                 onSearch("");

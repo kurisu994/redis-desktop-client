@@ -52,6 +52,53 @@ function matchesFilterPattern(key: string, pattern: string) {
   return globPatternToRegExp(normalizedPattern).test(key);
 }
 
+/** 在已加载 Key 列表中按 Redis MATCH glob 做前端过滤 */
+function filterKeyEntries(keys: KeyEntry[], pattern: string) {
+  const normalizedPattern = normalizeScanPattern(pattern);
+  if (normalizedPattern === "*") return keys;
+  return keys.filter((entry) =>
+    matchesFilterPattern(entry.key, normalizedPattern),
+  );
+}
+
+/** 合并 SCAN 结果，避免重复 Key */
+function mergeKeyEntries(current: KeyEntry[], next: KeyEntry[]) {
+  const existing = new Set(current.map((entry) => entry.key));
+  const unique = next.filter((entry) => !existing.has(entry.key));
+  return [...current, ...unique];
+}
+
+/** 本地新增或更新单个 Key 条目 */
+function upsertKeyEntry(entries: KeyEntry[], entry: KeyEntry) {
+  const existingIndex = entries.findIndex((item) => item.key === entry.key);
+  if (existingIndex < 0) return [entry, ...entries];
+
+  const next = [...entries];
+  next[existingIndex] = entry;
+  return next;
+}
+
+/** 本地删除一组 Key 条目 */
+function removeKeyEntries(entries: KeyEntry[], keys: string[]) {
+  const removingKeys = new Set(keys);
+  return entries.filter((entry) => !removingKeys.has(entry.key));
+}
+
+/** 本地重命名 Key 条目 */
+function renameKeyEntryInList(
+  entries: KeyEntry[],
+  oldKey: string,
+  newKey: string,
+) {
+  const oldEntry = entries.find((entry) => entry.key === oldKey);
+  if (!oldEntry) return entries;
+
+  const renamedEntry = { ...oldEntry, key: newKey };
+  return entries
+    .filter((entry) => entry.key !== oldKey && entry.key !== newKey)
+    .concat(renamedEntry);
+}
+
 /** 规范化 Redis SCAN MATCH 模式 */
 function normalizeScanPattern(pattern: string) {
   return pattern.trim() || "*";
@@ -85,7 +132,6 @@ export function DataBrowser() {
   const removeKeysFromStore = useBrowserStore((s) => s.removeKeys);
   const renameKeyEntry = useBrowserStore((s) => s.renameKeyEntry);
   const updateDbSize = useBrowserStore((s) => s.updateDbSize);
-  const appendKeys = useBrowserStore((s) => s.appendKeys);
   const setScanCursor = useBrowserStore((s) => s.setScanCursor);
   const setScanComplete = useBrowserStore((s) => s.setScanComplete);
   const setSelectedKey = useBrowserStore((s) => s.setSelectedKey);
@@ -99,6 +145,8 @@ export function DataBrowser() {
   const [showDeleteKeyConfirm, setShowDeleteKeyConfirm] = useState(false);
   const keyTreeRef = useRef<KeyTreeHandle>(null);
   const keyListRef = useRef<KeyListHandle>(null);
+  /** 后端扫描得到的完整 Key 列表，前端过滤以它为基准 */
+  const [loadedKeys, setLoadedKeys] = useState<KeyEntry[]>([]);
   /** 已应用到当前 Key 列表的过滤模式，输入框编辑不会立即改变它 */
   const [activeFilterPattern, setActiveFilterPattern] = useState("");
   /** 当前有效扫描请求编号，用于丢弃过期扫描结果 */
@@ -201,6 +249,8 @@ export function DataBrowser() {
         .catch(() => toast.error(t("browser.scanFailed")));
     } else if (!connectedId) {
       activeScanRequestId.current += 1;
+      setLoadedKeys([]);
+      setActiveFilterPattern("");
       setConnectionId(null);
       resetBrowser();
     }
@@ -216,26 +266,21 @@ export function DataBrowser() {
       const requestId = activeScanRequestId.current + 1;
       activeScanRequestId.current = requestId;
       const isCurrentScan = () => activeScanRequestId.current === requestId;
+      const nextActiveFilterPattern = patternOverride ?? activeFilterPattern;
 
       setLoading(true);
       try {
         let cursor = reset ? 0 : scanCursor;
-        let totalLoaded = reset ? 0 : keys.length;
-        const scanPattern = normalizeScanPattern(
-          patternOverride ?? activeFilterPattern,
-        );
+        let nextLoadedKeys = reset ? [] : loadedKeys;
+        let totalLoaded = nextLoadedKeys.length;
         if (reset) {
           // 重置时先清空并加载第一批
-          const result = await scanKeys(
-            connectedId,
-            selectedDb,
-            0,
-            scanPattern,
-            200,
-          );
+          const result = await scanKeys(connectedId, selectedDb, 0, "*", 200);
           if (!isCurrentScan()) return;
-          setKeys(result.keys);
-          totalLoaded = result.keys.length;
+          nextLoadedKeys = mergeKeyEntries(nextLoadedKeys, result.keys);
+          setLoadedKeys(nextLoadedKeys);
+          setKeys(filterKeyEntries(nextLoadedKeys, nextActiveFilterPattern));
+          totalLoaded = nextLoadedKeys.length;
           cursor = result.cursor;
           setScanCursor(cursor);
           setScanComplete(cursor === 0);
@@ -245,12 +290,14 @@ export function DataBrowser() {
               connectedId,
               selectedDb,
               cursor,
-              scanPattern,
+              "*",
               200,
             );
             if (!isCurrentScan()) return;
-            appendKeys(next.keys);
-            totalLoaded += next.keys.length;
+            nextLoadedKeys = mergeKeyEntries(nextLoadedKeys, next.keys);
+            setLoadedKeys(nextLoadedKeys);
+            setKeys(filterKeyEntries(nextLoadedKeys, nextActiveFilterPattern));
+            totalLoaded = nextLoadedKeys.length;
             cursor = next.cursor;
             setScanCursor(cursor);
             setScanComplete(cursor === 0 || totalLoaded >= MAX_LOAD_KEYS);
@@ -266,11 +313,13 @@ export function DataBrowser() {
             connectedId,
             selectedDb,
             cursor,
-            scanPattern,
+            "*",
             200,
           );
           if (!isCurrentScan()) return;
-          appendKeys(result.keys);
+          nextLoadedKeys = mergeKeyEntries(nextLoadedKeys, result.keys);
+          setLoadedKeys(nextLoadedKeys);
+          setKeys(filterKeyEntries(nextLoadedKeys, nextActiveFilterPattern));
           setScanCursor(result.cursor);
           setScanComplete(result.cursor === 0);
         }
@@ -286,19 +335,19 @@ export function DataBrowser() {
       scanCursor,
       scanComplete,
       activeFilterPattern,
+      loadedKeys,
       setKeys,
-      appendKeys,
       setScanCursor,
       setScanComplete,
       setLoading,
       t,
-      keys.length,
     ],
   );
 
   /** db 切换或连接初始化后自动加载 Key */
   useEffect(() => {
     if (connectedId) {
+      setLoadedKeys([]);
       setActiveFilterPattern("");
       loadKeys(true, "");
     }
@@ -367,11 +416,13 @@ export function DataBrowser() {
   /** 搜索过滤 */
   const handleSearch = useCallback(
     (pattern?: string) => {
+      if (loading) return;
+
       const nextPattern = pattern ?? filterPattern;
       setActiveFilterPattern(nextPattern);
-      loadKeys(true, nextPattern);
+      setKeys(filterKeyEntries(loadedKeys, nextPattern));
     },
-    [filterPattern, loadKeys],
+    [filterPattern, loadedKeys, loading, setKeys],
   );
 
   /** 刷新当前 Key 的值（编辑后回调） */
@@ -402,7 +453,10 @@ export function DataBrowser() {
   /** 新建或复制 Key 后只更新本地列表，避免重新 SCAN 整个库 */
   const handleKeyCreated = useCallback(
     (entry: KeyEntry) => {
-      const existedInLoadedKeys = keys.some((item) => item.key === entry.key);
+      const existedInLoadedKeys = loadedKeys.some(
+        (item) => item.key === entry.key,
+      );
+      setLoadedKeys((prev) => upsertKeyEntry(prev, entry));
       if (matchesFilterPattern(entry.key, activeFilterPattern)) {
         upsertKey(entry);
       }
@@ -415,7 +469,7 @@ export function DataBrowser() {
     },
     [
       activeFilterPattern,
-      keys,
+      loadedKeys,
       selectedDb,
       setKeyExpired,
       setKeyInfo,
@@ -429,6 +483,7 @@ export function DataBrowser() {
   const handleKeysDeleted = useCallback(
     (deletedKeys: string[], deletedCount: number) => {
       const deletedSet = new Set(deletedKeys);
+      setLoadedKeys((prev) => removeKeyEntries(prev, deletedKeys));
       removeKeysFromStore(deletedKeys);
       if (deletedSet.has(selectedKey ?? "")) {
         setSelectedKey(null);
@@ -451,7 +506,10 @@ export function DataBrowser() {
   /** 重命名 Key 后只替换本地列表项，目标名若已存在则同步修正计数 */
   const handleKeyRenamed = useCallback(
     (oldKey: string, newKey: string) => {
-      const targetAlreadyLoaded = keys.some((entry) => entry.key === newKey);
+      const targetAlreadyLoaded = loadedKeys.some(
+        (entry) => entry.key === newKey,
+      );
+      setLoadedKeys((prev) => renameKeyEntryInList(prev, oldKey, newKey));
       if (matchesFilterPattern(newKey, activeFilterPattern)) {
         renameKeyEntry(oldKey, newKey);
       } else {
@@ -466,7 +524,7 @@ export function DataBrowser() {
     },
     [
       activeFilterPattern,
-      keys,
+      loadedKeys,
       removeKeysFromStore,
       renameKeyEntry,
       selectedDb,
