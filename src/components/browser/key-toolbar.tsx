@@ -32,7 +32,7 @@ import { ImportDialog } from "./import-dialog";
 
 interface KeyToolbarProps {
   onRefresh: () => void;
-  onSearch: () => void;
+  onSearch: (pattern?: string) => void;
   onLocateSelectedKey: () => void;
   onKeyCreated: (entry: KeyEntry) => void;
 }
@@ -76,7 +76,7 @@ export function KeyToolbar({
   /** 搜索提交 */
   const handleSearchSubmit = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      onSearch();
+      onSearch(filterPattern);
     }
   };
 
@@ -149,7 +149,7 @@ export function KeyToolbar({
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               onClick={() => {
                 setFilterPattern("");
-                onSearch();
+                onSearch("");
               }}
             >
               <X className="w-3.5 h-3.5" />

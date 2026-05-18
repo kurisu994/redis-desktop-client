@@ -113,6 +113,8 @@
     "flatView": "平铺视图",
     "noKeys": "未找到键",
     "noKeysDesc": "该数据库为空",
+    "noMatchingKeys": "没有匹配的键",
+    "noMatchingKeysDesc": "当前过滤条件 “{{pattern}}” 没有匹配结果",
     "scanMore": "加载更多",
     "scanning": "扫描中...",
     "selectKey": "选择一个键查看内容",

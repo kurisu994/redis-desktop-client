@@ -113,6 +113,8 @@
     "flatView": "Flat View",
     "noKeys": "No keys found",
     "noKeysDesc": "This database is empty",
+    "noMatchingKeys": "No matching keys",
+    "noMatchingKeysDesc": "No keys match the current filter \"{{pattern}}\"",
     "scanMore": "Load more",
     "scanning": "Scanning...",
     "selectKey": "Select a key to view its contents",

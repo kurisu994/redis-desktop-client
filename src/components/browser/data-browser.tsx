@@ -22,6 +22,7 @@ import {
   Trash2,
   Download,
   X,
+  SearchX,
   CheckSquare,
   Square,
   Loader2,
@@ -49,6 +50,11 @@ function matchesFilterPattern(key: string, pattern: string) {
   const normalizedPattern = pattern.trim() || "*";
   if (normalizedPattern === "*") return true;
   return globPatternToRegExp(normalizedPattern).test(key);
+}
+
+/** 规范化 Redis SCAN MATCH 模式 */
+function normalizeScanPattern(pattern: string) {
+  return pattern.trim() || "*";
 }
 
 /** 数据浏览器主容器 — 工具栏 + 左右分栏（Key 列表 + 值编辑器） */
@@ -93,6 +99,10 @@ export function DataBrowser() {
   const [showDeleteKeyConfirm, setShowDeleteKeyConfirm] = useState(false);
   const keyTreeRef = useRef<KeyTreeHandle>(null);
   const keyListRef = useRef<KeyListHandle>(null);
+  /** 已应用到当前 Key 列表的过滤模式，输入框编辑不会立即改变它 */
+  const [activeFilterPattern, setActiveFilterPattern] = useState("");
+  /** 当前有效扫描请求编号，用于丢弃过期扫描结果 */
+  const activeScanRequestId = useRef(0);
 
   /** 左栏宽度（可拖拽调节） */
   const [panelWidth, setPanelWidth] = useState(288);
@@ -190,6 +200,7 @@ export function DataBrowser() {
         .then((info) => setDbList(info.db_sizes, info.db_count))
         .catch(() => toast.error(t("browser.scanFailed")));
     } else if (!connectedId) {
+      activeScanRequestId.current += 1;
       setConnectionId(null);
       resetBrowser();
     }
@@ -200,21 +211,29 @@ export function DataBrowser() {
 
   /** 加载 Key 列表 — 自动分片加载全部 Key（受 MAX_LOAD_KEYS 限制） */
   const loadKeys = useCallback(
-    async (reset = false) => {
+    async (reset = false, patternOverride?: string) => {
       if (!connectedId) return;
+      const requestId = activeScanRequestId.current + 1;
+      activeScanRequestId.current = requestId;
+      const isCurrentScan = () => activeScanRequestId.current === requestId;
+
       setLoading(true);
       try {
         let cursor = reset ? 0 : scanCursor;
         let totalLoaded = reset ? 0 : keys.length;
+        const scanPattern = normalizeScanPattern(
+          patternOverride ?? activeFilterPattern,
+        );
         if (reset) {
           // 重置时先清空并加载第一批
           const result = await scanKeys(
             connectedId,
             selectedDb,
             0,
-            filterPattern || "*",
+            scanPattern,
             200,
           );
+          if (!isCurrentScan()) return;
           setKeys(result.keys);
           totalLoaded = result.keys.length;
           cursor = result.cursor;
@@ -226,9 +245,10 @@ export function DataBrowser() {
               connectedId,
               selectedDb,
               cursor,
-              filterPattern || "*",
+              scanPattern,
               200,
             );
+            if (!isCurrentScan()) return;
             appendKeys(next.keys);
             totalLoaded += next.keys.length;
             cursor = next.cursor;
@@ -246,17 +266,18 @@ export function DataBrowser() {
             connectedId,
             selectedDb,
             cursor,
-            filterPattern || "*",
+            scanPattern,
             200,
           );
+          if (!isCurrentScan()) return;
           appendKeys(result.keys);
           setScanCursor(result.cursor);
           setScanComplete(result.cursor === 0);
         }
       } catch {
-        toast.error(t("browser.scanFailed"));
+        if (isCurrentScan()) toast.error(t("browser.scanFailed"));
       } finally {
-        setLoading(false);
+        if (isCurrentScan()) setLoading(false);
       }
     },
     [
@@ -264,7 +285,7 @@ export function DataBrowser() {
       selectedDb,
       scanCursor,
       scanComplete,
-      filterPattern,
+      activeFilterPattern,
       setKeys,
       appendKeys,
       setScanCursor,
@@ -278,7 +299,8 @@ export function DataBrowser() {
   /** db 切换或连接初始化后自动加载 Key */
   useEffect(() => {
     if (connectedId) {
-      loadKeys(true);
+      setActiveFilterPattern("");
+      loadKeys(true, "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectedId, selectedDb]);
@@ -343,9 +365,14 @@ export function DataBrowser() {
   }, [loadKeys, connectedId, setDbList, t]);
 
   /** 搜索过滤 */
-  const handleSearch = useCallback(() => {
-    loadKeys(true);
-  }, [loadKeys]);
+  const handleSearch = useCallback(
+    (pattern?: string) => {
+      const nextPattern = pattern ?? filterPattern;
+      setActiveFilterPattern(nextPattern);
+      loadKeys(true, nextPattern);
+    },
+    [filterPattern, loadKeys],
+  );
 
   /** 刷新当前 Key 的值（编辑后回调） */
   const handleValueChanged = useCallback(() => {
@@ -376,7 +403,7 @@ export function DataBrowser() {
   const handleKeyCreated = useCallback(
     (entry: KeyEntry) => {
       const existedInLoadedKeys = keys.some((item) => item.key === entry.key);
-      if (matchesFilterPattern(entry.key, filterPattern)) {
+      if (matchesFilterPattern(entry.key, activeFilterPattern)) {
         upsertKey(entry);
       }
       if (!existedInLoadedKeys) {
@@ -387,7 +414,7 @@ export function DataBrowser() {
       setKeyExpired(false);
     },
     [
-      filterPattern,
+      activeFilterPattern,
       keys,
       selectedDb,
       setKeyExpired,
@@ -425,7 +452,7 @@ export function DataBrowser() {
   const handleKeyRenamed = useCallback(
     (oldKey: string, newKey: string) => {
       const targetAlreadyLoaded = keys.some((entry) => entry.key === newKey);
-      if (matchesFilterPattern(newKey, filterPattern)) {
+      if (matchesFilterPattern(newKey, activeFilterPattern)) {
         renameKeyEntry(oldKey, newKey);
       } else {
         removeKeysFromStore([oldKey]);
@@ -438,7 +465,7 @@ export function DataBrowser() {
       setKeyExpired(false);
     },
     [
-      filterPattern,
+      activeFilterPattern,
       keys,
       removeKeysFromStore,
       renameKeyEntry,
@@ -480,6 +507,9 @@ export function DataBrowser() {
     if (!showFavoritesOnly) return keys;
     return keys.filter((k) => favorites.has(k.key));
   }, [keys, showFavoritesOnly, favorites]);
+  const normalizedActiveFilterPattern =
+    normalizeScanPattern(activeFilterPattern);
+  const hasActiveFilter = normalizedActiveFilterPattern !== "*";
 
   /** 定位当前选中的 Key；树形模式会由 KeyTree 自动展开父级目录 */
   const handleLocateSelectedKey = useCallback(() => {
@@ -573,7 +603,23 @@ export function DataBrowser() {
           style={{ width: `${panelWidth}px` }}
         >
           <div className="flex-1 overflow-y-auto">
-            {viewMode === "tree" ? (
+            {!loading && displayKeys.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center gap-2 px-6 text-center text-muted-foreground">
+                <SearchX className="w-9 h-9 opacity-30" />
+                <p className="text-sm font-medium text-foreground/80">
+                  {hasActiveFilter
+                    ? t("browser.noMatchingKeys")
+                    : t("browser.noKeys")}
+                </p>
+                <p className="text-xs leading-relaxed">
+                  {hasActiveFilter
+                    ? t("browser.noMatchingKeysDesc", {
+                        pattern: normalizedActiveFilterPattern,
+                      })
+                    : t("browser.noKeysDesc")}
+                </p>
+              </div>
+            ) : viewMode === "tree" ? (
               <KeyTree
                 ref={keyTreeRef}
                 keys={displayKeys}
