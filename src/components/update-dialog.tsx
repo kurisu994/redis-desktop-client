@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useCallback, Component, type ReactNode } from "react";
+import {
+  useState,
+  useCallback,
+  useRef,
+  Component,
+  type ReactNode,
+} from "react";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -61,26 +67,36 @@ function UpdateDialogInner({
   const [totalSize, setTotalSize] = useState(0);
   const [downloadedSize, setDownloadedSize] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const totalSizeRef = useRef(0);
+  const downloadedSizeRef = useRef(0);
 
   /** 下载进度回调 */
   const handleProgress = useCallback((event: DownloadEvent) => {
     switch (event.event) {
-      case "Started":
-        setTotalSize(event.data.contentLength ?? 0);
+      case "Started": {
+        const nextTotalSize = event.data.contentLength ?? 0;
+        totalSizeRef.current = nextTotalSize;
+        downloadedSizeRef.current = 0;
+        setTotalSize(nextTotalSize);
         setDownloadedSize(0);
+        setProgress(0);
         break;
-      case "Progress":
-        setDownloadedSize((prev) => {
-          const next = prev + event.data.chunkLength;
-          setTotalSize((total) => {
-            if (total > 0) {
-              setProgress(Math.min(100, Math.round((next / total) * 100)));
-            }
-            return total;
-          });
-          return next;
-        });
+      }
+      case "Progress": {
+        const nextDownloadedSize =
+          downloadedSizeRef.current + event.data.chunkLength;
+        downloadedSizeRef.current = nextDownloadedSize;
+        setDownloadedSize(nextDownloadedSize);
+        if (totalSizeRef.current > 0) {
+          setProgress(
+            Math.min(
+              100,
+              Math.round((nextDownloadedSize / totalSizeRef.current) * 100),
+            ),
+          );
+        }
         break;
+      }
       case "Finished":
         setProgress(100);
         setState("downloaded");
@@ -485,6 +501,10 @@ class MarkdownErrorBoundary extends Component<
 
   static getDerivedStateFromError(): MarkdownErrorBoundaryState {
     return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("[更新弹窗] 发布说明 Markdown 渲染失败:", error, errorInfo);
   }
 
   render() {
