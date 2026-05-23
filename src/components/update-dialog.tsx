@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, type ReactNode } from "react";
+import { useState, useCallback, Component, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -137,7 +137,9 @@ function UpdateDialogInner({
             <p className="text-xs font-medium text-muted-foreground mb-2">
               {t("update.releaseNotes")}
             </p>
-            <ReleaseNotesMarkdown content={updateInfo.body} />
+            <MarkdownErrorBoundary fallback={updateInfo.body}>
+              <ReleaseNotesMarkdown content={updateInfo.body} />
+            </MarkdownErrorBoundary>
           </div>
         )}
 
@@ -208,6 +210,10 @@ function UpdateDialogInner({
 
 /** 更新说明 Markdown 渲染组件，仅解析常见发布日志语法，不执行 HTML */
 function ReleaseNotesMarkdown({ content }: { content: string }) {
+  return <ReleaseNotesMarkdownInner content={content} />;
+}
+
+function ReleaseNotesMarkdownInner({ content }: { content: string }) {
   const lines = content.replace(/\r\n/g, "\n").split("\n");
   const nodes: ReactNode[] = [];
   let index = 0;
@@ -456,4 +462,39 @@ function renderInlineToken(token: string, key: string): ReactNode {
   }
 
   return token;
+}
+
+interface MarkdownErrorBoundaryProps {
+  children: ReactNode;
+  fallback: string;
+}
+
+interface MarkdownErrorBoundaryState {
+  hasError: boolean;
+}
+
+/** Markdown 渲染局部错误边界 — 解析异常时降级为原始文本 */
+class MarkdownErrorBoundary extends Component<
+  MarkdownErrorBoundaryProps,
+  MarkdownErrorBoundaryState
+> {
+  constructor(props: MarkdownErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): MarkdownErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <pre className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+          {this.props.fallback}
+        </pre>
+      );
+    }
+    return this.props.children;
+  }
 }
