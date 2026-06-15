@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/kurisu/develop/CLionProjects/redis-desktop-client/.codex/hooks/check-gstack.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}
