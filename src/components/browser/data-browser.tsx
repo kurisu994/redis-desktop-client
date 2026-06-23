@@ -258,6 +258,8 @@ export function DataBrowser() {
 
   /** 单次加载 Key 的最大数量，防止大数据库耗尽内存 */
   const MAX_LOAD_KEYS = 100_000;
+  /** 单次 SCAN 请求的 Key 数量，平衡加载速度与界面响应 */
+  const KEY_SCAN_BATCH_SIZE = 500;
 
   /** 加载 Key 列表 — 自动分片加载全部 Key（受 MAX_LOAD_KEYS 限制） */
   const loadKeys = useCallback(
@@ -275,7 +277,13 @@ export function DataBrowser() {
         let totalLoaded = nextLoadedKeys.length;
         if (reset) {
           // 重置时先清空并加载第一批
-          const result = await scanKeys(connectedId, selectedDb, 0, "*", 200);
+          const result = await scanKeys(
+            connectedId,
+            selectedDb,
+            0,
+            "*",
+            KEY_SCAN_BATCH_SIZE,
+          );
           if (!isCurrentScan()) return;
           nextLoadedKeys = mergeKeyEntries(nextLoadedKeys, result.keys);
           setLoadedKeys(nextLoadedKeys);
@@ -291,7 +299,7 @@ export function DataBrowser() {
               selectedDb,
               cursor,
               "*",
-              200,
+              KEY_SCAN_BATCH_SIZE,
             );
             if (!isCurrentScan()) return;
             nextLoadedKeys = mergeKeyEntries(nextLoadedKeys, next.keys);
@@ -314,7 +322,7 @@ export function DataBrowser() {
             selectedDb,
             cursor,
             "*",
-            200,
+            KEY_SCAN_BATCH_SIZE,
           );
           if (!isCurrentScan()) return;
           nextLoadedKeys = mergeKeyEntries(nextLoadedKeys, result.keys);

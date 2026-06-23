@@ -6,7 +6,7 @@
 
 - **项目版本**：v0.2.8（2026-05-23 发布）
 - **当前分支**：`main`
-- **工作树**：clean（无未提交变更）
+- **工作树**：存在本会话未提交变更：Key 扫描批大小调整为 500。
 - **最近 commits**：
   - `45c50cb` feat(codex): 添加 gstack 前置工具使用检查钩子
   - `9a9e1af` chore(tauri): 更新应用版本至 v0.2.8 并移除过时的 gstack 文档
@@ -16,35 +16,23 @@
 
 ## 本会话工作
 
-- 用户请求 `给项目生成记忆银行`。
-- 按 `~/develop/Agent/rules/memory-bank.md` 的方法论生成完整 `/memory-bank/` 6 文件结构。
-- 信息来源：`README.md`、`AGENTS.md`、`package.json`、`Cargo.toml`、`tauri.conf.json`、`CHANGELOG.md`、`docs/REQUIREMENTS.md`、`docs/DEVELOPMENT_PLAN.md`、`justfile`、实际目录结构、git log。
+- 审查 Key 加载链路：前端以 cursor 串行调用 Tauri `scan_keys`，后端执行 `SCAN` 后通过 pipeline 批量获取 `TYPE`。
+- 将前端单次 Key 扫描批大小从 200 调整为 500，覆盖初始扫描、自动续扫和兜底续扫。
+- 已执行 `just lint-web`，ESLint 与 TypeScript 类型检查通过。
 
 ## 活跃文件
 
-（本会话仅创建 Memory Bank，未修改业务代码）
-
-- `memory-bank/projectbrief.md` ✨ 新建
-- `memory-bank/productContext.md` ✨ 新建
-- `memory-bank/systemPatterns.md` ✨ 新建
-- `memory-bank/techContext.md` ✨ 新建
-- `memory-bank/progress.md` ✨ 新建
-- `memory-bank/activeContext.md` ✨ 新建（本文件）
+- `src/components/browser/data-browser.tsx`：新增 `KEY_SCAN_BATCH_SIZE = 500`，替换 3 处调用参数。
+- `memory-bank/activeContext.md`：记录本轮决策与验证结果。
 
 ## 已做决策
 
-- 6 文件全部使用中文撰写，符合用户全局协作规则（CLAUDE.md「默认使用中文交流」）。
-- 文档不重复 `AGENTS.md` 的编码规范，专注于「项目记忆」（架构、负向约束、历史决策、版本演进）。
-- `systemPatterns.md` 的目录树以实际 `eza -T` 输出为准，不照搬文档描述（README.md 中 viewers/ 列表已落后于实际 14 个文件）。
-- 版本号、依赖版本严格从 `package.json` / `Cargo.toml` / `tauri.conf.json` 提取，不猜测。
+- 不通过多线程并发遍历单个 DB 的 `SCAN`：下一 cursor 依赖上一响应，并发会导致重复扫描或放大 Redis 负载。
+- 先将批大小增至 500 以降低 IPC/网络往返次数；保留当前自动扫描至完成、最多 100,000 个 Key 的行为。
 
 ## 下一步
 
-无具体下一步任务。Memory Bank 已就绪，后续：
-
-- 新会话开始时自动加载 `activeContext.md`；其它 5 个文件按场景按需读取。
-- 会话结束前更新本文件（活跃文件、决策、下一步、阻塞）。
-- 若出现里程碑或重大架构变更，同步更新 `progress.md`。
+- 如需进一步改善首次进入 DB 的体感，应改为首批立即展示、再按滚动或“加载更多”继续 cursor 扫描；这会改变当前完整预加载交互，需单独确认。
 
 ## 阻塞
 
