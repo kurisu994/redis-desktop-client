@@ -20,7 +20,7 @@
 
 ### ✨ 新功能
 
-#### SSH 隧道支持（v0.3 工作中，分支 `feat/ssh-tunnel-v03`）
+#### SSH 隧道支持
 
 - 新增基于 `russh` 的 SSH 隧道后端，纯 Rust 异步实现，跨平台无需系统 `ssh` / `sshpass` / `expect` 等外部工具。
 - 支持任意 N 跳串联（OpenSSH ProxyJump 等效）：第一跳本地直连，后续每一跳在前一跳的 SSH 通道上递归建立，最后一跳对 Redis 开 `direct-tcpip` channel。
