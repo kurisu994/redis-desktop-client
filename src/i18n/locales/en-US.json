@@ -74,6 +74,16 @@
     "sshPrivateKey": "Private Key",
     "sshKeyPath": "Key File Path",
     "sshPassphrase": "Passphrase",
+    "sshHopHint": "Order of hops = link order. Hop #1 connects directly from your machine; the last hop opens a direct-tcpip channel to Redis.",
+    "sshHopOnly": "Only hop (→ Redis)",
+    "sshHopEntry": "Entry hop (you → here)",
+    "sshHopExit": "Exit hop (here → Redis)",
+    "sshHopRelay": "Relay #{{n}}",
+    "sshHopEmpty": "(host not set)",
+    "sshHopMoveUp": "Move hop up",
+    "sshHopMoveDown": "Move hop down",
+    "sshHopRemove": "Remove this hop",
+    "sshAddHop": "Add next hop",
     "enableTls": "Enable SSL/TLS",
     "tlsCaCert": "CA Certificate",
     "tlsClientCert": "Client Certificate",
@@ -374,5 +384,18 @@
   "pagination": {
     "showing": "{{from}}-{{to}} of {{total}} items",
     "perPage": "Per page"
+  },
+  "error": {
+    "ssh": {
+      "no_hops": "SSH tunnel needs at least one hop",
+      "connect_failed": "Failed to connect to SSH host",
+      "auth_failed": "SSH authentication failed",
+      "invalid_passphrase": "Wrong passphrase for SSH private key",
+      "key_not_found": "SSH private key file not found",
+      "channel_open_failed": "Failed to open SSH forwarding channel",
+      "local_listen_failed": "Failed to bind local forwarding port",
+      "invalid_auth_type": "Invalid SSH authentication type",
+      "unsupported_for_cluster_sentinel": "SSH tunnel is not supported for Cluster/Sentinel yet"
+    }
   }
 }

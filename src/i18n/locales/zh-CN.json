@@ -74,6 +74,16 @@
     "sshPrivateKey": "密钥认证",
     "sshKeyPath": "密钥文件路径",
     "sshPassphrase": "密钥密码",
+    "sshHopHint": "跳板顺序 = 链路顺序。第 1 跳是你本机直连的 SSH 主机，最后一跳在其上对 Redis 开 direct-tcpip 通道。",
+    "sshHopOnly": "唯一跳板（→ Redis）",
+    "sshHopEntry": "入口跳板（你 → 这台）",
+    "sshHopExit": "出口跳板（这台 → Redis）",
+    "sshHopRelay": "中转 #{{n}}",
+    "sshHopEmpty": "（未填主机）",
+    "sshHopMoveUp": "上移此跳",
+    "sshHopMoveDown": "下移此跳",
+    "sshHopRemove": "移除此跳",
+    "sshAddHop": "添加下一跳",
     "enableTls": "启用 SSL/TLS",
     "tlsCaCert": "CA 证书",
     "tlsClientCert": "客户端证书",
@@ -374,5 +384,18 @@
   "pagination": {
     "showing": "第 {{from}}-{{to}} 条，共 {{total}} 条",
     "perPage": "每页"
+  },
+  "error": {
+    "ssh": {
+      "no_hops": "SSH 隧道至少需要 1 个跳板/终点主机",
+      "connect_failed": "连接 SSH 主机失败",
+      "auth_failed": "SSH 认证失败",
+      "invalid_passphrase": "SSH 私钥密码错误",
+      "key_not_found": "SSH 私钥文件不存在",
+      "channel_open_failed": "打开 SSH 转发通道失败",
+      "local_listen_failed": "绑定本地转发端口失败",
+      "invalid_auth_type": "SSH 认证方式无效",
+      "unsupported_for_cluster_sentinel": "Cluster/Sentinel 模式暂不支持 SSH 隧道"
+    }
   }
 }

@@ -23,7 +23,16 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Shield, Plus, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
+import {
+  Shield,
+  Plus,
+  Trash2,
+  Eye,
+  EyeOff,
+  Loader2,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
 import {
   useConnectionStore,
   type ConnectionConfig,
@@ -255,16 +264,8 @@ export function ConnectionDialog() {
   const updateSsh = (patch: Partial<SshConfig>) =>
     setSsh((prev) => ({ ...prev, ...patch }));
 
-  /** 更新指定跳板字段（阶段 1：单跳；阶段 4：多跳） */
-  const updateHop = (index: number, patch: Partial<SshHop>) =>
-    setSsh((prev) => {
-      const hops = prev.hops.length > 0 ? [...prev.hops] : [{ ...defaultSshHop }];
-      hops[index] = { ...(hops[index] ?? defaultSshHop), ...patch };
-      return { ...prev, hops };
-    });
-
-  /** 当前主跳板（阶段 1 UI 仅展示第一跳） */
-  const primaryHop: SshHop = ssh.hops[0] ?? defaultSshHop;
+  /** 整体替换 hops 列表 */
+  const setHops = (hops: SshHop[]) => setSsh((prev) => ({ ...prev, hops }));
 
   /** 更新 TLS 配置字段 */
   const updateTls = (patch: Partial<TlsConfig>) =>
@@ -425,100 +426,12 @@ export function ConnectionDialog() {
                   </Label>
                 </div>
                 {ssh.enabled && (
-                  <>
-                    <div className="flex gap-3">
-                      <div className="space-y-2 flex-[3]">
-                        <Label>{t("connection.sshHost")}</Label>
-                        <Input
-                          value={primaryHop.host}
-                          onChange={(e) =>
-                            updateHop(0, { host: e.target.value })
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2 flex-1">
-                        <Label>{t("connection.sshPort")}</Label>
-                        <Input
-                          value={String(primaryHop.port)}
-                          onChange={(e) =>
-                            updateHop(0, {
-                              port: parseInt(e.target.value, 10) || 22,
-                            })
-                          }
-                          type="number"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t("connection.sshUsername")}</Label>
-                      <Input
-                        value={primaryHop.username}
-                        onChange={(e) =>
-                          updateHop(0, { username: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t("connection.sshAuthType")}</Label>
-                      <Select
-                        value={primaryHop.authType}
-                        onValueChange={(val) =>
-                          updateHop(0, {
-                            authType: val as "password" | "privateKey",
-                          })
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="password">
-                            {t("connection.sshPassword")}
-                          </SelectItem>
-                          <SelectItem value="privateKey">
-                            {t("connection.sshPrivateKey")}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {primaryHop.authType === "password" ? (
-                      <div className="space-y-2">
-                        <Label>{t("connection.sshPassword")}</Label>
-                        <Input
-                          value={primaryHop.password || ""}
-                          onChange={(e) =>
-                            updateHop(0, { password: e.target.value })
-                          }
-                          type="password"
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <div className="space-y-2">
-                          <Label>{t("connection.sshKeyPath")}</Label>
-                          <Input
-                            value={primaryHop.privateKeyPath || ""}
-                            onChange={(e) =>
-                              updateHop(0, { privateKeyPath: e.target.value })
-                            }
-                            placeholder="~/.ssh/id_rsa"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>{t("connection.sshPassphrase")}</Label>
-                          <Input
-                            value={primaryHop.passphrase || ""}
-                            onChange={(e) =>
-                              updateHop(0, { passphrase: e.target.value })
-                            }
-                            type="password"
-                          />
-                        </div>
-                      </>
-                    )}
-                  </>
+                  <SshHopList
+                    hops={ssh.hops}
+                    onChange={setHops}
+                    defaultHop={defaultSshHop}
+                    t={t}
+                  />
                 )}
               </div>
             </TabsContent>
@@ -873,5 +786,231 @@ function ClusterForm({
         />
       </div>
     </>
+  );
+}
+
+/** SSH 跳板链路列表 — 顺序即链路顺序，第一跳为入口，最后一跳为出口（→ Redis） */
+function SshHopList({
+  hops,
+  onChange,
+  defaultHop,
+  t,
+}: {
+  hops: SshHop[];
+  onChange: (hops: SshHop[]) => void;
+  defaultHop: SshHop;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  const updateHop = (index: number, patch: Partial<SshHop>) => {
+    const copy = [...hops];
+    copy[index] = { ...copy[index], ...patch };
+    onChange(copy);
+  };
+  const removeHop = (index: number) => {
+    onChange(hops.filter((_, j) => j !== index));
+  };
+  const moveHop = (from: number, to: number) => {
+    if (to < 0 || to >= hops.length) return;
+    const copy = [...hops];
+    [copy[from], copy[to]] = [copy[to], copy[from]];
+    onChange(copy);
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* 链路提示：首跳 → 中转 → 出口 → Redis */}
+      <div className="text-xs text-muted-foreground">
+        {t("connection.sshHopHint")}
+      </div>
+      {hops.map((hop, i) => (
+        <HopCard
+          key={i}
+          index={i}
+          total={hops.length}
+          hop={hop}
+          onPatch={(patch) => updateHop(i, patch)}
+          onRemove={hops.length > 1 ? () => removeHop(i) : undefined}
+          onMoveUp={i > 0 ? () => moveHop(i, i - 1) : undefined}
+          onMoveDown={i < hops.length - 1 ? () => moveHop(i, i + 1) : undefined}
+          t={t}
+        />
+      ))}
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => onChange([...hops, { ...defaultHop }])}
+        className="self-start"
+      >
+        <Plus size={14} />
+        {t("connection.sshAddHop")}
+      </Button>
+    </div>
+  );
+}
+
+/** 单个 SSH 跳板字段卡片 */
+function HopCard({
+  index,
+  total,
+  hop,
+  onPatch,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+  t,
+}: {
+  index: number;
+  total: number;
+  hop: SshHop;
+  onPatch: (patch: Partial<SshHop>) => void;
+  onRemove?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  // 标签：单跳=唯一跳板；多跳：第 1 跳=入口（直连）、最后一跳=出口（→ Redis）、中间=中转 #N
+  const roleLabel =
+    total === 1
+      ? t("connection.sshHopOnly")
+      : index === 0
+        ? t("connection.sshHopEntry")
+        : index === total - 1
+          ? t("connection.sshHopExit")
+          : t("connection.sshHopRelay", { n: index + 1 });
+
+  const summary = hop.host
+    ? `${hop.host}:${hop.port}`
+    : t("connection.sshHopEmpty");
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <div className="text-sm">
+          <span className="font-medium">
+            #{index + 1} {roleLabel}
+          </span>
+          <span className="ml-2 text-muted-foreground">{summary}</span>
+        </div>
+        <div className="flex gap-1">
+          {onMoveUp && (
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              onClick={onMoveUp}
+              aria-label={t("connection.sshHopMoveUp")}
+            >
+              <ChevronUp size={14} />
+            </Button>
+          )}
+          {onMoveDown && (
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              onClick={onMoveDown}
+              aria-label={t("connection.sshHopMoveDown")}
+            >
+              <ChevronDown size={14} />
+            </Button>
+          )}
+          {onRemove && (
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              className="text-destructive"
+              onClick={onRemove}
+              aria-label={t("connection.sshHopRemove")}
+            >
+              <Trash2 size={14} />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* host / port */}
+      <div className="flex gap-3">
+        <div className="space-y-2 flex-[3]">
+          <Label>{t("connection.sshHost")}</Label>
+          <Input
+            value={hop.host}
+            onChange={(e) => onPatch({ host: e.target.value })}
+            required
+          />
+        </div>
+        <div className="space-y-2 flex-1">
+          <Label>{t("connection.sshPort")}</Label>
+          <Input
+            value={String(hop.port)}
+            onChange={(e) =>
+              onPatch({ port: parseInt(e.target.value, 10) || 22 })
+            }
+            type="number"
+          />
+        </div>
+      </div>
+
+      {/* username */}
+      <div className="space-y-2">
+        <Label>{t("connection.sshUsername")}</Label>
+        <Input
+          value={hop.username}
+          onChange={(e) => onPatch({ username: e.target.value })}
+          required
+        />
+      </div>
+
+      {/* authType */}
+      <div className="space-y-2">
+        <Label>{t("connection.sshAuthType")}</Label>
+        <Select
+          value={hop.authType}
+          onValueChange={(val) =>
+            onPatch({ authType: val as "password" | "privateKey" })
+          }
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="password">
+              {t("connection.sshPassword")}
+            </SelectItem>
+            <SelectItem value="privateKey">
+              {t("connection.sshPrivateKey")}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* password 或 keyPath + passphrase */}
+      {hop.authType === "password" ? (
+        <div className="space-y-2">
+          <Label>{t("connection.sshPassword")}</Label>
+          <Input
+            value={hop.password || ""}
+            onChange={(e) => onPatch({ password: e.target.value })}
+            type="password"
+          />
+        </div>
+      ) : (
+        <>
+          <div className="space-y-2">
+            <Label>{t("connection.sshKeyPath")}</Label>
+            <Input
+              value={hop.privateKeyPath || ""}
+              onChange={(e) => onPatch({ privateKeyPath: e.target.value })}
+              placeholder="~/.ssh/id_rsa"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>{t("connection.sshPassphrase")}</Label>
+            <Input
+              value={hop.passphrase || ""}
+              onChange={(e) => onPatch({ passphrase: e.target.value })}
+              type="password"
+            />
+          </div>
+        </>
+      )}
+    </div>
   );
 }
