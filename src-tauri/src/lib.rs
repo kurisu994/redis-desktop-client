@@ -38,8 +38,10 @@ pub fn run() {
             app.manage(store);
 
             // 初始化 SSH known_hosts 存储（复用同一 master-key）
-            let known_hosts_store = Arc::new(SshKnownHostsStore::new(app_data_dir, master_key)
-                .map_err(|e| format!("初始化 SSH known_hosts 存储失败: {e}"))?);
+            let known_hosts_store = Arc::new(
+                SshKnownHostsStore::new(app_data_dir, master_key)
+                    .map_err(|e| format!("初始化 SSH known_hosts 存储失败: {e}"))?,
+            );
             app.manage(known_hosts_store);
 
             // 初始化 SSH TOFU 决策管理器

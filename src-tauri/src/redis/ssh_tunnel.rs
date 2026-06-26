@@ -6,8 +6,8 @@ use std::net::SocketAddr;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use thiserror::Error;
 use tauri::Emitter;
+use thiserror::Error;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex as TokioMutex;
 use tokio::task::JoinHandle;
@@ -163,9 +163,7 @@ impl Handler for KnownHostsValidator {
                     Ok(true) => {
                         self.tofu_manager
                             .cleanup(&self.connection_id, self.hop_index);
-                        if let Err(e) = self
-                            .known_hosts
-                            .trust(&self.host, self.port, &fingerprint)
+                        if let Err(e) = self.known_hosts.trust(&self.host, self.port, &fingerprint)
                         {
                             log::error!("保存 SSH known_hosts 失败：{}", e);
                             if let Ok(mut r) = self.result.lock() {

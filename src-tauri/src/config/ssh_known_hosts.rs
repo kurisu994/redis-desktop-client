@@ -177,7 +177,8 @@ impl SshTofuManager {
         let tx = pending
             .remove(&(connection_id.to_string(), hop_index))
             .ok_or_else(|| "TOFU 请求已过期或不存在".to_string())?;
-        tx.send(accept).map_err(|_| "TOFU 决策通道已关闭".to_string())?;
+        tx.send(accept)
+            .map_err(|_| "TOFU 决策通道已关闭".to_string())?;
         Ok(())
     }
 
@@ -216,7 +217,9 @@ mod tests {
         let key = [42u8; 32];
         let store = SshKnownHostsStore::new(dir.clone(), key).unwrap();
 
-        store.trust("jump.example.com", 22, sample_fingerprint()).unwrap();
+        store
+            .trust("jump.example.com", 22, sample_fingerprint())
+            .unwrap();
         let found = store.find("jump.example.com", 22).unwrap();
         assert_eq!(found.as_deref(), Some(sample_fingerprint()));
 

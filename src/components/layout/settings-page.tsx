@@ -67,9 +67,8 @@ export function SettingsPage() {
   const [appVersion, setAppVersion] = useState(FALLBACK_APP_VERSION);
   const [knownHosts, setKnownHosts] = useState<SshKnownHost[]>([]);
   const [knownHostsLoading, setKnownHostsLoading] = useState(false);
-  const [knownHostToDelete, setKnownHostToDelete] = useState<SshKnownHost | null>(
-    null,
-  );
+  const [knownHostToDelete, setKnownHostToDelete] =
+    useState<SshKnownHost | null>(null);
   const [updateProxyConfig, setUpdateProxyConfigState] =
     useState<UpdateProxyConfig>(() => getUpdateProxyConfig());
   const { enabled: updateProxyEnabled, url: updateProxyUrl } =
@@ -318,7 +317,9 @@ export function SettingsPage() {
             {t("settings.sshSecurityHint")}
           </p>
           {knownHostsLoading ? (
-            <p className="text-sm text-muted-foreground">{t("update.checking")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("update.checking")}
+            </p>
           ) : knownHosts.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {t("settings.sshKnownHostsEmpty")}
