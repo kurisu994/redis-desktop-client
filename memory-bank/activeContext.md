@@ -12,6 +12,8 @@
   - `feat(ssh): 新增 russh 隧道模块支持 N 跳串联`
   - `feat(ssh): RedisClientManager 集成 SSH 隧道连接`
   - `feat(ssh): 连接对话框 SSH Tab 改为 N 跳列表`
+  - `docs(memory-bank): 更新 SSH 隧道实施进度`
+  - `fix(ssh): SshHop 字段统一 camelCase 序列化`（修复用户端到端测试时 `test_connection` 报 `data did not match any variant of untagged enum OnDisk`）
 
 ## 本会话工作
 
@@ -42,6 +44,7 @@
 - **跳板 session 整链保活**：中间跳板 session 若提前 drop，派生其上的 channel stream 会失活；故所有 `Arc<Mutex<Handle>>` 都保存在 `SshTunnel` 结构内。
 - **密码同等加密**：每跳 SSH `password` 与 `passphrase` 与 Redis 密码同走 AES-256-GCM；不向日志写明文。
 - **i18n 错误命名空间**：所有 SSH 错误经稳定 i18n key（`error.ssh.*`）返回前端，不向前端泄露后端语言文本。
+- **本 PR 范围聚焦 SSH**：发现 `ConnectionConfig.connection_type` / `TlsConfig.*` / `SentinelConfig.*` 等同样存在前端 camelCase ↔ 后端 snake_case 字段名不匹配（因 `Option<T>` + `#[serde(default)]` 兜底，表现为 silent bug 而非 panic），与用户对齐后留作**单独 PR** 集中处理，不在 `feat/ssh-tunnel-v03` 内顺手改，避免主题漂移与老数据迁移风险扩散。
 
 ## 下一步
 

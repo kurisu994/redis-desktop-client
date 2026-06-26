@@ -90,6 +90,7 @@
 ### 工程化
 
 - 🔲 **前端测试框架**：暂未配置（Vitest / Playwright 待选）。
+- 🔲 **IPC 类型字段名一致性**（独立 PR）：`ConnectionConfig.connection_type` / `TlsConfig` / `SentinelConfig` 等 Rust 端 snake_case 字段与前端 camelCase 不匹配，因 `Option<T>` + `#[serde(default)]` 兜底导致 silent bug（如选 sentinel/cluster 时回落到 standalone、TLS 证书路径全 None）。修复策略：加 `#[serde(rename_all = "camelCase")]` + `#[serde(alias = "...")]` 兼容老磁盘数据。
 
 ## 关联记忆
 
