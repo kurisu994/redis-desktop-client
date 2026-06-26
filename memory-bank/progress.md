@@ -55,6 +55,7 @@
 | 2026-05-18   | Key 过滤改为前端过滤                              | 回车后只在已加载列表内匹配，不再重新 SCAN；保留后端扫描结果作为基准                                    |
 | 2026-05-23   | `ReleaseNotesMarkdown` 错误边界 + 下载进度重置    | 异常发布日志格式不再导致更新弹窗白屏；重试下载时进度从 0% 重新显示                                     |
 | 2026-06-26   | SSH 隧道后端基于 `russh` 实现，支持任意 N 跳串联  | OpenSSH ProxyJump 等效，纯 Rust 异步实现，跨平台无需系统 `ssh` 与 `expect`；连接对话框 SSH Tab 改为跳板列表 UI |
+| 2026-06-26   | IPC 类型字段名统一 camelCase（rename_all + alias）| 修复前后端字段名不匹配导致 sentinel/cluster/tls 配置 silent fail 无法持久化的旧 bug；老磁盘 snake_case 经 alias 自动迁移 |
 
 ## 已解阻碍
 
@@ -69,6 +70,7 @@
 - ✅ **监控/PubSub 页面布局未填满宽度**：v0.2.3 修复。
 - ✅ **更新弹窗白屏**：v0.2.8 为 `ReleaseNotesMarkdown` 添加错误边界，异常时降级为纯文本。
 - ✅ **重试下载进度累计**：v0.2.8 修正，重试时从 0% 重新显示。
+- ✅ **IPC 字段名 silent bug**：sentinel/cluster/tls 配置因前端 camelCase ↔ 后端 snake_case 不匹配且被 `serde(default)` 兜底导致永远存不进磁盘；2026-06-26 通过 `rename_all = camelCase` + `alias` 修复，老数据自动迁移。
 
 ## 遗留待办
 
@@ -90,7 +92,8 @@
 ### 工程化
 
 - 🔲 **前端测试框架**：暂未配置（Vitest / Playwright 待选）。
-- 🔲 **IPC 类型字段名一致性**（独立 PR）：`ConnectionConfig.connection_type` / `TlsConfig` / `SentinelConfig` 等 Rust 端 snake_case 字段与前端 camelCase 不匹配，因 `Option<T>` + `#[serde(default)]` 兜底导致 silent bug（如选 sentinel/cluster 时回落到 standalone、TLS 证书路径全 None）。修复策略：加 `#[serde(rename_all = "camelCase")]` + `#[serde(alias = "...")]` 兼容老磁盘数据。
+<!-- IPC 类型字段名一致性已在 2026-06-26 fix/ipc-camelcase 修复 -->
+
 
 ## 关联记忆
 

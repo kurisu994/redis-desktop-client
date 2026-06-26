@@ -8,6 +8,16 @@
 
 ## [Unreleased]
 
+### 🐛 修复
+
+#### IPC 类型字段名 silent bug
+
+- 修复前端 camelCase 与后端 snake_case 字段名不匹配导致 Sentinel / Cluster / TLS 配置无法被持久化的旧问题（因相关字段为 `Option<T>` + `serde(default)` 兜底，反序列化静默失败而非报错）：
+  - 修复前选 Sentinel/Cluster 连接类型，落盘后 `connection_type` 始终回落 `standalone`。
+  - 修复前启用 TLS 但 `caCertPath` / `clientCertPath` / `clientKeyPath` / `skipVerify` 全部丢字段。
+  - 修复前启用 Sentinel 时 `masterName` 字段缺失导致整个 sentinel 配置反序列化失败兜底为 `None`。
+- 老 snake_case 磁盘数据通过 `#[serde(alias)]` 自动兼容读取，下次保存写入新 camelCase 格式无需用户介入。
+
 ### ✨ 新功能
 
 #### SSH 隧道支持（v0.3 工作中，分支 `feat/ssh-tunnel-v03`）
