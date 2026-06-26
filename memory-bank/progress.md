@@ -4,7 +4,8 @@
 
 - **最新版本**：v0.2.8（2026-05-23）
 - **开发阶段**：Phase 1 ~ Phase 6 全部完成 ✅；Post-Release 持续打磨期。
-- **遗留待办**（待证书或外部依赖）：SSH 隧道后端实现（`russh`）、macOS 代码签名、Windows 代码签名、连接分组（文件夹）。
+- **当前进行中**（分支 `feat/ssh-tunnel-v03`）：基于 `russh` 的 SSH 隧道后端，支持任意 N 跳串联（OpenSSH ProxyJump 等效），目标 v0.3.0。
+- **遗留待办**（待证书或外部依赖）：macOS 代码签名、Windows 代码签名、连接分组（文件夹）。
 
 ## 开发阶段完成度
 
@@ -53,6 +54,7 @@
 | 2026-05-11   | 统一危险操作确认弹窗（`ConfirmDangerDialog`）     | 替代原生 `confirm()`，FLUSH 类要求输入确认文本                                                          |
 | 2026-05-18   | Key 过滤改为前端过滤                              | 回车后只在已加载列表内匹配，不再重新 SCAN；保留后端扫描结果作为基准                                    |
 | 2026-05-23   | `ReleaseNotesMarkdown` 错误边界 + 下载进度重置    | 异常发布日志格式不再导致更新弹窗白屏；重试下载时进度从 0% 重新显示                                     |
+| 2026-06-26   | SSH 隧道后端基于 `russh` 实现，支持任意 N 跳串联  | OpenSSH ProxyJump 等效，纯 Rust 异步实现，跨平台无需系统 `ssh` 与 `expect`；连接对话框 SSH Tab 改为跳板列表 UI |
 
 ## 已解阻碍
 
@@ -70,9 +72,11 @@
 
 ## 遗留待办
 
-### 高级连接（Phase 6）
+### 高级连接（v0.3 计划）
 
-- 🔲 **SSH 隧道后端**：需要 Rust `russh` 库，实现本地端口转发到远程 Redis（当前 UI 表单已就绪，运行依赖外部隧道工具）。
+- ⏳ **SSH 隧道后端（进行中，分支 `feat/ssh-tunnel-v03`）**：基于 `russh` 0.54 实现任意 N 跳 SSH 隧道，OpenSSH ProxyJump 等效；阶段 3 范围内仅 standalone 模式接入，Cluster/Sentinel 走 SSH 后续版本规划。
+- 🔲 **SSH `known_hosts` 校验**：当前阶段 `check_server_key` 信任所有服务器公钥，待引入 trust-on-first-use 提示与 `known_hosts` 持久化。
+- 🔲 **Cluster / Sentinel 走 SSH**：每个节点单独隧道协调，工作量大，独立立项。
 
 ### 打包发布（Phase 6）
 

@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+### ✨ 新功能
+
+#### SSH 隧道支持（v0.3 工作中，分支 `feat/ssh-tunnel-v03`）
+
+- 新增基于 `russh` 的 SSH 隧道后端，纯 Rust 异步实现，跨平台无需系统 `ssh` / `sshpass` / `expect` 等外部工具。
+- 支持任意 N 跳串联（OpenSSH ProxyJump 等效）：第一跳本地直连，后续每一跳在前一跳的 SSH 通道上递归建立，最后一跳对 Redis 开 `direct-tcpip` channel。
+- `SshConfig` 重构为 `{ enabled, hops: Vec<SshHop> }`；老数据自动迁移（兼容反序列化，下次保存即写入新格式）。
+- 每跳的 SSH 密码与私钥 passphrase 均与 Redis 密码一致走 AES-256-GCM 加密存储。
+- 连接对话框 SSH Tab 改为可增删跳板的卡片列表：自动标注「入口 / 中转 / 出口」角色，支持上移、下移、删除。
+- 错误信息全部走 i18n key（`error.ssh.*`），由前端翻译；不向前端泄露后端语言。
+- 阶段 3 范围：Cluster / Sentinel 暂不支持 SSH 隧道（涉及多节点隧道协调，后续版本规划）。
+
 ---
 
 ## [0.2.8] — 2026-05-23
