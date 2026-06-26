@@ -29,6 +29,7 @@ import {
   type ConnectionConfig,
   type ConnectionType,
   type SshConfig,
+  type SshHop,
   type TlsConfig,
 } from "@/stores/connection-store";
 import {
@@ -43,9 +44,8 @@ interface TestState {
   message?: string;
 }
 
-/** 默认 SSH 配置 */
-const defaultSsh: SshConfig = {
-  enabled: false,
+/** 默认 SSH 跳板/终点主机 */
+const defaultSshHop: SshHop = {
   host: "",
   port: 22,
   username: "root",
@@ -53,6 +53,12 @@ const defaultSsh: SshConfig = {
   password: "",
   privateKeyPath: "",
   passphrase: "",
+};
+
+/** 默认 SSH 隧道配置（单跳，阶段 4 UI 改造后支持多跳列表） */
+const defaultSsh: SshConfig = {
+  enabled: false,
+  hops: [{ ...defaultSshHop }],
 };
 
 /** 默认 TLS 配置 */
@@ -245,9 +251,20 @@ export function ConnectionDialog() {
     }
   }, [buildConfig, closeDialog, setConnections, t]);
 
-  /** 更新 SSH 配置字段 */
+  /** 更新 SSH 顶层字段（如 enabled） */
   const updateSsh = (patch: Partial<SshConfig>) =>
     setSsh((prev) => ({ ...prev, ...patch }));
+
+  /** 更新指定跳板字段（阶段 1：单跳；阶段 4：多跳） */
+  const updateHop = (index: number, patch: Partial<SshHop>) =>
+    setSsh((prev) => {
+      const hops = prev.hops.length > 0 ? [...prev.hops] : [{ ...defaultSshHop }];
+      hops[index] = { ...(hops[index] ?? defaultSshHop), ...patch };
+      return { ...prev, hops };
+    });
+
+  /** 当前主跳板（阶段 1 UI 仅展示第一跳） */
+  const primaryHop: SshHop = ssh.hops[0] ?? defaultSshHop;
 
   /** 更新 TLS 配置字段 */
   const updateTls = (patch: Partial<TlsConfig>) =>
@@ -413,17 +430,19 @@ export function ConnectionDialog() {
                       <div className="space-y-2 flex-[3]">
                         <Label>{t("connection.sshHost")}</Label>
                         <Input
-                          value={ssh.host}
-                          onChange={(e) => updateSsh({ host: e.target.value })}
+                          value={primaryHop.host}
+                          onChange={(e) =>
+                            updateHop(0, { host: e.target.value })
+                          }
                           required
                         />
                       </div>
                       <div className="space-y-2 flex-1">
                         <Label>{t("connection.sshPort")}</Label>
                         <Input
-                          value={String(ssh.port)}
+                          value={String(primaryHop.port)}
                           onChange={(e) =>
-                            updateSsh({
+                            updateHop(0, {
                               port: parseInt(e.target.value, 10) || 22,
                             })
                           }
@@ -434,9 +453,9 @@ export function ConnectionDialog() {
                     <div className="space-y-2">
                       <Label>{t("connection.sshUsername")}</Label>
                       <Input
-                        value={ssh.username}
+                        value={primaryHop.username}
                         onChange={(e) =>
-                          updateSsh({ username: e.target.value })
+                          updateHop(0, { username: e.target.value })
                         }
                         required
                       />
@@ -444,9 +463,9 @@ export function ConnectionDialog() {
                     <div className="space-y-2">
                       <Label>{t("connection.sshAuthType")}</Label>
                       <Select
-                        value={ssh.authType}
+                        value={primaryHop.authType}
                         onValueChange={(val) =>
-                          updateSsh({
+                          updateHop(0, {
                             authType: val as "password" | "privateKey",
                           })
                         }
@@ -464,13 +483,13 @@ export function ConnectionDialog() {
                         </SelectContent>
                       </Select>
                     </div>
-                    {ssh.authType === "password" ? (
+                    {primaryHop.authType === "password" ? (
                       <div className="space-y-2">
                         <Label>{t("connection.sshPassword")}</Label>
                         <Input
-                          value={ssh.password || ""}
+                          value={primaryHop.password || ""}
                           onChange={(e) =>
-                            updateSsh({ password: e.target.value })
+                            updateHop(0, { password: e.target.value })
                           }
                           type="password"
                         />
@@ -480,9 +499,9 @@ export function ConnectionDialog() {
                         <div className="space-y-2">
                           <Label>{t("connection.sshKeyPath")}</Label>
                           <Input
-                            value={ssh.privateKeyPath || ""}
+                            value={primaryHop.privateKeyPath || ""}
                             onChange={(e) =>
-                              updateSsh({ privateKeyPath: e.target.value })
+                              updateHop(0, { privateKeyPath: e.target.value })
                             }
                             placeholder="~/.ssh/id_rsa"
                           />
@@ -490,9 +509,9 @@ export function ConnectionDialog() {
                         <div className="space-y-2">
                           <Label>{t("connection.sshPassphrase")}</Label>
                           <Input
-                            value={ssh.passphrase || ""}
+                            value={primaryHop.passphrase || ""}
                             onChange={(e) =>
-                              updateSsh({ passphrase: e.target.value })
+                              updateHop(0, { passphrase: e.target.value })
                             }
                             type="password"
                           />

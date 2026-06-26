@@ -63,6 +63,33 @@ fn validate_connection_config(config: &ConnectionConfig) -> Result<(), String> {
     if !matches!(conn_type, "standalone" | "sentinel" | "cluster") {
         return Err("连接类型无效".to_string());
     }
+    if let Some(ref ssh) = config.ssh {
+        if ssh.enabled {
+            if ssh.hops.is_empty() {
+                return Err("SSH 隧道至少需要 1 个跳板/终点主机".to_string());
+            }
+            for (i, hop) in ssh.hops.iter().enumerate() {
+                let n = i + 1;
+                if hop.host.trim().is_empty() {
+                    return Err(format!("SSH 第 {} 跳主机地址不能为空", n));
+                }
+                if hop.port == 0 {
+                    return Err(format!("SSH 第 {} 跳端口号不能为 0", n));
+                }
+                if hop.username.trim().is_empty() {
+                    return Err(format!("SSH 第 {} 跳用户名不能为空", n));
+                }
+                if !matches!(hop.auth_type.as_str(), "password" | "privateKey") {
+                    return Err(format!("SSH 第 {} 跳认证方式无效", n));
+                }
+                if hop.auth_type == "privateKey"
+                    && hop.private_key_path.as_deref().unwrap_or("").trim().is_empty()
+                {
+                    return Err(format!("SSH 第 {} 跳私钥路径不能为空", n));
+                }
+            }
+        }
+    }
     Ok(())
 }
 

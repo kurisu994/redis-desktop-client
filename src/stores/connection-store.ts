@@ -3,9 +3,8 @@ import { create } from "zustand";
 /** 连接类型 */
 export type ConnectionType = "standalone" | "sentinel" | "cluster";
 
-/** SSH 隧道配置 */
-export interface SshConfig {
-  enabled: boolean;
+/** SSH 跳板/终点主机配置 — 隧道链路中的一个节点 */
+export interface SshHop {
   host: string;
   port: number;
   username: string;
@@ -14,6 +13,17 @@ export interface SshConfig {
   password?: string;
   privateKeyPath?: string;
   passphrase?: string;
+}
+
+/**
+ * SSH 隧道配置 — 支持任意 N 跳串联
+ *
+ * `hops` 数组顺序即链路顺序：第一项是本地直连的 SSH 主机，最后一项是
+ * 在其上发起 direct-tcpip channel 到目标 Redis 的"出口"主机。
+ */
+export interface SshConfig {
+  enabled: boolean;
+  hops: SshHop[];
 }
 
 /** TLS/SSL 配置 */
