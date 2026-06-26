@@ -4,7 +4,7 @@
 
 - **最新版本**：v0.2.8（2026-05-23）
 - **开发阶段**：Phase 1 ~ Phase 6 全部完成 ✅；Post-Release 持续打磨期。
-- **当前进行中**（分支 `feat/ssh-tunnel-v03`）：基于 `russh` 的 SSH 隧道后端，支持任意 N 跳串联（OpenSSH ProxyJump 等效），目标 v0.3.0。
+- **当前进行中**（分支 `feat/ssh-known-hosts`）：SSH 隧道安全增强 — `known_hosts` 校验 + TOFU（Trust on First Use），目标 v0.3.1。
 - **遗留待办**（待证书或外部依赖）：macOS 代码签名、Windows 代码签名、连接分组（文件夹）。
 
 ## 开发阶段完成度
@@ -23,6 +23,8 @@
 
 | 版本      | 日期         | 核心变更                                                                                                |
 | --------- | ------------ | ------------------------------------------------------------------------------------------------------- |
+| **0.3.1** | 2026-06-26   | 🔒 SSH known_hosts 校验 + TOFU 首次连接确认；设置页新增 SSH 安全 Tab 管理已信任主机指纹                     |
+| **0.3.0** | 2026-06-26   | ✨ SSH 隧道后端（`russh` + N 跳 ProxyJump 等效）+ 连接对话框跳板列表 UI；🐛 IPC 字段名 camelCase 统一修复 silent bug |
 | **0.2.8** | 2026-05-23   | 🐛 ReleaseNotesMarkdown 错误边界 + 下载进度重置；更新弹窗稳定性增强                                     |
 | 0.2.7     | 2026-05-18   | 🔧 Key 过滤改为前端过滤（不再重新 SCAN）+ 空状态提示 + 扫描期间禁用过滤                                  |
 | 0.2.6     | 2026-05-15   | 🔧 Key 树形视图叶子节点缩进对齐                                                                          |
@@ -56,6 +58,7 @@
 | 2026-05-23   | `ReleaseNotesMarkdown` 错误边界 + 下载进度重置    | 异常发布日志格式不再导致更新弹窗白屏；重试下载时进度从 0% 重新显示                                     |
 | 2026-06-26   | SSH 隧道后端基于 `russh` 实现，支持任意 N 跳串联  | OpenSSH ProxyJump 等效，纯 Rust 异步实现，跨平台无需系统 `ssh` 与 `expect`；连接对话框 SSH Tab 改为跳板列表 UI |
 | 2026-06-26   | IPC 类型字段名统一 camelCase（rename_all + alias）| 修复前后端字段名不匹配导致 sentinel/cluster/tls 配置 silent fail 无法持久化的旧 bug；老磁盘 snake_case 经 alias 自动迁移 |
+| 2026-06-26   | SSH known_hosts 校验 + TOFU（Trust on First Use）| 关闭 `AcceptAllKeys` 安全漏洞；指纹存独立加密 JSON（AES-256-GCM），首次连接弹窗确认，失配硬拒绝；设置页可管理已信任主机 |
 
 ## 已解阻碍
 
@@ -76,8 +79,8 @@
 
 ### 高级连接（v0.3 计划）
 
-- ⏳ **SSH 隧道后端（进行中，分支 `feat/ssh-tunnel-v03`）**：基于 `russh` 0.54 实现任意 N 跳 SSH 隧道，OpenSSH ProxyJump 等效；阶段 3 范围内仅 standalone 模式接入，Cluster/Sentinel 走 SSH 后续版本规划。
-- 🔲 **SSH `known_hosts` 校验**：当前阶段 `check_server_key` 信任所有服务器公钥，待引入 trust-on-first-use 提示与 `known_hosts` 持久化。
+- ✅ **SSH 隧道后端**：基于 `russh` 0.54 实现任意 N 跳 SSH 隧道，OpenSSH ProxyJump 等效；阶段 3 范围内仅 standalone 模式接入。
+- ✅ **SSH `known_hosts` 校验 + TOFU**：独立加密指纹存储，首次连接弹窗确认，指纹失配硬拒绝，设置页可管理已信任主机。
 - 🔲 **Cluster / Sentinel 走 SSH**：每个节点单独隧道协调，工作量大，独立立项。
 
 ### 打包发布（Phase 6）

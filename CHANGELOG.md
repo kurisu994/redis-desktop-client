@@ -20,6 +20,16 @@
 
 ### ✨ 新功能
 
+#### SSH 隧道 known_hosts 校验与 TOFU
+
+- 关闭 v0.3.0 `AcceptAllKeys` 无条件信任所有服务器公钥的安全漏洞，引入 known_hosts 校验与 Trust on First Use（首次连接确认）。
+- 新增独立 `ssh-known-hosts.json` 存储，指纹字段走 AES-256-GCM 加密（复用 `master-key`），不污染系统 `~/.ssh/known_hosts`。
+- 首次连接未知 SSH 主机时弹出 `SshTofuDialog`，展示 host:port + OpenSSH 风格 SHA-256 指纹；用户「信任并保存」后写入 known_hosts，「拒绝」则连接失败。
+- 已信任主机指纹匹配时静默通过；指纹失配时硬拒绝并返回 `error.ssh.host_key_mismatch`，不允许 UI 一键忽略。
+- 多跳链路每跳独立校验，首次连接逐跳弹窗确认。
+- 设置页新增「SSH 安全」Tab，列出所有已信任主机指纹，支持单条删除（删除后下次连接重新 TOFU）。
+- 新增 `ssh_tofu_decide`、`list_ssh_known_hosts`、`remove_ssh_known_host` 三个 Tauri 命令，以及 `ssh:tofu-request` 事件。
+
 #### SSH 隧道支持
 
 - 新增基于 `russh` 的 SSH 隧道后端，纯 Rust 异步实现，跨平台无需系统 `ssh` / `sshpass` / `expect` 等外部工具。

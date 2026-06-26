@@ -4,53 +4,65 @@
 
 ## 当前状态
 
-- **项目版本**：v0.2.8（2026-05-23 发布）；v0.3.0 工作中。
-- **当前分支**：`main`（与 `origin/main` 同步，已 push 所有 SSH 隧道 + IPC 字段名修复 + Rust 单元测试）。
-- **工作树**：干净。
-- **最近 commits**：
-  - `tests(rust): 补 SSH 配置 + IPC 字段名兼容 + 校验关键路径单元测试`
-  - `docs(memory-bank): 收尾 SSH 隧道 + IPC 字段名 silent bug 修复`
-  - `fix(ipc): IPC 类型字段名统一 camelCase 修复 silent bug`
-  - `docs(memory-bank): 同步 SSH 反序列化修复与字段名 silent bug 待办`
-  - `fix(ssh): SshHop 字段统一 camelCase 序列化`
-  - `docs(memory-bank): 更新 SSH 隧道实施进度`
-  - `feat(ssh): 连接对话框 SSH Tab 改为 N 跳列表`
-  - `feat(ssh): RedisClientManager 集成 SSH 隧道连接`
-  - `feat(ssh): 新增 russh 隧道模块支持 N 跳串联`
-  - `feat(ssh): 重构 SSH 配置为 N 跳模型并兼容老数据`
+- **项目版本**：v0.2.8（2026-05-23 发布）；v0.3.0 已合并到 main；v0.3.1 进行中。
+- **当前分支**：`feat/ssh-known-hosts`（从 main 切出，实现 SSH known_hosts 校验 + TOFU）。
+- **工作树**：有变更（known_hosts + TOFU 全链路实现完成，待 commit）。
+- **最近 commits**（本分支尚未生成，预期分阶段提交）：
+  - `feat(ssh): 新增 known_hosts 加密存储与 TOFU 决策管理器`
+  - `feat(ssh): SSH 隧道接入 known_hosts 校验与 TOFU 事件`
+  - `feat(ssh): 前端 SshTofuDialog 弹窗与监听 hook`
+  - `feat(ui): 设置页新增 SSH 安全 Tab`
+  - `tests(ssh): 补充 known_hosts / TOFU / 错误 key 单元测试`
+  - `docs(memory-bank): 同步 known_hosts + TOFU 完成状态`
 
 ## 本会话工作
 
-### 1. SSH 隧道后端（v0.3 核心，分 5 阶段 commit + 1 个 fix）
+### SSH 隧道安全增强：known_hosts 校验 + TOFU（v0.3.1）
 
-实现 SSH 隧道后端，对齐用户脚本 `~/develop/login_server/redis`（OpenSSH `ssh -NL ... -J seelog@116.63.141.212 root@192.168.0.35` 等效能力）；落地方案 B（任意 N 跳一步到位）。
+关闭 v0.3.0 中 `AcceptAllKeys` 信任所有服务器公钥的安全漏洞，实现与 OpenSSH 类似的 Trust on First Use 体验。
 
-- **后端数据模型**：`SshConfig` 由单跳扁平字段重构为 `{ enabled, hops: Vec<SshHop> }`；自定义 `Deserialize` 用 `untagged` 兼容老格式，老数据下次保存自动迁移。`ConnectionStore` 同步扩展每跳的 SSH `password` / `passphrase` 走 AES-256-GCM 加密。
-- **`ssh_tunnel.rs` 模块**：基于 `russh = "0.54"` 实现 N 跳隧道；第 1 跳 TCP 直连，第 2..N 跳在前一跳 session 上 `channel_open_direct_tcpip(next_hop, 22)` 取得 channel，`channel.into_stream()` 作为下一跳 `connect_stream` 的 transport，递归到最后一跳；最后一跳监听本地随机端口，`copy_bidirectional` 桥接到 Redis。`SshTunnelError` 每变体对应稳定 i18n key。
-- **`RedisClientManager` 接入**：新增 `tunnels` HashMap 与 `clients` 共生命周期；`connect_with_config` 检测 standalone + `ssh.enabled` 时先建隧道，再用本地端口建 Redis 连接；`disconnect` 同步释放隧道。`test_connection` 的 standalone 分支同步建临时隧道再 PING。
-- **前端 SSH Tab UI 改造**：新增 `SshHopList` + `HopCard`，每个跳板独立卡片，支持上下移、删除；底部「添加下一跳」；角色标签自动判断（入口 / 中转 / 出口）。新增 i18n key 共 19 个（含 `error.ssh.*` 命名空间），`just i18n-check` 通过。
-- **端到端测试通过**：用户已用真实链路（jump + endpoint）验证 standalone + SSH 隧道 PING 成功。
-
-### 2. IPC 字段名 silent bug 修复（独立 PR fix/ipc-camelcase）
-
-发现并修复一类 silent bug：`StoredConnection` / `ConnectionConfig` / `TlsConfig` / `SentinelConfig` 在 Rust 端是 snake_case 字段（如 `connection_type` / `ca_cert_path` / `master_name`），前端 TypeScript 与 IPC 用 camelCase，serde 反序列化时字段名不匹配；又因相关字段是 `Option<T>` + `#[serde(default)]` 兜底，反序列化失败时静默回落到默认值而非报错，导致用户实际上从未能保存过任何 sentinel / cluster / TLS 配置（数据存进去就丢字段）。
-
-修复方式：四个类型加 `#[serde(rename_all = "camelCase")]` 统一序列化字段名；snake_case 字段加 `#[serde(alias = "...")]` 兼容老磁盘数据。Rust 内部字段访问按 snake_case 不受影响。用户已验证修复后不破坏现有 standalone + SSH 连接。
+- **后端数据模型**：新增 `src-tauri/src/config/ssh_known_hosts.rs`：
+  - `SshKnownHost { host, port, fingerprint, first_seen_at, last_used_at }`
+  - `SshKnownHostsStore` 落盘到 `app_data_dir/ssh-known-hosts.json`，指纹字段走 AES-256-GCM 加密（复用 `master-key`）。
+  - `SshTofuManager` 管理待决策的 `oneshot` 通道，支持注册/决策/清理。
+- **后端校验流程**：`ssh_tunnel.rs` 中 `AcceptAllKeys` 替换为 `KnownHostsValidator`：
+  - 已信任且指纹匹配 → 静默通过。
+  - 已信任但指纹不匹配 → `HostKeyMismatch` 硬拒绝（不允许 UI 忽略）。
+  - 未信任主机 → 通过 `tauri::Emitter` 发送 `ssh:tofu-request` 事件，等待前端 `ssh_tofu_decide` 命令回写决策；用户信任后保存指纹。
+  - 新增 `SshTunnelError::HostKeyMismatch` / `HostKeyRejected` 及对应 `error.ssh.*` i18n key。
+- **Tauri 状态与命令**：
+  - `lib.rs` setup 中初始化 `SshKnownHostsStore` 与 `SshTofuManager`（均包 `Arc`）作为 managed state。
+  - 新增 `commands::ssh` 模块：提供 `ssh_tofu_decide`、`list_ssh_known_hosts`、`remove_ssh_known_host`。
+  - `connect_redis` / `test_connection` 命令现在把 known_hosts / tofu_manager / AppHandle 封装为 `SshTunnelContext` 传入隧道建立流程。
+- **前端 TOFU 弹窗**：
+  - `use-ssh-tofu-listener.ts` hook 监听 `ssh:tofu-request`，维护请求队列。
+  - `SshTofuDialog` 组件显示 host:port + SHA-256 指纹，提供「信任并保存」/「拒绝」。
+  - 在 `page.tsx` 全局挂载，多跳链路首次连接会依次弹窗。
+- **设置页 SSH 安全 Tab**：
+  - 列出所有已信任主机（host / port / fingerprint），支持单条删除。
+  - 删除时使用 `ConfirmDangerDialog` 二次确认。
+- **i18n**：新增 14 个 key（连接弹窗 6 + 错误 2 + 设置页 6），`just i18n-check` 通过。
+- **单元测试**：
+  - `ssh_known_hosts.rs`：5 个存储测试 + 3 个 TOFU 管理器测试。
+  - `ssh_tunnel.rs`：新增 `HostKeyMismatch` / `HostKeyRejected` i18n key 映射测试。
+  - 全量 28 个 Rust 单元测试通过；`cargo clippy -D warnings` 通过；`pnpm exec tsc --noEmit` 通过；`pnpm lint` 通过。
 
 ## 已做决策
 
-- **方案 B（一步到位 N 跳）**：原本规划 v0.3 走方案 A 单跳，但与用户对齐「SSH 跳」准确定义后发现单跳模型表达不了 jump + endpoint（用户脚本就是 1 jump + 1 endpoint），最少需要 2 个 SSH 节点；扩展到任意 N 跳与 1+1 协议层实现没有本质差异，故一步到位。
-- **认证策略**：当前阶段 `check_server_key` 信任所有服务器公钥；TODO 引入 `known_hosts` 校验与 TOFU 提示。
-- **Cluster / Sentinel 不接 SSH**：涉及多节点隧道协调（每节点单独隧道、客户端拿到的内网 IP 还需做映射），工作量大，独立立项；当前 standalone + SSH 已通；cluster/sentinel + SSH 返回 `error.ssh.unsupported_for_cluster_sentinel`。
-- **跳板 session 整链保活**：中间跳板 session 若提前 drop，派生其上的 channel stream 会失活；故所有 `Arc<Mutex<Handle>>` 都保存在 `SshTunnel` 结构内。
-- **密码同等加密**：每跳 SSH `password` 与 `passphrase` 与 Redis 密码同走 AES-256-GCM；不向日志写明文。
-- **i18n 错误命名空间**：所有 SSH 错误经稳定 i18n key（`error.ssh.*`）返回前端，不向前端泄露后端语言文本。
-- **TestResult 不动**：`latency_ms` snake_case 前后端一致工作正常，改为 camelCase 需同步前端读取代码且无功能收益，保留不动。
+- **已知主机存储独立加密 JSON**：不污染 `~/.ssh/known_hosts`，跨平台一致，与 `connections.json` 同机制。
+- **指纹格式 OpenSSH 风格**：`SHA256:base64...`，用户肉眼对比方便。
+- **指纹失配硬拒绝**：不在 UI 提供「强制更新」按钮，用户必须去设置页手动删除后重新 TOFU，降低钓鱼风险。
+- **多跳每跳独立校验**：首次连接时逐跳弹窗；每跳独立注册/决策通道。
+- **关闭弹窗 = 拒绝**：避免用户误触关闭导致连接挂起。
+- **Cluster / Sentinel 不接 SSH**：保持 v0.3.0 决策，涉及多节点隧道协调，独立立项。
 
 ## 下一步
 
-- `just version 0.3.0` 升版本号 + `just release v0.3.0` 触发 CI 打正式版本。
-- 后续可选打磨：known_hosts 校验 + TOFU 提示、cluster/sentinel + SSH 支持、SSH session 复用池、TestResult 字段名统一 camelCase（顺手清理项目最后一处 snake_case IPC 字段）。
+1. 将当前变更按功能分阶段 commit 到 `feat/ssh-known-hosts`。
+2. 用户用真实 SSH 链路验证：首次连接 TOFU 弹窗 → 信任后再次连接静默通过 → 手动改指纹后连接硬拒绝 → 设置页删除后重新 TOFU。
+3. 验证通过后将 `feat/ssh-known-hosts` 合并到 main。
+4. `just version 0.3.1` + `just release v0.3.1` 发版。
+5. 后续可选打磨（用户已同意暂缓）：cluster/sentinel + SSH、SSH session 复用池、TestResult 字段名统一 camelCase。
 
 ## 阻塞
 
