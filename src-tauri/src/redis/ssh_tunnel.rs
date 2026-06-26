@@ -1,0 +1,273 @@
+// 阶段 2 commit 时模块尚未被 RedisClientManager 引用，先放行 dead_code；
+// 阶段 3 接入后该 allow 会被移除（届时 clippy 会校验所有 item 都已使用）。
+#![allow(dead_code)]
+
+use crate::config::store::{SshConfig, SshHop};
+use russh::client::{self, AuthResult, Config, Handle, Handler};
+use russh::keys::{load_secret_key, ssh_key, PrivateKeyWithHashAlg};
+use std::net::SocketAddr;
+use std::path::Path;
+use std::sync::Arc;
+use std::time::Duration;
+use thiserror::Error;
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::Mutex;
+use tokio::task::JoinHandle;
+
+/// SSH 隧道空闲超时（用于 `russh` 心跳与断连判定）
+const TUNNEL_INACTIVITY: Duration = Duration::from_secs(3600);
+
+/// SSH 隧道错误 — 每个变体对应一个前端 i18n key，避免泄露后端语言
+#[derive(Debug, Error)]
+pub enum SshTunnelError {
+    #[error("error.ssh.no_hops")]
+    NoHops,
+    #[error("error.ssh.connect_failed: {0}")]
+    ConnectFailed(String),
+    #[error("error.ssh.auth_failed")]
+    AuthFailed,
+    #[error("error.ssh.invalid_passphrase")]
+    InvalidPassphrase,
+    #[error("error.ssh.key_not_found")]
+    KeyNotFound,
+    #[error("error.ssh.channel_open_failed: {0}")]
+    ChannelOpenFailed(String),
+    #[error("error.ssh.local_listen_failed")]
+    LocalListenFailed,
+    #[error("error.ssh.invalid_auth_type")]
+    InvalidAuthType,
+}
+
+impl SshTunnelError {
+    /// 返回稳定的 i18n key（不含具体错误描述），供前端翻译
+    pub fn i18n_key(&self) -> &'static str {
+        match self {
+            Self::NoHops => "error.ssh.no_hops",
+            Self::ConnectFailed(_) => "error.ssh.connect_failed",
+            Self::AuthFailed => "error.ssh.auth_failed",
+            Self::InvalidPassphrase => "error.ssh.invalid_passphrase",
+            Self::KeyNotFound => "error.ssh.key_not_found",
+            Self::ChannelOpenFailed(_) => "error.ssh.channel_open_failed",
+            Self::LocalListenFailed => "error.ssh.local_listen_failed",
+            Self::InvalidAuthType => "error.ssh.invalid_auth_type",
+        }
+    }
+}
+
+/// `Handle` 含 `UnboundedReceiver` 不是 Sync，跨任务共享需走 Mutex
+type SharedSession = Arc<Mutex<Handle<AcceptAllKeys>>>;
+
+/// 不校验远端公钥的 SSH Handler — 阶段 2 简化实现
+///
+/// TODO 后续阶段引入 `known_hosts` 校验并提供首次连接的 trust on first use 提示
+struct AcceptAllKeys;
+
+impl Handler for AcceptAllKeys {
+    type Error = russh::Error;
+
+    async fn check_server_key(
+        &mut self,
+        _server_public_key: &ssh_key::PublicKey,
+    ) -> Result<bool, Self::Error> {
+        Ok(true)
+    }
+}
+
+/// SSH 隧道句柄 — drop 时关闭本地 listener 与所有跳板 session
+pub struct SshTunnel {
+    local_addr: SocketAddr,
+    accept_task: JoinHandle<()>,
+    /// 持有所有跳板 session 引用直到 drop。中间跳板若提前 drop，
+    /// 派生在其上的下一跳 channel stream 会失活，因此必须整链保活
+    _sessions: Vec<SharedSession>,
+}
+
+impl SshTunnel {
+    /// 隧道在本地绑定的 `127.0.0.1:port`，可直接喂给 Redis client 建连
+    pub fn local_addr(&self) -> SocketAddr {
+        self.local_addr
+    }
+}
+
+impl Drop for SshTunnel {
+    fn drop(&mut self) {
+        self.accept_task.abort();
+    }
+}
+
+/// 建立一条 N 跳 SSH 隧道并在本地 127.0.0.1 绑定随机端口；将所有入向
+/// TCP 连接经过完整 SSH 链路桥接到 `target_host:target_port`
+///
+/// `ssh.hops` 顺序即链路顺序：
+/// - hops\[0\]：本地直连的 SSH 主机（堡垒机或唯一跳板）
+/// - hops\[1..N-1\]：中间跳板，每跳通过上一跳的 SSH 通道连接
+/// - hops\[N-1\]：出口主机，在其上发起 direct-tcpip 到 Redis
+pub async fn open(
+    ssh: &SshConfig,
+    target_host: &str,
+    target_port: u16,
+) -> Result<SshTunnel, SshTunnelError> {
+    if !ssh.enabled || ssh.hops.is_empty() {
+        return Err(SshTunnelError::NoHops);
+    }
+
+    let config = Arc::new(Config {
+        inactivity_timeout: Some(TUNNEL_INACTIVITY),
+        ..Default::default()
+    });
+
+    let mut sessions: Vec<SharedSession> = Vec::with_capacity(ssh.hops.len());
+
+    // 第 1 跳：直接 TCP 连接到 SSH 主机
+    let first = &ssh.hops[0];
+    let tcp = TcpStream::connect((first.host.as_str(), first.port))
+        .await
+        .map_err(|e| SshTunnelError::ConnectFailed(e.to_string()))?;
+    let mut current = client::connect_stream(config.clone(), tcp, AcceptAllKeys)
+        .await
+        .map_err(|e| SshTunnelError::ConnectFailed(e.to_string()))?;
+    authenticate_hop(&mut current, first).await?;
+    sessions.push(Arc::new(Mutex::new(current)));
+
+    // 第 2..N 跳：在前一跳的 session 上开 direct-tcpip 通道到下一跳 SSH 端口，
+    // 把 channel stream 作为下一跳 session 的 transport（OpenSSH ProxyJump 等效）
+    for next_hop in ssh.hops.iter().skip(1) {
+        let prev = sessions
+            .last()
+            .expect("已建立至少一个 session")
+            .clone();
+        let channel = {
+            let prev_guard = prev.lock().await;
+            prev_guard
+                .channel_open_direct_tcpip(
+                    next_hop.host.as_str(),
+                    next_hop.port as u32,
+                    "127.0.0.1",
+                    0,
+                )
+                .await
+                .map_err(|e| SshTunnelError::ChannelOpenFailed(e.to_string()))?
+        };
+        let stream = channel.into_stream();
+        let mut current = client::connect_stream(config.clone(), stream, AcceptAllKeys)
+            .await
+            .map_err(|e| SshTunnelError::ConnectFailed(e.to_string()))?;
+        authenticate_hop(&mut current, next_hop).await?;
+        sessions.push(Arc::new(Mutex::new(current)));
+    }
+
+    // 本地随机端口监听
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .map_err(|_| SshTunnelError::LocalListenFailed)?;
+    let local_addr = listener
+        .local_addr()
+        .map_err(|_| SshTunnelError::LocalListenFailed)?;
+
+    let last_session = sessions
+        .last()
+        .expect("已建立至少一个 session")
+        .clone();
+    let sessions_for_task = sessions.clone();
+    let target_host = target_host.to_string();
+
+    let accept_task = tokio::spawn(async move {
+        // 持有所有跳板 session 引用直到任务结束（含中间跳板）
+        let _keep_alive = sessions_for_task;
+        loop {
+            let (mut socket, _peer) = match listener.accept().await {
+                Ok(v) => v,
+                Err(e) => {
+                    log::warn!("SSH 隧道本地 accept 失败：{}", e);
+                    continue;
+                }
+            };
+            let last = last_session.clone();
+            let target_host = target_host.clone();
+            tokio::spawn(async move {
+                let channel_res = {
+                    let guard = last.lock().await;
+                    guard
+                        .channel_open_direct_tcpip(
+                            target_host.as_str(),
+                            target_port as u32,
+                            "127.0.0.1",
+                            0,
+                        )
+                        .await
+                };
+                let channel = match channel_res {
+                    Ok(c) => c,
+                    Err(e) => {
+                        log::warn!("SSH 隧道开 Redis direct-tcpip 失败：{}", e);
+                        return;
+                    }
+                };
+                let mut stream = channel.into_stream();
+                if let Err(e) = tokio::io::copy_bidirectional(&mut socket, &mut stream).await {
+                    log::debug!("SSH 隧道桥接结束：{}", e);
+                }
+            });
+        }
+    });
+
+    Ok(SshTunnel {
+        local_addr,
+        accept_task,
+        _sessions: sessions,
+    })
+}
+
+/// 对一个 SSH session 执行该跳的认证（密码 / 私钥）
+async fn authenticate_hop(
+    session: &mut Handle<AcceptAllKeys>,
+    hop: &SshHop,
+) -> Result<(), SshTunnelError> {
+    let result: AuthResult = match hop.auth_type.as_str() {
+        "password" => {
+            let pwd = hop.password.as_deref().unwrap_or("");
+            session
+                .authenticate_password(hop.username.clone(), pwd.to_string())
+                .await
+                .map_err(|_| SshTunnelError::AuthFailed)?
+        }
+        "privateKey" => {
+            let path = hop
+                .private_key_path
+                .as_deref()
+                .ok_or(SshTunnelError::KeyNotFound)?;
+            if !Path::new(path).exists() {
+                return Err(SshTunnelError::KeyNotFound);
+            }
+            let passphrase = hop.passphrase.as_deref().filter(|s| !s.is_empty());
+            let key = load_secret_key(path, passphrase).map_err(|e| {
+                let msg = e.to_string().to_lowercase();
+                if msg.contains("passphrase")
+                    || msg.contains("decrypt")
+                    || msg.contains("incorrect password")
+                {
+                    SshTunnelError::InvalidPassphrase
+                } else {
+                    SshTunnelError::KeyNotFound
+                }
+            })?;
+            // RSA 由服务端协商最合适的 hash 算法；非 RSA 自动忽略
+            let hash_alg = match session.best_supported_rsa_hash().await {
+                Ok(Some(alg)) => alg,
+                _ => None,
+            };
+            let key_with_hash = PrivateKeyWithHashAlg::new(Arc::new(key), hash_alg);
+            session
+                .authenticate_publickey(hop.username.clone(), key_with_hash)
+                .await
+                .map_err(|_| SshTunnelError::AuthFailed)?
+        }
+        _ => return Err(SshTunnelError::InvalidAuthType),
+    };
+
+    if result.success() {
+        Ok(())
+    } else {
+        Err(SshTunnelError::AuthFailed)
+    }
+}
