@@ -298,3 +298,170 @@ impl ConnectionStore {
         self.save_connections(&reordered)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---------- SshConfig 反序列化兼容 ----------
+
+    #[test]
+    fn ssh_config_deserialize_new_format_camel_case_hops() {
+        // 前端 IPC / 新磁盘格式：嵌套 hops 数组，SshHop 内部 camelCase
+        let json = r#"{
+            "enabled": true,
+            "hops": [
+                {
+                    "host": "10.0.0.1",
+                    "port": 22,
+                    "username": "alice",
+                    "authType": "password",
+                    "password": "p1",
+                    "privateKeyPath": null,
+                    "passphrase": null
+                }
+            ]
+        }"#;
+        let cfg: SshConfig = serde_json::from_str(json).unwrap();
+        assert!(cfg.enabled);
+        assert_eq!(cfg.hops.len(), 1);
+        assert_eq!(cfg.hops[0].host, "10.0.0.1");
+        assert_eq!(cfg.hops[0].auth_type, "password");
+        assert_eq!(cfg.hops[0].password.as_deref(), Some("p1"));
+    }
+
+    #[test]
+    fn ssh_config_deserialize_legacy_single_hop_snake_case() {
+        // v0.2.x 老格式：扁平 snake_case 字段，应自动迁移为 hops[0]
+        let json = r#"{
+            "enabled": true,
+            "host": "legacy.example.com",
+            "port": 2222,
+            "username": "root",
+            "auth_type": "privateKey",
+            "password": null,
+            "private_key_path": "/keys/id_rsa",
+            "passphrase": "secret"
+        }"#;
+        let cfg: SshConfig = serde_json::from_str(json).unwrap();
+        assert!(cfg.enabled);
+        assert_eq!(cfg.hops.len(), 1);
+        let hop = &cfg.hops[0];
+        assert_eq!(hop.host, "legacy.example.com");
+        assert_eq!(hop.port, 2222);
+        assert_eq!(hop.auth_type, "privateKey");
+        assert_eq!(hop.private_key_path.as_deref(), Some("/keys/id_rsa"));
+        assert_eq!(hop.passphrase.as_deref(), Some("secret"));
+    }
+
+    #[test]
+    fn ssh_config_serialize_emits_camel_case_for_hops() {
+        // 写入磁盘 / 返回前端时，SshHop 字段必须输出 camelCase
+        let cfg = SshConfig {
+            enabled: true,
+            hops: vec![SshHop {
+                host: "h".to_string(),
+                port: 22,
+                username: "u".to_string(),
+                auth_type: "password".to_string(),
+                password: Some("p".to_string()),
+                private_key_path: None,
+                passphrase: None,
+            }],
+        };
+        let json = serde_json::to_string(&cfg).unwrap();
+        assert!(
+            json.contains(r#""authType":"password""#),
+            "expected camelCase authType, got: {json}"
+        );
+        assert!(
+            !json.contains(r#""auth_type":"#),
+            "snake_case auth_type should NOT appear, got: {json}"
+        );
+    }
+
+    // ---------- TlsConfig / SentinelConfig 双向兼容 ----------
+
+    #[test]
+    fn tls_config_deserialize_camel_case_and_snake_case_alias() {
+        // 新格式（前端 IPC + 新磁盘）：camelCase
+        let camel = r#"{
+            "enabled": true,
+            "caCertPath": "/ca.pem",
+            "clientCertPath": "/c.pem",
+            "clientKeyPath": "/c.key",
+            "skipVerify": true
+        }"#;
+        let cfg: TlsConfig = serde_json::from_str(camel).unwrap();
+        assert!(cfg.enabled);
+        assert_eq!(cfg.ca_cert_path.as_deref(), Some("/ca.pem"));
+        assert!(cfg.skip_verify);
+
+        // 老磁盘 snake_case 通过 alias 兼容读取
+        let snake = r#"{
+            "enabled": true,
+            "ca_cert_path": "/ca.pem",
+            "client_cert_path": "/c.pem",
+            "client_key_path": "/c.key",
+            "skip_verify": true
+        }"#;
+        let cfg: TlsConfig = serde_json::from_str(snake).unwrap();
+        assert_eq!(cfg.ca_cert_path.as_deref(), Some("/ca.pem"));
+        assert!(cfg.skip_verify);
+    }
+
+    #[test]
+    fn sentinel_config_deserialize_camel_case_and_snake_case_alias() {
+        let camel = r#"{
+            "nodes": [{"host":"127.0.0.1","port":26379}],
+            "masterName": "mymaster",
+            "sentinelPassword": "spass"
+        }"#;
+        let cfg: SentinelConfig = serde_json::from_str(camel).unwrap();
+        assert_eq!(cfg.master_name, "mymaster");
+        assert_eq!(cfg.sentinel_password.as_deref(), Some("spass"));
+
+        // 老磁盘格式
+        let snake = r#"{
+            "nodes": [{"host":"127.0.0.1","port":26379}],
+            "master_name": "mymaster",
+            "sentinel_password": "spass"
+        }"#;
+        let cfg: SentinelConfig = serde_json::from_str(snake).unwrap();
+        assert_eq!(cfg.master_name, "mymaster");
+        assert_eq!(cfg.sentinel_password.as_deref(), Some("spass"));
+    }
+
+    #[test]
+    fn stored_connection_connection_type_alias_legacy_snake_case() {
+        // 老磁盘 connection_type 必须能被读出来（用户老连接保留正确类型）
+        let json = r#"{
+            "id": "x",
+            "name": "old",
+            "host": "127.0.0.1",
+            "port": 6379,
+            "username": null,
+            "password": null,
+            "db": 0,
+            "group": null,
+            "connection_type": "sentinel"
+        }"#;
+        let conn: StoredConnection = serde_json::from_str(json).unwrap();
+        assert_eq!(conn.connection_type, "sentinel");
+
+        // 新格式 connectionType 也能读
+        let json_new = r#"{
+            "id": "y",
+            "name": "new",
+            "host": "127.0.0.1",
+            "port": 6379,
+            "username": null,
+            "password": null,
+            "db": 0,
+            "group": null,
+            "connectionType": "cluster"
+        }"#;
+        let conn: StoredConnection = serde_json::from_str(json_new).unwrap();
+        assert_eq!(conn.connection_type, "cluster");
+    }
+}

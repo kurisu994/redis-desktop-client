@@ -314,3 +314,103 @@ async fn test_single_connection_with_tunnel(
         message: pong,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::store::SshHop;
+
+    /// 构造一份最小可用的 standalone 连接配置
+    fn base_config() -> ConnectionConfig {
+        ConnectionConfig {
+            id: "id".into(),
+            name: "name".into(),
+            host: "127.0.0.1".into(),
+            port: 6379,
+            username: None,
+            password: None,
+            db: 0,
+            group: None,
+            connection_type: Some("standalone".into()),
+            ssh: None,
+            tls: None,
+            sentinel: None,
+            cluster: None,
+        }
+    }
+
+    fn ssh_hop_password(host: &str) -> SshHop {
+        SshHop {
+            host: host.into(),
+            port: 22,
+            username: "u".into(),
+            auth_type: "password".into(),
+            password: Some("pw".into()),
+            private_key_path: None,
+            passphrase: None,
+        }
+    }
+
+    #[test]
+    fn validate_accepts_standalone_without_ssh() {
+        assert!(validate_connection_config(&base_config()).is_ok());
+    }
+
+    #[test]
+    fn validate_accepts_ssh_with_valid_hop() {
+        let mut cfg = base_config();
+        cfg.ssh = Some(SshConfig {
+            enabled: true,
+            hops: vec![ssh_hop_password("jump.example.com")],
+        });
+        assert!(validate_connection_config(&cfg).is_ok());
+    }
+
+    #[test]
+    fn validate_rejects_ssh_enabled_with_empty_hops() {
+        let mut cfg = base_config();
+        cfg.ssh = Some(SshConfig {
+            enabled: true,
+            hops: vec![],
+        });
+        let err = validate_connection_config(&cfg).unwrap_err();
+        assert!(err.contains("SSH"), "应提示 SSH 相关错误，实际：{err}");
+    }
+
+    #[test]
+    fn validate_rejects_ssh_hop_with_invalid_auth_type() {
+        let mut hop = ssh_hop_password("h");
+        hop.auth_type = "weird".into();
+        let mut cfg = base_config();
+        cfg.ssh = Some(SshConfig {
+            enabled: true,
+            hops: vec![hop],
+        });
+        assert!(validate_connection_config(&cfg).is_err());
+    }
+
+    #[test]
+    fn validate_rejects_ssh_private_key_hop_without_path() {
+        let mut hop = ssh_hop_password("h");
+        hop.auth_type = "privateKey".into();
+        hop.private_key_path = None;
+        let mut cfg = base_config();
+        cfg.ssh = Some(SshConfig {
+            enabled: true,
+            hops: vec![hop],
+        });
+        let err = validate_connection_config(&cfg).unwrap_err();
+        assert!(err.contains("私钥"), "应提示私钥路径相关错误，实际：{err}");
+    }
+
+    #[test]
+    fn validate_skips_ssh_when_disabled_even_with_empty_hops() {
+        // SSH 未启用时不应校验 hops（用户保存了 disabled SSH 配置应允许通过）
+        let mut cfg = base_config();
+        cfg.ssh = Some(SshConfig {
+            enabled: false,
+            hops: vec![],
+        });
+        assert!(validate_connection_config(&cfg).is_ok());
+    }
+}
