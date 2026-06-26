@@ -7,7 +7,11 @@ pub const CONNECTIONS_FILENAME: &str = "connections.json";
 pub const MASTER_KEY_FILENAME: &str = "master-key";
 
 /// 持久化存储的连接配置（密码已加密）
+///
+/// 序列化字段统一为 camelCase 与前端 TypeScript / IPC 对齐；老磁盘格式中
+/// `connection_type` snake_case 经 `serde(alias)` 兼容自动迁移。
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StoredConnection {
     pub id: String,
     pub name: String,
@@ -19,7 +23,7 @@ pub struct StoredConnection {
     pub db: u8,
     pub group: Option<String>,
     /// 连接类型: standalone / sentinel / cluster
-    #[serde(default = "default_connection_type")]
+    #[serde(default = "default_connection_type", alias = "connection_type")]
     pub connection_type: String,
     /// SSH 隧道配置
     #[serde(default)]
@@ -125,13 +129,19 @@ impl<'de> Deserialize<'de> for SshConfig {
 }
 
 /// TLS/SSL 配置
+///
+/// 序列化字段统一为 camelCase 与前端对齐；老磁盘 snake_case 经 alias 兼容
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TlsConfig {
     pub enabled: bool,
+    #[serde(default, alias = "ca_cert_path")]
     pub ca_cert_path: Option<String>,
+    #[serde(default, alias = "client_cert_path")]
     pub client_cert_path: Option<String>,
+    #[serde(default, alias = "client_key_path")]
     pub client_key_path: Option<String>,
-    #[serde(default)]
+    #[serde(default, alias = "skip_verify")]
     pub skip_verify: bool,
 }
 
@@ -143,10 +153,15 @@ pub struct SentinelNode {
 }
 
 /// Sentinel 配置
+///
+/// 序列化字段统一为 camelCase 与前端对齐；老磁盘 snake_case 经 alias 兼容
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SentinelConfig {
     pub nodes: Vec<SentinelNode>,
+    #[serde(alias = "master_name")]
     pub master_name: String,
+    #[serde(default, alias = "sentinel_password")]
     pub sentinel_password: Option<String>,
 }
 

@@ -10,7 +10,11 @@ use std::time::Instant;
 use tauri::State;
 
 /// 前端传入的连接配置
+///
+/// 序列化字段统一为 camelCase 与前端 TypeScript 对齐；
+/// `connection_type` 老磁盘 snake_case 通过 alias 兼容（用户曾保存过的连接读出时）。
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ConnectionConfig {
     pub id: String,
     pub name: String,
@@ -21,7 +25,7 @@ pub struct ConnectionConfig {
     pub db: u8,
     pub group: Option<String>,
     /// 连接类型: standalone / sentinel / cluster
-    #[serde(default = "default_connection_type")]
+    #[serde(default = "default_connection_type", alias = "connection_type")]
     pub connection_type: Option<String>,
     /// SSH 隧道配置
     pub ssh: Option<SshConfig>,
