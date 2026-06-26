@@ -28,6 +28,12 @@ import type {
   UpdateProxyValidationError,
 } from "@/lib/update-settings";
 import {
+  listSshKnownHosts,
+  removeSshKnownHost,
+  type SshKnownHost,
+} from "@/lib/tauri-api";
+import { ConfirmDangerDialog } from "@/components/confirm-danger-dialog";
+import {
   Settings,
   Globe,
   Palette,
@@ -36,6 +42,8 @@ import {
   RefreshCw,
   CheckCircle,
   AlertCircle,
+  Shield,
+  Trash2,
 } from "lucide-react";
 
 /** 当前应用版本号（构建时内联） */
@@ -57,6 +65,11 @@ export function SettingsPage() {
   } = useUpdateChecker();
   const [manualCheckDone, setManualCheckDone] = useState(false);
   const [appVersion, setAppVersion] = useState(FALLBACK_APP_VERSION);
+  const [knownHosts, setKnownHosts] = useState<SshKnownHost[]>([]);
+  const [knownHostsLoading, setKnownHostsLoading] = useState(false);
+  const [knownHostToDelete, setKnownHostToDelete] = useState<SshKnownHost | null>(
+    null,
+  );
   const [updateProxyConfig, setUpdateProxyConfigState] =
     useState<UpdateProxyConfig>(() => getUpdateProxyConfig());
   const { enabled: updateProxyEnabled, url: updateProxyUrl } =
@@ -75,6 +88,19 @@ export function SettingsPage() {
         console.warn("[设置] 获取当前版本失败:", err);
       });
 
+    // 加载已信任 SSH 主机列表
+    setKnownHostsLoading(true);
+    listSshKnownHosts()
+      .then((hosts) => {
+        if (!cancelled) setKnownHosts(hosts);
+      })
+      .catch((err) => {
+        console.warn("[设置] 加载 SSH known_hosts 失败:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setKnownHostsLoading(false);
+      });
+
     return () => {
       cancelled = true;
     };
@@ -86,6 +112,20 @@ export function SettingsPage() {
     setManualCheckDone(false);
     setUpdateProxyConfigState(nextConfig);
     setUpdateProxyConfig(nextConfig);
+  };
+
+  /** 删除已信任 SSH 主机 */
+  const handleDeleteKnownHost = async (host: SshKnownHost) => {
+    try {
+      await removeSshKnownHost(host.host, host.port);
+      setKnownHosts((prev) =>
+        prev.filter((h) => h.host !== host.host || h.port !== host.port),
+      );
+    } catch (err) {
+      console.error("[设置] 删除 SSH known_host 失败:", err);
+    } finally {
+      setKnownHostToDelete(null);
+    }
   };
 
   const proxyValidationError = updateProxyEnabled
@@ -268,6 +308,69 @@ export function SettingsPage() {
 
         <Separator className="my-4" />
 
+        {/* SSH 安全 */}
+        <SectionHeader
+          icon={<Shield size={16} />}
+          title={t("settings.sshSecurity")}
+        />
+        <div className="flex flex-col gap-4 mb-6">
+          <p className="text-sm text-muted-foreground">
+            {t("settings.sshSecurityHint")}
+          </p>
+          {knownHostsLoading ? (
+            <p className="text-sm text-muted-foreground">{t("update.checking")}</p>
+          ) : knownHosts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t("settings.sshKnownHostsEmpty")}
+            </p>
+          ) : (
+            <div className="border rounded-md overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium">
+                      {t("settings.sshKnownHostHost")}
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium w-20">
+                      {t("settings.sshKnownHostPort")}
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium">
+                      {t("settings.sshKnownHostFingerprint")}
+                    </th>
+                    <th className="px-3 py-2 text-right font-medium w-16">
+                      {t("actions.delete")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {knownHosts.map((h) => (
+                    <tr key={`${h.host}:${h.port}`} className="border-t">
+                      <td className="px-3 py-2 font-mono">{h.host}</td>
+                      <td className="px-3 py-2 font-mono">{h.port}</td>
+                      <td className="px-3 py-2 font-mono break-all">
+                        {h.fingerprint}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={() => setKnownHostToDelete(h)}
+                          title={t("actions.delete")}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <Separator className="my-4" />
+
         {/* 关于 */}
         <SectionHeader
           icon={<Settings size={16} />}
@@ -282,6 +385,19 @@ export function SettingsPage() {
 
       {/* 设置页面内的更新弹窗 */}
       <UpdateDialog updateInfo={updateAvailable} onDismiss={dismissUpdate} />
+
+      {/* 删除 SSH known_host 确认弹窗 */}
+      <ConfirmDangerDialog
+        isOpen={knownHostToDelete !== null}
+        onClose={() => setKnownHostToDelete(null)}
+        onConfirm={() => {
+          if (knownHostToDelete) {
+            handleDeleteKnownHost(knownHostToDelete);
+          }
+        }}
+        title={t("actions.delete")}
+        message={t("settings.sshKnownHostDeleteConfirm")}
+      />
     </div>
   );
 }
