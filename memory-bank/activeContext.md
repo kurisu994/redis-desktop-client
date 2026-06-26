@@ -5,9 +5,11 @@
 ## 当前状态
 
 - **项目版本**：v0.2.8（2026-05-23 发布）；v0.3.0 工作中。
-- **当前分支**：`main`（已合并 `feat/ssh-tunnel-v03` + `fix/ipc-camelcase`，本地领先 `origin/main` 8 个 commit，尚未 push）。
+- **当前分支**：`main`（与 `origin/main` 同步，已 push 所有 SSH 隧道 + IPC 字段名修复 + Rust 单元测试）。
 - **工作树**：干净。
 - **最近 commits**：
+  - `tests(rust): 补 SSH 配置 + IPC 字段名兼容 + 校验关键路径单元测试`
+  - `docs(memory-bank): 收尾 SSH 隧道 + IPC 字段名 silent bug 修复`
   - `fix(ipc): IPC 类型字段名统一 camelCase 修复 silent bug`
   - `docs(memory-bank): 同步 SSH 反序列化修复与字段名 silent bug 待办`
   - `fix(ssh): SshHop 字段统一 camelCase 序列化`
@@ -47,9 +49,8 @@
 
 ## 下一步
 
-- 是否 `push origin main` 由用户决定（目前本地领先 8 个 commit）。
-- 加 Rust 单元测试覆盖 `SshConfig::Deserialize` 兼容老格式、`validate_connection_config` SSH 校验、`TlsConfig`/`SentinelConfig` 序列化双向兼容。
-- 视情况 `just version 0.3.0` 升版本号 + `just release` 触发 CI 打 v0.3.0。
+- `just version 0.3.0` 升版本号 + `just release v0.3.0` 触发 CI 打正式版本。
+- 后续可选打磨：known_hosts 校验 + TOFU 提示、cluster/sentinel + SSH 支持、SSH session 复用池、TestResult 字段名统一 camelCase（顺手清理项目最后一处 snake_case IPC 字段）。
 
 ## 阻塞
 
