@@ -352,8 +352,8 @@ export async function sshTofuDecide(
   accept: boolean,
 ): Promise<void> {
   return invoke("ssh_tofu_decide", {
-    connection_id: connectionId,
-    hop_index: hopIndex,
+    connectionId,
+    hopIndex,
     accept,
   });
 }
