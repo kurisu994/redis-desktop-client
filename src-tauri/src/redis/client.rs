@@ -1,5 +1,5 @@
 use crate::config::store::StoredConnection;
-use crate::redis::ssh_tunnel::{self, SshTunnel};
+use crate::redis::ssh_tunnel::{self, SshTunnel, SshTunnelContext};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -28,15 +28,24 @@ impl RedisClientManager {
     /// 若 `config.ssh.enabled = true` 且为 standalone 连接，先建立 SSH 隧道，
     /// 再以本地 127.0.0.1:local_port 作为实际 Redis 地址。Cluster / Sentinel
     /// 走 SSH 涉及多节点隧道协调，暂未实现（阶段 3 范围）。
-    pub async fn connect_with_config(&self, config: &StoredConnection) -> Result<(), String> {
+    pub async fn connect_with_config(
+        &self,
+        config: &StoredConnection,
+        context: Option<&SshTunnelContext>,
+    ) -> Result<(), String> {
         let tls_enabled = config.tls.as_ref().map(|t| t.enabled).unwrap_or(false);
         let scheme = if tls_enabled { "rediss" } else { "redis" };
         let conn_type = config.connection_type.as_str();
 
         // 仅 standalone 模式支持 SSH 隧道（阶段 3 范围）
-        let tunnel =
-            open_ssh_tunnel_if_needed(config.ssh.as_ref(), &config.host, config.port, conn_type)
-                .await?;
+        let tunnel = open_ssh_tunnel_if_needed(
+            config.ssh.as_ref(),
+            &config.host,
+            config.port,
+            conn_type,
+            context,
+        )
+        .await?;
         let (effective_host, effective_port) = match &tunnel {
             Some(t) => {
                 let addr = t.local_addr();
@@ -158,6 +167,7 @@ pub fn sanitize_redis_error(err: &str) -> String {
 /// - `ssh`：当前连接的 SSH 配置（None 或 disabled 时直接返回 None）
 /// - `target_host` / `target_port`：隧道桥接到的最终 Redis 端点
 /// - `conn_type`："standalone" / "sentinel" / "cluster"；阶段 3 仅 standalone 走 SSH
+/// - `context`：包含 known_hosts 存储、TOFU 管理器与 AppHandle，首次连接时需要
 ///
 /// 错误返回 SshTunnelError 对应的 i18n key，由前端翻译展示
 pub async fn open_ssh_tunnel_if_needed(
@@ -165,6 +175,7 @@ pub async fn open_ssh_tunnel_if_needed(
     target_host: &str,
     target_port: u16,
     conn_type: &str,
+    context: Option<&SshTunnelContext>,
 ) -> Result<Option<SshTunnel>, String> {
     let Some(ssh) = ssh else {
         return Ok(None);
@@ -176,7 +187,11 @@ pub async fn open_ssh_tunnel_if_needed(
         // Cluster / Sentinel 走 SSH 涉及多节点隧道协调，暂不支持
         return Err("error.ssh.unsupported_for_cluster_sentinel".to_string());
     }
-    let tunnel = ssh_tunnel::open(ssh, target_host, target_port)
+    let Some(ctx) = context else {
+        // 启用 SSH 但未提供上下文（理论上不应发生），保守拒绝
+        return Err("error.ssh.host_key_rejected".to_string());
+    };
+    let tunnel = ssh_tunnel::open(ssh, target_host, target_port, ctx)
         .await
         .map_err(|e| e.i18n_key().to_string())?;
     Ok(Some(tunnel))
