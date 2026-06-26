@@ -3843,7 +3843,7 @@ dependencies = [
 
 [[package]]
 name = "redis-desktop-client"
-version = "0.2.8"
+version = "0.2.9"
 dependencies = [
  "aes-gcm",
  "base64 0.22.1",
