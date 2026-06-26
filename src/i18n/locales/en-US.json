@@ -111,7 +111,13 @@
     "conflictRename": "Rename",
     "importSuccess": "Imported {{imported}}, skipped {{skipped}}, overwritten {{overwritten}}",
     "exportSuccess": "Export successful",
-    "saveFailed": "Failed to save connection"
+    "saveFailed": "Failed to save connection",
+    "sshHostKeyTitle": "Confirm SSH Host Key",
+    "sshHostKeyDescription": "First time connecting to {{host}}:{{port}}, please verify the host key fingerprint.",
+    "sshHostKeyFingerprint": "SHA-256 fingerprint",
+    "sshHostKeyHint": "If the fingerprint does not match what you expect, you may be under a man-in-the-middle attack; reject and check the server configuration.",
+    "sshHostKeyReject": "Reject",
+    "sshHostKeyTrust": "Trust & Save"
   },
   "browser": {
     "title": "Browser",
@@ -319,7 +325,16 @@
     "updateProxyUnsupported": "Only HTTP/HTTPS proxies are supported in this first stage",
     "downloading": "Downloading...",
     "install": "Install Update",
-    "about": "About"
+    "about": "About",
+    "sshSecurity": "SSH Security",
+    "sshSecurityHint": "Manage trusted SSH host fingerprints. After deletion, the next connection to that host will ask for confirmation again.",
+    "sshKnownHostsEmpty": "No trusted SSH hosts yet",
+    "sshKnownHostHost": "Host",
+    "sshKnownHostPort": "Port",
+    "sshKnownHostFingerprint": "Fingerprint",
+    "sshKnownHostFirstSeen": "First trusted",
+    "sshKnownHostLastUsed": "Last used",
+    "sshKnownHostDeleteConfirm": "After deletion, the next connection to this host will require fingerprint confirmation again. Are you sure?"
   },
   "shortcuts": {
     "title": "Shortcuts",
@@ -395,7 +410,9 @@
       "channel_open_failed": "Failed to open SSH forwarding channel",
       "local_listen_failed": "Failed to bind local forwarding port",
       "invalid_auth_type": "Invalid SSH authentication type",
-      "unsupported_for_cluster_sentinel": "SSH tunnel is not supported for Cluster/Sentinel yet"
+      "unsupported_for_cluster_sentinel": "SSH tunnel is not supported for Cluster/Sentinel yet",
+      "host_key_mismatch": "SSH host key fingerprint does not match the trusted record; connection aborted to prevent man-in-the-middle attack",
+      "host_key_rejected": "SSH host key was rejected; connection failed"
     }
   }
 }

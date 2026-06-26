@@ -111,7 +111,13 @@
     "conflictRename": "重命名",
     "importSuccess": "导入 {{imported}} 个，跳过 {{skipped}} 个，覆盖 {{overwritten}} 个",
     "exportSuccess": "导出成功",
-    "saveFailed": "保存连接失败"
+    "saveFailed": "保存连接失败",
+    "sshHostKeyTitle": "确认 SSH 主机指纹",
+    "sshHostKeyDescription": "首次连接到 {{host}}:{{port}}，请确认其公钥指纹。",
+    "sshHostKeyFingerprint": "SHA-256 指纹",
+    "sshHostKeyHint": "若指纹与预期不符，可能遭受中间人攻击；请拒绝并检查服务器配置。",
+    "sshHostKeyReject": "拒绝",
+    "sshHostKeyTrust": "信任并保存"
   },
   "browser": {
     "title": "浏览器",
@@ -319,7 +325,16 @@
     "updateProxyUnsupported": "第一阶段仅支持 HTTP/HTTPS 代理",
     "downloading": "下载中...",
     "install": "安装更新",
-    "about": "关于"
+    "about": "关于",
+    "sshSecurity": "SSH 安全",
+    "sshSecurityHint": "管理已信任的 SSH 主机指纹。删除后下次连接将重新要求确认。",
+    "sshKnownHostsEmpty": "暂无已信任的 SSH 主机",
+    "sshKnownHostHost": "主机",
+    "sshKnownHostPort": "端口",
+    "sshKnownHostFingerprint": "指纹",
+    "sshKnownHostFirstSeen": "首次信任",
+    "sshKnownHostLastUsed": "最近使用",
+    "sshKnownHostDeleteConfirm": "删除后下次连接该主机将重新触发指纹确认，确定删除？"
   },
   "shortcuts": {
     "title": "快捷键",
@@ -395,7 +410,9 @@
       "channel_open_failed": "打开 SSH 转发通道失败",
       "local_listen_failed": "绑定本地转发端口失败",
       "invalid_auth_type": "SSH 认证方式无效",
-      "unsupported_for_cluster_sentinel": "Cluster/Sentinel 模式暂不支持 SSH 隧道"
+      "unsupported_for_cluster_sentinel": "Cluster/Sentinel 模式暂不支持 SSH 隧道",
+      "host_key_mismatch": "SSH 主机指纹与已信任记录不符，连接已中断以防止中间人攻击",
+      "host_key_rejected": "已拒绝信任 SSH 主机公钥，连接失败"
     }
   }
 }

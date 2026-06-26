@@ -15,12 +15,14 @@ import { PubSubPage } from "@/components/pubsub/pubsub-page";
 import { SettingsPage } from "@/components/layout/settings-page";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { UpdateDialog } from "@/components/update-dialog";
+import { SshTofuDialog } from "@/components/ssh-tofu-dialog";
 import { useConnectionStore } from "@/stores/connection-store";
 import { useMonitorStore } from "@/stores/monitor-store";
 import { stopMonitor } from "@/lib/tauri-api";
 import { useAppStore } from "@/stores/app-store";
 import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
 import { useUpdateChecker } from "@/hooks/use-update-checker";
+import { useSshTofuListener } from "@/hooks/use-ssh-tofu-listener";
 
 /** 应用主页 — 三栏布局 */
 export default function Home() {
@@ -34,6 +36,9 @@ export default function Home() {
 
   // 启动时自动检查更新
   const { updateAvailable, dismissUpdate } = useUpdateChecker();
+
+  // 监听 SSH TOFU 确认请求
+  const { currentRequest, accept, reject, dismiss } = useSshTofuListener();
 
   // 监控日志生命周期：关闭 monitor tab 或断开连接时停止后台 MONITOR
   const prevConnRef = useRef(activeConnectionId);
@@ -105,6 +110,12 @@ export default function Home() {
       <ConnectionDialog />
       <CommandPalette />
       <UpdateDialog updateInfo={updateAvailable} onDismiss={dismissUpdate} />
+      <SshTofuDialog
+        request={currentRequest}
+        onAccept={accept}
+        onReject={reject}
+        onDismiss={dismiss}
+      />
     </div>
   );
 }

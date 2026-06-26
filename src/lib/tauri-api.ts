@@ -313,9 +313,62 @@ function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
     case "import_keys":
       return { total: 1, imported: 1, skipped: 0, errors: [] } as T;
 
+    // SSH TOFU / known_hosts mock（浏览器开发环境无真实 SSH）
+    case "ssh_tofu_decide":
+    case "list_ssh_known_hosts":
+      return [] as T;
+    case "remove_ssh_known_host":
+      return true as T;
+
     default:
       throw new Error(`未知的 IPC 命令: ${cmd}`);
   }
+}
+
+// ============ SSH known_hosts / TOFU API ============
+
+/** 已信任 SSH 主机记录 */
+export interface SshKnownHost {
+  host: string;
+  port: number;
+  fingerprint: string;
+  first_seen_at: string;
+  last_used_at: string;
+}
+
+/** 后端发来的 SSH TOFU 确认请求 */
+export interface SshTofuRequest {
+  connection_id: string;
+  hop_index: number;
+  host: string;
+  port: number;
+  fingerprint: string;
+}
+
+/** 对 SSH TOFU 请求做出信任/拒绝决策 */
+export async function sshTofuDecide(
+  connectionId: string,
+  hopIndex: number,
+  accept: boolean,
+): Promise<void> {
+  return invoke("ssh_tofu_decide", {
+    connection_id: connectionId,
+    hop_index: hopIndex,
+    accept,
+  });
+}
+
+/** 获取所有已信任的 SSH 主机 */
+export async function listSshKnownHosts(): Promise<SshKnownHost[]> {
+  return invoke<SshKnownHost[]>("list_ssh_known_hosts");
+}
+
+/** 删除一条已信任的 SSH 主机记录 */
+export async function removeSshKnownHost(
+  host: string,
+  port: number,
+): Promise<boolean> {
+  return invoke<boolean>("remove_ssh_known_host", { host, port });
 }
 
 // ============ 连接管理 API ============
