@@ -40,7 +40,11 @@ fn default_connection_type() -> String {
 }
 
 /// SSH 跳板/终点主机配置 — 隧道链路中的一个节点
+///
+/// 序列化字段统一为 camelCase，与前端 TypeScript 类型对齐；
+/// Rust 内部仍按 snake_case 访问。
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SshHop {
     pub host: String,
     pub port: u16,
