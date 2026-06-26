@@ -1,7 +1,10 @@
 use crate::config::store::{
     ClusterConfig, ConnectionStore, SentinelConfig, SshConfig, StoredConnection, TlsConfig,
 };
-use crate::redis::client::{build_redis_url, sanitize_redis_error, RedisClientManager};
+use crate::redis::client::{
+    build_redis_url, open_ssh_tunnel_if_needed, sanitize_redis_error, RedisClientManager,
+};
+use crate::redis::ssh_tunnel::SshTunnel;
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
 use tauri::State;
@@ -83,7 +86,12 @@ fn validate_connection_config(config: &ConnectionConfig) -> Result<(), String> {
                     return Err(format!("SSH 第 {} 跳认证方式无效", n));
                 }
                 if hop.auth_type == "privateKey"
-                    && hop.private_key_path.as_deref().unwrap_or("").trim().is_empty()
+                    && hop
+                        .private_key_path
+                        .as_deref()
+                        .unwrap_or("")
+                        .trim()
+                        .is_empty()
                 {
                     return Err(format!("SSH 第 {} 跳私钥路径不能为空", n));
                 }
@@ -235,16 +243,31 @@ pub async fn test_connection(config: ConnectionConfig) -> Result<TestResult, Str
             test_single_connection(&url, start).await
         }
         _ => {
-            // Standalone 模式
-            let url = build_redis_url(
-                scheme,
+            // Standalone 模式：如启用 SSH 隧道则先建临时隧道再 PING
+            let tunnel = open_ssh_tunnel_if_needed(
+                config.ssh.as_ref(),
                 &config.host,
                 config.port,
+                "standalone",
+            )
+            .await?;
+            let (host, port) = match &tunnel {
+                Some(t) => {
+                    let a = t.local_addr();
+                    (a.ip().to_string(), a.port())
+                }
+                None => (config.host.clone(), config.port),
+            };
+            let url = build_redis_url(
+                scheme,
+                &host,
+                port,
                 config.username.as_deref(),
                 config.password.as_deref(),
                 config.db,
             )?;
-            test_single_connection(&url, start).await
+            // tunnel 持有到测试结束自然 drop（关闭 listener + 释放跳板 session）
+            test_single_connection_with_tunnel(&url, start, tunnel).await
         }
     }
 }
@@ -258,8 +281,19 @@ pub async fn reorder_connections(
     store.reorder_connections(&ordered_ids)
 }
 
-/// 测试单个连接
+/// 测试单个连接（cluster/sentinel 走该入口，无 SSH）
 async fn test_single_connection(url: &str, start: Instant) -> Result<TestResult, String> {
+    test_single_connection_with_tunnel(url, start, None).await
+}
+
+/// 测试单个连接，可选携带 SSH 隧道（standalone + ssh 走该入口）
+///
+/// `_tunnel` 仅用于保活：函数返回时 drop，listener 关闭，跳板 session 释放。
+async fn test_single_connection_with_tunnel(
+    url: &str,
+    start: Instant,
+    _tunnel: Option<SshTunnel>,
+) -> Result<TestResult, String> {
     let client = redis::Client::open(url).map_err(|e| sanitize_redis_error(&e.to_string()))?;
     let mut conn = client
         .get_multiplexed_async_connection()

@@ -1,7 +1,3 @@
-// 阶段 2 commit 时模块尚未被 RedisClientManager 引用，先放行 dead_code；
-// 阶段 3 接入后该 allow 会被移除（届时 clippy 会校验所有 item 都已使用）。
-#![allow(dead_code)]
-
 use crate::config::store::{SshConfig, SshHop};
 use russh::client::{self, AuthResult, Config, Handle, Handler};
 use russh::keys::{load_secret_key, ssh_key, PrivateKeyWithHashAlg};
@@ -132,10 +128,7 @@ pub async fn open(
     // 第 2..N 跳：在前一跳的 session 上开 direct-tcpip 通道到下一跳 SSH 端口，
     // 把 channel stream 作为下一跳 session 的 transport（OpenSSH ProxyJump 等效）
     for next_hop in ssh.hops.iter().skip(1) {
-        let prev = sessions
-            .last()
-            .expect("已建立至少一个 session")
-            .clone();
+        let prev = sessions.last().expect("已建立至少一个 session").clone();
         let channel = {
             let prev_guard = prev.lock().await;
             prev_guard
@@ -164,10 +157,7 @@ pub async fn open(
         .local_addr()
         .map_err(|_| SshTunnelError::LocalListenFailed)?;
 
-    let last_session = sessions
-        .last()
-        .expect("已建立至少一个 session")
-        .clone();
+    let last_session = sessions.last().expect("已建立至少一个 session").clone();
     let sessions_for_task = sessions.clone();
     let target_host = target_host.to_string();
 
