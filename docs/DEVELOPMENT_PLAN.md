@@ -299,14 +299,14 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 以下基础设施已在前序 Phase 中完成，Phase 5 可直接复用：
 
-| 已有基础         | 说明                                                                              |
-| ---------------- | --------------------------------------------------------------------------------- |
-| 侧边栏导航       | `sidebar.tsx` 底部 Monitor、Pub/Sub 按钮已绑定 `SidebarNavButton`，支持视图切换   |
-| i18n 完整 key    | 所有 monitor、pubsub、dataExport、dataImport 相关翻译 key 已添加（en-US + zh-CN） |
+| 已有基础         | 说明                                                                                    |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| 侧边栏导航       | `sidebar.tsx` 底部 Monitor、Pub/Sub 按钮已绑定 `SidebarNavButton`，支持视图切换         |
+| i18n 完整 key    | 所有 monitor、pubsub、dataExport、dataImport 相关翻译 key 已添加（en-US + zh-CN）       |
 | MainView 类型    | `app-store.ts` 中 `TabType = "browser" \| "cli" \| "monitor" \| "pubsub" \| "settings"` |
-| IPC 封装模式     | `lib/tauri-api.ts` 已添加所有 Phase 5 API 函数 + Mock 实现                        |
-| Tauri Event 机制 | Pub/Sub 订阅消息通过 `redis://pubsub` Event 推送                                  |
-| Tauri 文件插件   | 已安装 `tauri-plugin-dialog` + `tauri-plugin-fs`，用于导入导出文件对话框          |
+| IPC 封装模式     | `lib/tauri-api.ts` 已添加所有 Phase 5 API 函数 + Mock 实现                              |
+| Tauri Event 机制 | Pub/Sub 订阅消息通过 `redis://pubsub` Event 推送                                        |
+| Tauri 文件插件   | 已安装 `tauri-plugin-dialog` + `tauri-plugin-fs`，用于导入导出文件对话框                |
 
 ### 任务清单
 
@@ -402,14 +402,14 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 #### 6.1 高级连接
 
-| #   | 任务          | 状态 | 说明                                                                                            |
-| --- | ------------- | ---- | ----------------------------------------------------------------------------------------------- |
-| 1   | SSH 隧道后端  | 🔲   | Rust 端建立 SSH 隧道（需 `russh` 库），转发本地端口到远程 Redis（预留架构，运行时依赖外部隧道） |
-| 2   | SSH 隧道 UI   | ✅   | 连接表单 SSH Tab：主机、端口、用户名、密码/密钥文件、认证方式选择                               |
-| 3   | SSL/TLS 后端  | ✅   | `client.rs` 根据 TLS 配置自动切换 `redis://` / `rediss://` 协议                                 |
-| 4   | SSL/TLS UI    | ✅   | 连接表单 SSL/TLS Tab：CA 证书、客户端证书、密钥文件路径、跳过验证选项                           |
-| 5   | Sentinel 连接 | ✅   | ConnectionConfig 扩展 Sentinel 字段 + UI 配置表单（节点列表、Master 名称、密码）                |
-| 6   | Cluster 连接  | ✅   | ConnectionConfig 扩展 Cluster 字段 + UI 配置表单（种子节点列表）、test_connection 支持          |
+| #   | 任务          | 状态 | 说明                                                                                             |
+| --- | ------------- | ---- | ------------------------------------------------------------------------------------------------ |
+| 1   | SSH 隧道后端  | ✅   | 基于 `russh` 建立纯 Rust SSH 隧道，支持 N 跳串联、known_hosts 校验与 TOFU；当前仅接入 Standalone |
+| 2   | SSH 隧道 UI   | ✅   | 连接表单 SSH Tab：N 跳卡片、密码/密钥认证、密码显隐、非 Standalone 时禁用并提示                  |
+| 3   | SSL/TLS 后端  | ✅   | `client.rs` 根据 TLS 配置自动切换 `redis://` / `rediss://` 协议                                  |
+| 4   | SSL/TLS UI    | ✅   | 连接表单 SSL/TLS Tab：CA 证书、客户端证书、密钥文件路径、跳过验证选项                            |
+| 5   | Sentinel 连接 | ✅   | ConnectionConfig 扩展 Sentinel 字段 + UI 配置表单（节点列表、Master 名称、密码）                 |
+| 6   | Cluster 连接  | ✅   | ConnectionConfig 扩展 Cluster 字段 + UI 配置表单（种子节点列表）、test_connection 支持           |
 
 #### 6.2 连接配置导入/导出（后端已在 Phase 3 完成）
 
@@ -482,7 +482,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 ### 交付物
 
 - ✅ SSH/TLS/Sentinel/Cluster UI 配置表单 + TLS 后端支持（`rediss://`）
-- 🔲 SSH 隧道后端实现（Rust `russh` 库）
+- ✅ SSH 隧道后端实现（Rust `russh`、N 跳串联、known_hosts + TOFU，当前仅 Standalone）
 - ✅ 连接配置导入/导出
 - ✅ 中英文国际化
 - ✅ 全局快捷键（⌘N/T/F/R/K/D/S/,/F5/Delete）+ Toast + 错误边界 + 设置页面
@@ -510,29 +510,29 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 ## 技术风险 & 注意事项
 
-| 风险项                    | 影响                         | 应对策略                                    |
-| ------------------------- | ---------------------------- | ------------------------------------------- |
-| Next.js SSR 与 Tauri 兼容 | Tauri 仅加载客户端页面       | Next.js 配置 `output: 'export'` 静态导出    |
-| 大量 Key 浏览性能         | 百万级 Key 导致内存/渲染压力 | 虚拟滚动 + SCAN 分页 + 树节点延迟加载       |
-| SSH 隧道稳定性            | 网络抖动导致隧道断开         | 自动重连机制 + 心跳检测                     |
-| Cluster 模式路由          | 集群拓扑变更影响连接         | 定期刷新拓扑 + MOVED/ASK 重定向处理         |
-| 跨平台兼容性              | 快捷键/文件路径差异          | 使用 Tauri API 抽象平台差异                 |
-| macOS 签名 & 公证         | 未签名应用无法安装           | 配置 Apple Developer 证书 + CI Secrets 管理 |
-| Windows 代码签名          | SmartScreen 拦截未签名安装包 | 购买代码签名证书 + CI 自动签名              |
-| 自动更新安全              | 更新包被篡改                 | Tauri Updater 内置签名校验机制              |
+| 风险项                    | 影响                                        | 应对策略                                                  |
+| ------------------------- | ------------------------------------------- | --------------------------------------------------------- |
+| Next.js SSR 与 Tauri 兼容 | Tauri 仅加载客户端页面                      | Next.js 配置 `output: 'export'` 静态导出                  |
+| 大量 Key 浏览性能         | 百万级 Key 导致内存/渲染压力                | 虚拟滚动 + SCAN 分页 + 树节点延迟加载                     |
+| SSH 隧道稳定性            | 网络抖动、TOFU 未响应或配置切换导致连接异常 | TOFU 超时清理 + tunnel 生命周期管理；自动重连后续独立增强 |
+| Cluster 模式路由          | 集群拓扑变更影响连接                        | 定期刷新拓扑 + MOVED/ASK 重定向处理                       |
+| 跨平台兼容性              | 快捷键/文件路径差异                         | 使用 Tauri API 抽象平台差异                               |
+| macOS 签名 & 公证         | 未签名应用无法安装                          | 配置 Apple Developer 证书 + CI Secrets 管理               |
+| Windows 代码签名          | SmartScreen 拦截未签名安装包                | 购买代码签名证书 + CI 自动签名                            |
+| 自动更新安全              | 更新包被篡改                                | Tauri Updater 内置签名校验机制                            |
 
 ---
 
 ## 文档索引
 
-| 文档            | 路径                                              | 说明                                 |
-| --------------- | ------------------------------------------------- | ------------------------------------ |
-| 项目入口        | [README.md](../README.md)                         | 技术栈、命令、目录结构和安装说明     |
-| 需求文档        | [docs/REQUIREMENTS.md](./REQUIREMENTS.md)         | 完整功能需求和架构设计               |
-| 开发计划        | [docs/DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) | 本文档，6 期迭代开发计划             |
-| 协作规范        | [AGENTS.md](../AGENTS.md)                         | AI 助手和工程协作规范                |
-| Claude 协作规范 | [CLAUDE.md](../CLAUDE.md)                         | Claude/GStack 使用约束和代码结构说明 |
-| 变更日志        | [CHANGELOG.md](../CHANGELOG.md)                   | 版本变更记录                         |
+| 文档     | 路径                                              | 说明                             |
+| -------- | ------------------------------------------------- | -------------------------------- |
+| 项目入口 | [README.md](../README.md)                         | 技术栈、命令、目录结构和安装说明 |
+| 需求文档 | [docs/REQUIREMENTS.md](./REQUIREMENTS.md)         | 完整功能需求和架构设计           |
+| 开发计划 | [docs/DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) | 本文档，6 期迭代开发计划         |
+| 协作规范 | [AGENTS.md](../AGENTS.md)                         | AI 助手和工程协作规范            |
+| 变更日志 | [CHANGELOG.md](../CHANGELOG.md)                   | 版本变更记录                     |
+| 项目记忆 | [memory-bank/](../memory-bank/)                   | 项目长期事实、当前状态和版本演进 |
 
 ---
 
@@ -542,7 +542,7 @@ i18n-check       # 检查翻译完整性（key 缺失检测）
 
 ### 高级连接（Phase 6）
 
-- [ ] SSH 隧道后端 — Rust 端建立 SSH 隧道（需 `russh` 库），转发本地端口到远程 Redis
+- [ ] Cluster / Sentinel 走 SSH — 多节点隧道协调复杂，后续独立立项
 
 ### 打包发布（Phase 6）
 

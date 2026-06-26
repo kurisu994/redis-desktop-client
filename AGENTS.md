@@ -2,9 +2,9 @@
 
 ## 项目结构与模块组织
 
-本项目是基于 Tauri 2 和 Next.js 16 的 Redis 桌面客户端。前端源码位于 `src/`：`app/` 存放 App Router 入口，`components/` 存放功能组件和 shadcn/ui 组件（18 个），`hooks/` 存放通用 React Hooks（全局快捷键、拖拽排序、更新检查），`stores/` 存放 Zustand 状态（6 个领域 Store），`lib/` 存放工具函数、Tauri API 封装与更新代理配置，`i18n/` 存放国际化配置。Rust 后端位于 `src-tauri/src/`，按 `commands/`、`redis/`、`config/` 分层。静态资源在 `public/`，项目文档在 `docs/`。
+本项目是基于 Tauri 2 和 Next.js 16 的 Redis 桌面客户端。前端源码位于 `src/`：`app/` 存放 App Router 入口，`components/` 存放功能组件和 shadcn/ui 组件（18 个），`hooks/` 存放通用 React Hooks（全局快捷键、拖拽排序、更新检查、SSH TOFU 监听），`stores/` 存放 Zustand 状态（6 个领域 Store），`lib/` 存放工具函数、Tauri API 封装与更新代理配置，`i18n/` 存放国际化配置。Rust 后端位于 `src-tauri/src/`，按 `commands/`、`redis/`、`config/` 分层，分别包含 SSH TOFU 命令、`russh` 隧道和 known_hosts 加密存储。静态资源在 `public/`，项目文档在 `docs/`。
 
-前端组件按功能模块组织：`browser/`（数据浏览器，含 `viewers/` 子目录存放按类型拆分的值查看/编辑器：string-viewer、hash-viewer、list-viewer、set-viewer、zset-viewer、stream-viewer、json-viewer、table-view、value-viewer 路由入口、value-format-editor 多格式编辑器及 JSON 辅助组件）、`cli/`（CLI 终端）、`connection/`（连接对话框含导入导出）、`layout/`（布局组件）、`monitor/`（服务器监控含 MONITOR 日志）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件）。全局组件包括 `providers.tsx`、`error-boundary.tsx`、`confirm-danger-dialog.tsx`（删除/批量删除/FLUSHDB 等危险操作确认）、`command-palette.tsx`（⌘K 命令面板）、`update-dialog.tsx`（应用更新弹窗）。
+前端组件按功能模块组织：`browser/`（数据浏览器，含 `viewers/` 子目录存放按类型拆分的值查看/编辑器：string-viewer、hash-viewer、list-viewer、set-viewer、zset-viewer、stream-viewer、json-viewer、table-view、value-viewer 路由入口、value-format-editor 多格式编辑器及 JSON 辅助组件）、`cli/`（CLI 终端）、`connection/`（连接对话框含导入导出）、`layout/`（布局组件）、`monitor/`（服务器监控含 MONITOR 日志）、`pubsub/`（发布订阅）、`ui/`（shadcn/ui 基础组件）。全局组件包括 `providers.tsx`、`error-boundary.tsx`、`confirm-danger-dialog.tsx`（删除/批量删除/FLUSHDB 等危险操作确认）、`command-palette.tsx`（⌘K 命令面板）、`update-dialog.tsx`（应用更新弹窗）、`ssh-tofu-dialog.tsx`（SSH 首次连接指纹确认）。
 
 ## 构建、测试与开发命令
 
@@ -42,7 +42,7 @@
 
 ## 安全与配置提示
 
-不要提交密钥、签名文件或本地 `.env` 内容。Tauri 权限位于 `src-tauri/capabilities/`，新增权限应保持最小范围。修改更新、文件系统、进程调用或 Redis 连接逻辑时，需要在 PR 中说明安全影响。
+不要提交密钥、签名文件或本地 `.env` 内容。Tauri 权限位于 `src-tauri/capabilities/`，新增权限应保持最小范围。SSH 私钥只存路径不复制内容，known_hosts 指纹存入独立加密文件。修改更新、文件系统、进程调用、SSH 隧道或 Redis 连接逻辑时，需要在 PR 中说明安全影响。
 
 ## AI 会话收尾与记忆银行
 

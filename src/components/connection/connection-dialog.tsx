@@ -104,6 +104,7 @@ export function ConnectionDialog() {
 
   // SSH 配置
   const [ssh, setSsh] = useState<SshConfig>({ ...defaultSsh });
+  const isSshSupported = connectionType === "standalone";
 
   // TLS 配置
   const [tls, setTls] = useState<TlsConfig>({ ...defaultTls });
@@ -194,7 +195,7 @@ export function ConnectionDialog() {
       db: Number.isNaN(parseInt(db, 10)) ? 0 : parseInt(db, 10),
       connectionType,
     };
-    if (ssh.enabled) config.ssh = ssh;
+    if (isSshSupported && ssh.enabled) config.ssh = ssh;
     if (tls.enabled) config.tls = tls;
     if (connectionType === "sentinel") {
       config.sentinel = {
@@ -216,6 +217,7 @@ export function ConnectionDialog() {
     password,
     db,
     connectionType,
+    isSshSupported,
     ssh,
     tls,
     sentinelNodes,
@@ -259,6 +261,15 @@ export function ConnectionDialog() {
       setSaving(false);
     }
   }, [buildConfig, closeDialog, setConnections, t]);
+
+  /** 切换连接类型时同步收敛当前阶段不支持的 SSH 配置 */
+  const handleConnectionTypeChange = (val: string) => {
+    const nextType = val as ConnectionType;
+    setConnectionType(nextType);
+    if (nextType !== "standalone") {
+      setSsh((prev) => ({ ...prev, enabled: false }));
+    }
+  };
 
   /** 更新 SSH 顶层字段（如 enabled） */
   const updateSsh = (patch: Partial<SshConfig>) =>
@@ -309,9 +320,7 @@ export function ConnectionDialog() {
                   <Label>{t("connection.connectionType")}</Label>
                   <Select
                     value={connectionType}
-                    onValueChange={(val) =>
-                      setConnectionType(val as ConnectionType)
-                    }
+                    onValueChange={handleConnectionTypeChange}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue />
@@ -418,14 +427,20 @@ export function ConnectionDialog() {
                 <div className="flex items-center gap-2">
                   <Switch
                     id="ssh-enable"
-                    checked={ssh.enabled}
+                    checked={isSshSupported && ssh.enabled}
+                    disabled={!isSshSupported}
                     onCheckedChange={(v) => updateSsh({ enabled: v })}
                   />
                   <Label htmlFor="ssh-enable">
                     {t("connection.enableSsh")}
                   </Label>
                 </div>
-                {ssh.enabled && (
+                {!isSshSupported && (
+                  <p className="text-sm text-muted-foreground">
+                    {t("connection.sshStandaloneOnly")}
+                  </p>
+                )}
+                {isSshSupported && ssh.enabled && (
                   <SshHopList
                     hops={ssh.hops}
                     onChange={setHops}
@@ -868,6 +883,9 @@ function HopCard({
   onMoveDown?: () => void;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
+  const [isSshPasswordVisible, setIsSshPasswordVisible] = useState(false);
+  const [isPassphraseVisible, setIsPassphraseVisible] = useState(false);
+
   // 标签：单跳=唯一跳板；多跳：第 1 跳=入口（直连）、最后一跳=出口（→ Redis）、中间=中转 #N
   const roleLabel =
     total === 1
@@ -983,14 +1001,13 @@ function HopCard({
 
       {/* password 或 keyPath + passphrase */}
       {hop.authType === "password" ? (
-        <div className="space-y-2">
-          <Label>{t("connection.sshPassword")}</Label>
-          <Input
-            value={hop.password || ""}
-            onChange={(e) => onPatch({ password: e.target.value })}
-            type="password"
-          />
-        </div>
+        <PasswordInput
+          label={t("connection.sshPassword")}
+          value={hop.password || ""}
+          onValueChange={(value) => onPatch({ password: value })}
+          isVisible={isSshPasswordVisible}
+          onToggle={() => setIsSshPasswordVisible((v) => !v)}
+        />
       ) : (
         <>
           <div className="space-y-2">
@@ -1001,14 +1018,13 @@ function HopCard({
               placeholder="~/.ssh/id_rsa"
             />
           </div>
-          <div className="space-y-2">
-            <Label>{t("connection.sshPassphrase")}</Label>
-            <Input
-              value={hop.passphrase || ""}
-              onChange={(e) => onPatch({ passphrase: e.target.value })}
-              type="password"
-            />
-          </div>
+          <PasswordInput
+            label={t("connection.sshPassphrase")}
+            value={hop.passphrase || ""}
+            onValueChange={(value) => onPatch({ passphrase: value })}
+            isVisible={isPassphraseVisible}
+            onToggle={() => setIsPassphraseVisible((v) => !v)}
+          />
         </>
       )}
     </div>

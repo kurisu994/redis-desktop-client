@@ -3,7 +3,7 @@ use crate::config::store::{SshConfig, SshHop};
 use russh::client::{self, AuthResult, Config, Handle, Handler};
 use russh::keys::{load_secret_key, ssh_key, PrivateKeyWithHashAlg};
 use std::net::SocketAddr;
-use std::path::Path;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::Emitter;
@@ -11,9 +11,12 @@ use thiserror::Error;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex as TokioMutex;
 use tokio::task::JoinHandle;
+use tokio::time::timeout;
 
 /// SSH 隧道空闲超时（用于 `russh` 心跳与断连判定）
 const TUNNEL_INACTIVITY: Duration = Duration::from_secs(3600);
+/// TOFU 弹窗等待超时，避免前端未响应时连接流程永久挂起
+const TOFU_DECISION_TIMEOUT: Duration = Duration::from_secs(120);
 
 /// SSH 隧道建立所需上下文 — 由调用方（Tauri 命令层）注入
 pub struct SshTunnelContext {
@@ -159,8 +162,8 @@ impl Handler for KnownHostsValidator {
                     return Ok(false);
                 }
 
-                match rx.await {
-                    Ok(true) => {
+                match timeout(TOFU_DECISION_TIMEOUT, rx).await {
+                    Ok(Ok(true)) => {
                         self.tofu_manager
                             .cleanup(&self.connection_id, self.hop_index);
                         if let Err(e) = self.known_hosts.trust(&self.host, self.port, &fingerprint)
@@ -174,7 +177,21 @@ impl Handler for KnownHostsValidator {
                             Ok(true)
                         }
                     }
-                    _ => {
+                    Ok(_) => {
+                        self.tofu_manager
+                            .cleanup(&self.connection_id, self.hop_index);
+                        if let Ok(mut r) = self.result.lock() {
+                            *r = Some(SshTunnelError::HostKeyRejected);
+                        }
+                        Ok(false)
+                    }
+                    Err(_) => {
+                        log::warn!(
+                            "SSH TOFU 决策超时：{}:{}（第 {} 跳）",
+                            self.host,
+                            self.port,
+                            self.hop_index
+                        );
                         self.tofu_manager
                             .cleanup(&self.connection_id, self.hop_index);
                         if let Ok(mut r) = self.result.lock() {
@@ -208,6 +225,15 @@ impl SshTunnel {
     /// 隧道在本地绑定的 `127.0.0.1:port`，可直接喂给 Redis client 建连
     pub fn local_addr(&self) -> SocketAddr {
         self.local_addr
+    }
+
+    #[cfg(test)]
+    pub(crate) fn test_handle(local_addr: SocketAddr) -> Self {
+        Self {
+            local_addr,
+            accept_task: tokio::spawn(async {}),
+            _sessions: Vec::new(),
+        }
     }
 }
 
@@ -390,11 +416,12 @@ async fn authenticate_hop<H: Handler>(
                 .private_key_path
                 .as_deref()
                 .ok_or(SshTunnelError::KeyNotFound)?;
-            if !Path::new(path).exists() {
+            let expanded_path = expand_home_path(path).ok_or(SshTunnelError::KeyNotFound)?;
+            if !expanded_path.exists() {
                 return Err(SshTunnelError::KeyNotFound);
             }
             let passphrase = hop.passphrase.as_deref().filter(|s| !s.is_empty());
-            let key = load_secret_key(path, passphrase).map_err(|e| {
+            let key = load_secret_key(&expanded_path, passphrase).map_err(|e| {
                 let msg = e.to_string().to_lowercase();
                 if msg.contains("passphrase")
                     || msg.contains("decrypt")
@@ -426,6 +453,37 @@ async fn authenticate_hop<H: Handler>(
     }
 }
 
+fn expand_home_path(path: &str) -> Option<PathBuf> {
+    if path == "~" {
+        return home_dir();
+    }
+    if let Some(rest) = path.strip_prefix("~/").or_else(|| path.strip_prefix("~\\")) {
+        return home_dir().map(|home| home.join(rest));
+    }
+    Some(PathBuf::from(path))
+}
+
+fn home_dir() -> Option<PathBuf> {
+    #[cfg(windows)]
+    {
+        std::env::var_os("USERPROFILE")
+            .map(PathBuf::from)
+            .or_else(|| {
+                let drive = std::env::var_os("HOMEDRIVE")?;
+                let path = std::env::var_os("HOMEPATH")?;
+                Some(PathBuf::from(format!(
+                    "{}{}",
+                    drive.to_string_lossy(),
+                    path.to_string_lossy()
+                )))
+            })
+    }
+    #[cfg(not(windows))]
+    {
+        std::env::var_os("HOME").map(PathBuf::from)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -443,6 +501,20 @@ mod tests {
         assert_eq!(
             SshTunnelError::HostKeyRejected.i18n_key(),
             "error.ssh.host_key_rejected"
+        );
+    }
+
+    #[test]
+    fn expand_home_path_supports_tilde_prefix() {
+        let home = home_dir().expect("测试环境应有 home 目录");
+        assert_eq!(expand_home_path("~").as_deref(), Some(home.as_path()));
+        assert_eq!(
+            expand_home_path("~/.ssh/id_rsa"),
+            Some(home.join(".ssh/id_rsa"))
+        );
+        assert_eq!(
+            expand_home_path("/tmp/id_rsa"),
+            Some(PathBuf::from("/tmp/id_rsa"))
         );
     }
 }

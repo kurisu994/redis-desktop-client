@@ -11,7 +11,8 @@
 - **状态管理**：Zustand 5.x
 - **国际化**：i18next + react-i18next（中/英）
 - **图标**：lucide-react
-- **后端**：Rust (Edition 2021) + Tokio + redis-rs
+- **后端**：Rust (Edition 2021) + Tokio + redis-rs + russh
+- **高级连接**：SSH 隧道（N 跳、known_hosts + TOFU，当前仅 Standalone）、SSL/TLS、Sentinel、Cluster
 - **值编辑器**：原生 textarea + JSON 高亮叠层 + Hex dump（按格式切换）
 - **自动更新**：Tauri Updater Plugin（Ed25519 签名校验，支持 HTTP/HTTPS 更新代理）
 
@@ -82,6 +83,7 @@ src/                        # 前端源码
 │   ├── error-boundary.tsx  # 错误边界
 │   ├── command-palette.tsx # ⌘K 命令面板
 │   ├── update-dialog.tsx   # 应用更新弹窗
+│   ├── ssh-tofu-dialog.tsx # SSH 首次连接指纹确认弹窗
 │   ├── confirm-danger-dialog.tsx # 删除/批量删除/FLUSHDB 等危险操作确认
 │   ├── ui/                 # shadcn/ui 基础组件（18 个）
 │   ├── layout/             # 布局组件（TitleBar, Sidebar, TabBar, Settings 等）
@@ -91,7 +93,7 @@ src/                        # 前端源码
 │   ├── connection/         # 连接对话框（含导入导出）
 │   ├── monitor/            # 服务器监控（INFO, 实时图表, 慢查询, MONITOR 日志）
 │   └── pubsub/             # 发布订阅
-├── hooks/                  # 自定义 Hooks（全局快捷键、拖拽排序、更新检查）
+├── hooks/                  # 自定义 Hooks（全局快捷键、拖拽排序、更新检查、SSH TOFU 监听）
 ├── lib/                    # 工具函数（Tauri IPC 封装 + 更新代理设置 + cn 工具）
 ├── stores/                 # Zustand 状态仓库（app, connection, browser, cli, monitor, pubsub）
 └── i18n/                   # 国际化配置与翻译文件
@@ -99,9 +101,9 @@ src/                        # 前端源码
 src-tauri/                  # Rust 后端
 ├── src/
 │   ├── lib.rs              # Tauri 入口
-│   ├── commands/           # Tauri Command（connection, keys, values, cli, server, pubsub, data, export）
-│   ├── redis/              # Redis 客户端封装（client, types）
-│   └── config/             # 配置管理（store, encryption）
+│   ├── commands/           # Tauri Command（connection, keys, values, cli, server, pubsub, data, export, ssh）
+│   ├── redis/              # Redis 客户端与 SSH 隧道（client, types, ssh_tunnel）
+│   └── config/             # 配置管理（store, encryption, ssh_known_hosts）
 └── tauri.conf.json         # Tauri 配置
 
 docs/                       # 项目文档
@@ -109,8 +111,8 @@ docs/                       # 项目文档
 └── DEVELOPMENT_PLAN.md     # 开发计划
 
 AGENTS.md                   # AI 助手协作规范
-CLAUDE.md                   # Claude/GStack 协作规范
 CHANGELOG.md                # 变更日志
+memory-bank/                # 项目长期记忆与动态上下文
 ```
 
 ## 安装

@@ -74,6 +74,9 @@ fn validate_connection_config(config: &ConnectionConfig) -> Result<(), String> {
     }
     if let Some(ref ssh) = config.ssh {
         if ssh.enabled {
+            if conn_type != "standalone" {
+                return Err("error.ssh.unsupported_for_cluster_sentinel".to_string());
+            }
             if ssh.hops.is_empty() {
                 return Err("SSH 隧道至少需要 1 个跳板/终点主机".to_string());
             }
@@ -388,6 +391,20 @@ mod tests {
             hops: vec![ssh_hop_password("jump.example.com")],
         });
         assert!(validate_connection_config(&cfg).is_ok());
+    }
+
+    #[test]
+    fn validate_rejects_ssh_enabled_for_cluster_or_sentinel() {
+        for conn_type in ["cluster", "sentinel"] {
+            let mut cfg = base_config();
+            cfg.connection_type = Some(conn_type.into());
+            cfg.ssh = Some(SshConfig {
+                enabled: true,
+                hops: vec![ssh_hop_password("jump.example.com")],
+            });
+            let err = validate_connection_config(&cfg).unwrap_err();
+            assert_eq!(err, "error.ssh.unsupported_for_cluster_sentinel");
+        }
     }
 
     #[test]

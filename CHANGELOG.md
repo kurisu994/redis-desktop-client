@@ -10,6 +10,14 @@
 
 ### 🐛 修复
 
+#### SSH 发布前稳定性与体验修复
+
+- 统一 SSH + Sentinel/Cluster 的前后端契约：当前阶段只允许 Standalone 连接启用 SSH，保存、测试和真实连接路径都会明确拒绝非 Standalone SSH。
+- TOFU 首次连接确认增加 120 秒超时和 pending 清理，避免前端未响应时连接测试或连接流程永久挂起。
+- 私钥路径支持 `~`、`~/...`、`~\...` 展开，用户可直接填写 `~/.ssh/id_rsa`。
+- 同一连接从 SSH 改为非 SSH 后重连时会清理旧 SSH tunnel，避免遗留跳板会话。
+- SSH 密码认证和私钥 passphrase 输入框新增显示/隐藏按钮。
+
 #### IPC 类型字段名 silent bug
 
 - 修复前端 camelCase 与后端 snake_case 字段名不匹配导致 Sentinel / Cluster / TLS 配置无法被持久化的旧问题（因相关字段为 `Option<T>` + `serde(default)` 兜底，反序列化静默失败而非报错）：

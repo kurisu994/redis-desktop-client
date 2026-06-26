@@ -11,17 +11,18 @@ Redis 是后端服务最广泛使用的内存数据库，但官方未提供 GUI 
 
 ## 特殊约束
 
-| 约束维度       | 要求                                                                                                                  |
-| -------------- | --------------------------------------------------------------------------------------------------------------------- |
-| 安全 — 密码    | 连接密码本地 **AES-256-GCM 加密**存储；Master Key 自动生成并保存到独立 `master-key` 文件。SSH 私钥只存路径不存内容。 |
-| 安全 — 操作    | 删除 Key、批量删除、FLUSHDB / FLUSHALL 等危险操作必须经过统一 `ConfirmDangerDialog` 二次确认；FLUSH 类需输入确认文本。 |
-| 安全 — 更新    | 应用更新包必须经 Ed25519 签名校验（公钥已硬编码到 `tauri.conf.json`），更新源固定为 GitHub Releases `latest.json`。   |
-| 性能 — 浏览   | Key 列表必须使用 SCAN 分页 + react-virtuoso 虚拟滚动；Hash/List/Set/ZSet/Stream 表格服务端分页（每页 200 条）。       |
-| 性能 — 大值   | String > 1MB 必须先预览前 1KB 再按需完整加载；Hex dump 最大 256KB 后截断提示；Monaco Editor 大值禁用高开销特性。       |
-| 跨平台 — 快捷键 | 必须使用 ⌘/Ctrl 兼容写法（`Cmd/Ctrl + X`），Tauri API 统一抽象平台差异。                                            |
-| 国际化         | 所有 UI 文案必须走 i18n key，禁止硬编码中文/英文；新增 key 需同步 `en-US.json` 和 `zh-CN.json`，`just i18n-check` 校验。 |
-| CSP            | 严格 CSP：`script-src 'self'`、`connect-src 'self'`，禁止远程脚本和远程图片（仅允许 data: / blob:）。                |
-| 错误信息       | Rust 后端错误信息返回 **i18n key**（而非语言文本），由前端翻译展示。                                                  |
+| 约束维度        | 要求                                                                                                                                             |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 安全 — 密码     | 连接密码、SSH 密码和私钥 passphrase 本地 **AES-256-GCM 加密**存储；Master Key 自动生成并保存到独立 `master-key` 文件。SSH 私钥只存路径不存内容。 |
+| 安全 — SSH      | SSH known_hosts 指纹独立加密存储；首次连接通过 TOFU 弹窗确认，指纹失配硬拒绝。当前 SSH 仅支持 Standalone 连接。                                  |
+| 安全 — 操作     | 删除 Key、批量删除、FLUSHDB / FLUSHALL 等危险操作必须经过统一 `ConfirmDangerDialog` 二次确认；FLUSH 类需输入确认文本。                           |
+| 安全 — 更新     | 应用更新包必须经 Ed25519 签名校验（公钥已硬编码到 `tauri.conf.json`），更新源固定为 GitHub Releases `latest.json`。                              |
+| 性能 — 浏览     | Key 列表必须使用 SCAN 分页 + react-virtuoso 虚拟滚动；Hash/List/Set/ZSet/Stream 表格服务端分页（每页 200 条）。                                  |
+| 性能 — 大值     | String > 1MB 必须先预览前 1KB 再按需完整加载；Hex dump 最大 256KB 后截断提示；Monaco Editor 大值禁用高开销特性。                                 |
+| 跨平台 — 快捷键 | 必须使用 ⌘/Ctrl 兼容写法（`Cmd/Ctrl + X`），Tauri API 统一抽象平台差异。                                                                         |
+| 国际化          | 所有 UI 文案必须走 i18n key，禁止硬编码中文/英文；新增 key 需同步 `en-US.json` 和 `zh-CN.json`，`just i18n-check` 校验。                         |
+| CSP             | 严格 CSP：`script-src 'self'`、`connect-src 'self'`，禁止远程脚本和远程图片（仅允许 data: / blob:）。                                            |
+| 错误信息        | Rust 后端错误信息返回 **i18n key**（而非语言文本），由前端翻译展示。                                                                             |
 
 ## 核心用户流
 
@@ -36,12 +37,12 @@ Redis 是后端服务最广泛使用的内存数据库，但官方未提供 GUI 
     ▼
 [连接对话框 Tabs]
     ├── General: host/port/password/db/alias
-    ├── SSH Tunnel: ssh host/port/auth (UI 就绪)
-    └── Advanced: TLS / Sentinel / Cluster
+    ├── SSH Tunnel: N 跳、密码/密钥认证、known_hosts + TOFU（仅 Standalone）
+    └── Advanced: TLS / Sentinel / Cluster（当前不支持叠加 SSH）
     │
     ▼ 点击「测试」── PING 验证 + 延迟反馈
     │
-    ▼ 点击「保存」── 密码 AES-256-GCM 加密 → connections.json
+    ▼ 点击「保存」── Redis/SSH 密码 AES-256-GCM 加密 → connections.json
     │
     ▼ 连接列表展示，状态指示器（绿/灰/黄）
     │ 双击连接 / 右键「连接」
@@ -114,6 +115,7 @@ Monitor 页面 Tabs
 ## 数据安全约束
 
 - 不记录密码、Master Key、私钥内容到日志。
+- 不允许在 Sentinel / Cluster 连接上启用 SSH；后续支持需单独设计多节点隧道协调。
 - `.env`、签名密钥、`master-key` 文件不进入版本控制（`.gitignore` 已配置）。
 - 修改更新、文件系统、进程调用、Redis 连接逻辑时，PR 描述必须说明安全影响（AGENTS.md 要求）。
 - Tauri capabilities 最小权限：仅 `default.json` 中已批准的权限可用，新增需保持最小范围。

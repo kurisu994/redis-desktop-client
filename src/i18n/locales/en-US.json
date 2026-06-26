@@ -66,6 +66,7 @@
     "sentinelMode": "Sentinel",
     "clusterMode": "Cluster",
     "enableSsh": "Enable SSH Tunnel",
+    "sshStandaloneOnly": "SSH tunnels currently support Standalone connections only. Sentinel/Cluster is not available yet.",
     "sshHost": "SSH Host",
     "sshPort": "SSH Port",
     "sshUsername": "SSH Username",

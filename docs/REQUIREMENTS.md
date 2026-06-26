@@ -8,19 +8,19 @@
 
 ### 1.2 技术栈
 
-| 层级         | 技术                                    | 说明                                                                 |
-| ------------ | --------------------------------------- | -------------------------------------------------------------------- |
-| 桌面框架     | **Tauri v2**                            | Rust 后端，负责 Redis 连接管理、数据操作、系统集成                   |
+| 层级         | 技术                                      | 说明                                                                 |
+| ------------ | ----------------------------------------- | -------------------------------------------------------------------- |
+| 桌面框架     | **Tauri v2**                              | Rust 后端，负责 Redis 连接管理、数据操作、系统集成                   |
 | 前端框架     | **Next.js 16.1** (App Router + Turbopack) | React 19.2 前端，负责 UI 渲染与交互逻辑                              |
-| UI 组件库    | **shadcn/ui**                           | 基于 Radix UI + Tailwind CSS 的组件库，提供美观一致的界面            |
-| 样式         | **Tailwind CSS v4**                     | CSS-first 配置模式                                                   |
-| 图标         | **lucide-react**                        | React SVG 图标组件库                                                 |
-| 值编辑器     | **内置多格式值编辑器**                  | 原生 textarea + JSON 高亮叠层 + Hex dump，降低依赖并保留系统输入行为 |
-| Redis 客户端 | **redis-rs**                            | Rust 生态的 Redis 客户端库（tokio 异步）                             |
-| 状态管理     | **Zustand**                             | 轻量级前端状态管理                                                   |
-| 国际化       | **i18next** + **react-i18next**         | 前端国际化框架，支持中/英文                                          |
-| 数据持久化   | **Tauri Store Plugin**                  | 本地存储连接配置等数据                                               |
-| 任务管理     | **just**                                | 跨平台命令运行器，统一项目常用命令入口                               |
+| UI 组件库    | **shadcn/ui**                             | 基于 Radix UI + Tailwind CSS 的组件库，提供美观一致的界面            |
+| 样式         | **Tailwind CSS v4**                       | CSS-first 配置模式                                                   |
+| 图标         | **lucide-react**                          | React SVG 图标组件库                                                 |
+| 值编辑器     | **内置多格式值编辑器**                    | 原生 textarea + JSON 高亮叠层 + Hex dump，降低依赖并保留系统输入行为 |
+| Redis 客户端 | **redis-rs**                              | Rust 生态的 Redis 客户端库（tokio 异步）                             |
+| 状态管理     | **Zustand**                               | 轻量级前端状态管理                                                   |
+| 国际化       | **i18next** + **react-i18next**           | 前端国际化框架，支持中/英文                                          |
+| 数据持久化   | **Tauri Store Plugin**                    | 本地存储连接配置等数据                                               |
+| 任务管理     | **just**                                  | 跨平台命令运行器，统一项目常用命令入口                               |
 
 ### 1.3 目标平台
 
@@ -45,8 +45,11 @@
 #### 2.1.2 高级连接
 
 - **SSH 隧道连接**：支持通过 SSH 跳板机连接 Redis
-  - 支持密码认证和密钥认证
+  - 基于 `russh` 的纯 Rust 实现，支持 N 跳串联（OpenSSH ProxyJump 等效）
+  - 支持密码认证和密钥认证，密码和 passphrase 可显示/隐藏
   - 支持自定义 SSH 端口
+  - 支持 `known_hosts` 校验与 TOFU（首次连接确认），未知主机需确认指纹后保存
+  - 当前阶段 SSH 仅接入 Standalone 连接；Sentinel / Cluster over SSH 需后续单独设计多节点隧道协调
 - **SSL/TLS 连接**：支持 TLS 加密连接
   - 支持自签名证书
   - 支持 CA 证书 / 客户端证书配置
@@ -201,7 +204,8 @@
 ### 3.2 安全要求
 
 - 连接密码本地加密存储
-- SSH 密钥文件路径存储，不复制密钥内容
+- SSH 密码和私钥 passphrase 本地加密存储；SSH 密钥文件只存路径，不复制密钥内容
+- SSH known_hosts 指纹独立存储并加密，指纹失配时硬拒绝连接
 - 支持 TLS 加密连接
 - 删除/批量操作需二次确认
 - 敏感操作（FLUSHDB/FLUSHALL）需输入确认文字
@@ -306,6 +310,7 @@ src/
 │   ├── confirm-danger-dialog.tsx # 删除/批量删除/FLUSHDB 等危险操作确认
 │   ├── command-palette.tsx # ⌘K 常用命令面板
 │   ├── update-dialog.tsx   # 应用更新提示弹窗
+│   ├── ssh-tofu-dialog.tsx # SSH 首次连接指纹确认弹窗
 │   ├── ui/                 # shadcn/ui 基础组件
 │   ├── layout/             # 布局组件（TitleBar, Sidebar, TabBar, Settings 等）
 │   ├── browser/            # 数据浏览器组件（含 viewers/value-format-editor）
@@ -316,7 +321,8 @@ src/
 ├── hooks/                  # 自定义 Hooks
 │   ├── use-global-shortcuts.ts  # 全局快捷键注册
 │   ├── use-connection-drag.ts   # 连接列表拖拽排序
-│   └── use-update-checker.ts    # 应用更新检查逻辑
+│   ├── use-update-checker.ts    # 应用更新检查逻辑
+│   └── use-ssh-tofu-listener.ts # SSH TOFU 事件监听与弹窗队列
 ├── lib/                    # 工具函数
 │   ├── tauri-api.ts        # Tauri IPC 封装（含浏览器环境 mock）
 │   ├── update-settings.ts  # 更新代理设置
@@ -325,7 +331,6 @@ src/
 ├── i18n/                   # 国际化资源
 │   ├── index.ts            # i18next 配置
 │   └── locales/            # 翻译文件（en-US.json, zh-CN.json）
-└── types/                  # 类型定义（预留）
 ```
 
 ### 4.2 后端目录结构 (Rust)
@@ -344,12 +349,15 @@ src-tauri/
 │   │   ├── cli.rs          # CLI 命令
 │   │   ├── pubsub.rs       # Pub/Sub 命令
 │   │   ├── data.rs         # Key 数据导入/导出命令
-│   │   └── export.rs       # 连接配置导入/导出命令
+│   │   ├── export.rs       # 连接配置导入/导出命令
+│   │   └── ssh.rs          # SSH TOFU 决策与 known_hosts 管理命令
 │   ├── redis/              # Redis 操作封装
 │   │   ├── client.rs       # Redis 客户端管理（连接池）
+│   │   ├── ssh_tunnel.rs   # russh 隧道、N 跳串联、known_hosts 校验
 │   │   └── types.rs        # 数据类型定义
 │   └── config/             # 配置管理
 │       ├── store.rs        # 连接配置持久化（AES-256-GCM 加密）
+│       ├── ssh_known_hosts.rs # SSH 已信任主机指纹存储 + TOFU pending 管理
 │       └── encryption.rs   # 加密模块
 ├── Cargo.toml
 └── tauri.conf.json
@@ -402,18 +410,18 @@ src-tauri/
 
 ### 5.3 快捷键
 
-| 快捷键         | 功能            |
-| -------------- | --------------- |
-| `Cmd/Ctrl + N` | 新建连接        |
-| `Cmd/Ctrl + T` | 新建 CLI Tab    |
-| `Cmd/Ctrl + F` | 搜索/过滤 Key   |
-| `Cmd/Ctrl + R` | 刷新当前视图    |
-| `Cmd/Ctrl + K` | 打开命令面板    |
-| `Cmd/Ctrl + D` | 删除选中 Key    |
-| `Cmd/Ctrl + S` | 保存编辑        |
-| `Cmd/Ctrl + ,` | 打开设置        |
-| `F5`           | 刷新 Key 列表   |
-| `Delete`       | 删除选中项      |
+| 快捷键         | 功能          |
+| -------------- | ------------- |
+| `Cmd/Ctrl + N` | 新建连接      |
+| `Cmd/Ctrl + T` | 新建 CLI Tab  |
+| `Cmd/Ctrl + F` | 搜索/过滤 Key |
+| `Cmd/Ctrl + R` | 刷新当前视图  |
+| `Cmd/Ctrl + K` | 打开命令面板  |
+| `Cmd/Ctrl + D` | 删除选中 Key  |
+| `Cmd/Ctrl + S` | 保存编辑      |
+| `Cmd/Ctrl + ,` | 打开设置      |
+| `F5`           | 刷新 Key 列表 |
+| `Delete`       | 删除选中项    |
 
 ---
 

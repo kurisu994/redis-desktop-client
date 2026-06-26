@@ -66,6 +66,7 @@
     "sentinelMode": "Sentinel 模式",
     "clusterMode": "Cluster 集群模式",
     "enableSsh": "启用 SSH 隧道",
+    "sshStandaloneOnly": "当前阶段 SSH 隧道仅支持单机模式，Sentinel/Cluster 暂不可用。",
     "sshHost": "SSH 主机",
     "sshPort": "SSH 端口",
     "sshUsername": "SSH 用户名",

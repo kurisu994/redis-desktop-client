@@ -72,11 +72,20 @@ impl RedisClientManager {
         // 锁顺序：先 clients 再 tunnels（与 disconnect 一致避免死锁）
         let mut clients = self.clients.lock().await;
         clients.insert(config.id.clone(), conn);
-        if let Some(t) = tunnel {
-            let mut tunnels = self.tunnels.lock().await;
-            tunnels.insert(config.id.clone(), t);
-        }
+        self.replace_tunnel(config.id.clone(), tunnel).await;
         Ok(())
+    }
+
+    async fn replace_tunnel(&self, id: String, tunnel: Option<SshTunnel>) {
+        let mut tunnels = self.tunnels.lock().await;
+        match tunnel {
+            Some(t) => {
+                tunnels.insert(id, t);
+            }
+            None => {
+                tunnels.remove(&id);
+            }
+        }
     }
 
     /// 断开连接并从池中移除（同时释放 SSH 隧道）
@@ -195,4 +204,22 @@ pub async fn open_ssh_tunnel_if_needed(
         .await
         .map_err(|e| e.i18n_key().to_string())?;
     Ok(Some(tunnel))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn clear_tunnel_for_connection_removes_stale_entry() {
+        let manager = RedisClientManager::new();
+        manager.tunnels.lock().await.insert(
+            "conn-1".into(),
+            SshTunnel::test_handle("127.0.0.1:0".parse().unwrap()),
+        );
+
+        manager.replace_tunnel("conn-1".into(), None).await;
+
+        assert!(!manager.tunnels.lock().await.contains_key("conn-1"));
+    }
 }

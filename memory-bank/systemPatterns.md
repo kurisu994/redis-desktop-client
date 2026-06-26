@@ -18,8 +18,8 @@
 │  │                Rust Backend (tokio + redis-rs 0.29)       │   │
 │  │  ┌────────────┐  ┌────────────┐  ┌─────────────────────┐ │   │
 │  │  │  commands/ │  │   redis/   │  │      config/        │ │   │
-│  │  │ 9 modules  │  │  client +  │  │  AES-256-GCM Store  │ │   │
-│  │  │            │  │   types    │  │  + Master Key       │ │   │
+│  │  │ 10 modules │  │ client +   │  │ AES-256-GCM Store   │ │   │
+│  │  │            │  │ ssh_tunnel │  │ + Master Key        │ │   │
 │  │  └────────────┘  └────────────┘  └─────────────────────┘ │   │
 │  │  Plugins: store, dialog, fs, opener, process, updater    │   │
 │  └────────────────────┬─────────────────────────────────────┘   │
@@ -94,11 +94,13 @@ redis-desktop-client/
 │   │   ├── error-boundary.tsx
 │   │   ├── command-palette.tsx       # ⌘K
 │   │   ├── confirm-danger-dialog.tsx
-│   │   └── update-dialog.tsx
+│   │   ├── update-dialog.tsx
+│   │   └── ssh-tofu-dialog.tsx        # SSH 首次连接指纹确认
 │   ├── hooks/
 │   │   ├── use-global-shortcuts.ts
 │   │   ├── use-connection-drag.ts
-│   │   └── use-update-checker.ts
+│   │   ├── use-update-checker.ts
+│   │   └── use-ssh-tofu-listener.ts   # SSH TOFU 事件监听
 │   ├── stores/                       # Zustand × 6
 │   │   ├── app-store.ts              # Tab 管理 / 视图模式 / 主题 / 语言
 │   │   ├── connection-store.ts       # 连接列表 / 当前连接 / dialog 状态
@@ -119,7 +121,7 @@ redis-desktop-client/
 │   ├── src/
 │   │   ├── main.rs                   # binary 入口
 │   │   ├── lib.rs                    # 插件注册 + Command 注册
-│   │   ├── commands/                 # 9 个 Tauri Command 模块
+│   │   ├── commands/                 # 10 个 Tauri Command 模块
 │   │   │   ├── mod.rs
 │   │   │   ├── connection.rs         # connect/disconnect/save/list/test
 │   │   │   ├── keys.rs               # SCAN / 新建 / 重命名 / 复制 / 删除 / TTL
@@ -128,15 +130,18 @@ redis-desktop-client/
 │   │   │   ├── server.rs             # get_server_info / start_monitor / slowlog
 │   │   │   ├── pubsub.rs             # subscribe/unsubscribe/publish
 │   │   │   ├── data.rs               # Key 数据导入导出
-│   │   │   └── export.rs             # 连接配置导入导出
+│   │   │   ├── export.rs             # 连接配置导入导出
+│   │   │   └── ssh.rs                # TOFU 决策 + known_hosts 管理
 │   │   ├── redis/
 │   │   │   ├── mod.rs
 │   │   │   ├── client.rs             # RedisClientManager 连接池
+│   │   │   ├── ssh_tunnel.rs         # russh N 跳隧道 + known_hosts 校验
 │   │   │   └── types.rs              # IpcResponse<T> / 数据类型
 │   │   └── config/
 │   │       ├── mod.rs
 │   │       ├── store.rs              # ConnectionStore（connections.json）
-│   │       └── encryption.rs         # AES-256-GCM
+│   │       ├── encryption.rs         # AES-256-GCM
+│   │       └── ssh_known_hosts.rs    # 加密指纹存储 + TOFU pending 管理
 │   ├── capabilities/default.json     # Tauri 权限清单
 │   ├── icons/                        # 应用图标
 │   ├── Cargo.toml
@@ -180,13 +185,16 @@ redis-desktop-client/
 - **错误信息走 i18n key**：Rust 端不返回语言文本，返回 i18n key 由前端翻译。
 - **连接池**：`RedisClientManager` 用 `HashMap<connection_id, MultiplexedConnection> + Mutex` 管理多连接；Pub/Sub 使用**独立连接**（非复用），通过 `redis://pubsub` Event 向前端推送消息。
 - **加密**：密码用 **AES-256-GCM** 加密；Master Key 在首次启动生成并持久化到独立 `master-key` 文件，不与 `connections.json` 混存。
+- **SSH 隧道**：`redis/ssh_tunnel.rs` 基于 `russh` 建立 N 跳隧道；阶段内仅 Standalone 连接可启用 SSH，Sentinel / Cluster over SSH 后续独立设计。
+- **SSH 主机信任**：`config/ssh_known_hosts.rs` 独立管理加密指纹和 TOFU pending 请求；未知主机通过 `ssh:tofu-request` 事件让前端确认，指纹失配硬拒绝。
 - **异步**：所有 Redis 操作走 `tokio` 异步运行时；后台监控/订阅任务通过 `tauri::async_runtime::spawn`，注意任务句柄管理避免泄漏（v0.2.3 修复过 MONITOR 任务泄漏）。
 - **TLS 切换**：`client.rs` 根据连接配置自动切换 `redis://` / `rediss://`。
-- **Tauri Event 通道**：`redis://pubsub`（Pub/Sub 消息）、`redis://monitor`（实时指标）、`redis://import-progress` / `redis://export-progress`（导入导出进度）、`redis://update-progress`（更新下载进度）。
+- **Tauri Event 通道**：`redis://pubsub`（Pub/Sub 消息）、`redis://monitor`（实时指标）、`redis://import-progress` / `redis://export-progress`（导入导出进度）、`redis://update-progress`（更新下载进度）、`ssh:tofu-request`（SSH 首次连接指纹确认）。
 
 ## 数据存储
 
 - **连接配置**：`{AppData}/connections.json`（密码 AES-256-GCM 加密）。
+- **SSH known_hosts**：`{AppData}/ssh-known-hosts.json`（指纹 AES-256-GCM 加密）。
 - **Master Key**：`{AppData}/master-key`（独立文件，应用启动时自动生成）。
 - **用户偏好**：`localStorage`（主题、语言、命名空间分隔符、自动更新开关、更新代理）。
 - **Tauri Store**：`@tauri-apps/plugin-store` 用于其它需要持久化的状态。
@@ -204,10 +212,11 @@ redis-desktop-client/
 - ❌ **不要在表格视图全量加载**：Hash/List/Set/ZSet/Stream 必须服务端分页（每页 200 条）。
 - ❌ **不要扩展 Tauri capabilities 超过最小范围**：新增权限需在 PR 描述说明安全影响。
 - ❌ **不要提交 .env、签名密钥、`master-key`**：已在 `.gitignore`；构建时通过 `set dotenv-load` 由 justfile 加载。
+- ❌ **不要让 Sentinel / Cluster 连接启用 SSH**：当前只支持 Standalone over SSH，多节点隧道协调需单独立项。
 - ❌ **不要为前端写测试**：暂未配置前端测试框架，仅 Rust 端 `cargo test`；前端行为变更靠 `just lint` + `just dev` 手动验证。
 - ❌ **不要在数据库设计中使用外键**：本项目无数据库，但全局规则同样适用——表关联由代码逻辑、索引和校验控制。
 - ❌ **不要在输入框开启 autoCapitalize / autoCorrect / spellCheck**：全局关闭，避免改写 Key 名/值。
-- ❌ **不要使用 `find` / `grep` / `cat` / `ls`**：开发协作中用 `fd` / `rg` / `bat` / `eza` 替代（CLAUDE.md 全局规则）。
+- ❌ **不要使用 `find` / `grep` / `cat` / `ls`**：开发协作中用 `fd` / `rg` / `bat` / `eza` 替代（AGENTS.md 全局规则）。
 
 ## 关联记忆
 

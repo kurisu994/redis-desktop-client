@@ -6,14 +6,14 @@
 
 ## 产品标识
 
-| 项目                  | 值                                                       |
-| --------------------- | -------------------------------------------------------- |
-| 产品名（Product Name） | Redis Desktop Client                                     |
-| 应用标识（Bundle ID）  | `com.redis-desktop-client`                               |
-| 当前版本              | **0.2.8**（2026-05-23 发布）                              |
-| 仓库地址              | https://github.com/kurisu994/redis-desktop-client        |
-| License               | MIT                                                      |
-| 作者                  | lucifer994@gmail.com                                     |
+| 项目                   | 值                                                |
+| ---------------------- | ------------------------------------------------- |
+| 产品名（Product Name） | Redis Desktop Client                              |
+| 应用标识（Bundle ID）  | `com.redis-desktop-client`                        |
+| 当前版本               | **0.2.8**（2026-05-23 发布）                      |
+| 仓库地址               | https://github.com/kurisu994/redis-desktop-client |
+| License                | MIT                                               |
+| 作者                   | lucifer994@gmail.com                              |
 
 ## 目标用户
 
@@ -23,7 +23,7 @@
 
 ## 范围（What's In）
 
-- **连接管理**：基础连接、SSL/TLS、Sentinel、Cluster、SSH（UI 已就绪，后端隧道待 `russh` 接入）、加密存储、导入导出。
+- **连接管理**：基础连接、SSL/TLS、Sentinel、Cluster、SSH（`russh` N 跳隧道，known_hosts + TOFU，当前仅 Standalone 接入）、加密存储、导入导出。
 - **数据浏览**：树形 / 平铺 Key 浏览器；7 种数据类型（String / Hash / List / Set / ZSet / Stream / RedisJSON）全量增删改查；TTL、内存、编码方式展示。
 - **多格式值编辑器**：原生 textarea + JSON 高亮叠层 + Hex dump，支持 Text/JSON/XML/YAML/HTML/CSS/JS/TS/SQL/Markdown/Hex 切换。
 - **CLI 控制台**：内置自定义终端，100+ 命令补全、多 Tab、命令历史。
@@ -36,7 +36,7 @@
 ## 范围（What's Out）
 
 - ❌ macOS / Windows 代码签名（待证书）。
-- ❌ SSH 隧道后端实现（仅 UI 表单，依赖外部隧道运行时）。
+- ❌ Cluster / Sentinel over SSH（多节点隧道协调复杂，后续独立立项）。
 - ❌ 连接分组（文件夹拖拽组织）。
 - ❌ 前端单元测试框架（仅 Rust 端 `cargo test`）。
 
@@ -44,7 +44,7 @@
 
 - 桌面安装包：macOS `.dmg`（Apple Silicon）、Windows `.exe` / `.msi`、Linux `.AppImage` / `.deb` / `.rpm`。
 - GitHub Releases 自动发布 + `latest.json` 更新清单（Tauri Updater 消费）。
-- 文档：`README.md`、`AGENTS.md`、`CLAUDE.md`、`docs/REQUIREMENTS.md`、`docs/DEVELOPMENT_PLAN.md`、`CHANGELOG.md`。
+- 文档：`README.md`、`AGENTS.md`、`docs/REQUIREMENTS.md`、`docs/DEVELOPMENT_PLAN.md`、`CHANGELOG.md`、`memory-bank/`。
 
 ## 关联文档
 
