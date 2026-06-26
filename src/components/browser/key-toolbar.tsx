@@ -30,11 +30,44 @@ import { KeyDialog } from "./key-dialog";
 import { ExportDialog } from "./export-dialog";
 import { ImportDialog } from "./import-dialog";
 
+const DEFAULT_VISIBLE_DB_COUNT = 16;
+
 interface KeyToolbarProps {
   onRefresh: () => void;
   onSearch: (pattern?: string) => void;
   onLocateSelectedKey: () => void;
   onKeyCreated: (entry: KeyEntry) => void;
+}
+
+function getVisibleDbNumbers(
+  dbCount: number,
+  dbList: { db: number; size: number }[],
+  selectedDb: number,
+) {
+  const visibleDbs = new Set<number>();
+  const normalizedDbCount = Math.max(0, dbCount);
+  const baseDbCount = Math.min(normalizedDbCount, DEFAULT_VISIBLE_DB_COUNT);
+
+  for (let db = 0; db < baseDbCount; db += 1) {
+    visibleDbs.add(db);
+  }
+
+  // 避免配置了 256 个 DB 的实例把大量空库塞进菜单；高位库只有有数据或已选中时才展示。
+  dbList.forEach((info) => {
+    if (
+      info.size > 0 &&
+      info.db >= DEFAULT_VISIBLE_DB_COUNT &&
+      info.db < normalizedDbCount
+    ) {
+      visibleDbs.add(info.db);
+    }
+  });
+
+  if (selectedDb >= 0 && selectedDb < normalizedDbCount) {
+    visibleDbs.add(selectedDb);
+  }
+
+  return Array.from(visibleDbs).sort((a, b) => a - b);
 }
 
 /** 工具栏 — db 选择器 + 刷新 + 搜索 + 视图切换 + 新建 Key */
@@ -82,14 +115,16 @@ export function KeyToolbar({
   };
 
   // 构建 db 选项列表
-  const dbOptions = Array.from({ length: dbCount }, (_, i) => {
-    const info = dbList.find((d) => d.db === i);
-    return {
-      value: String(i),
-      label: `db${i}`,
-      count: info?.size ?? 0,
-    };
-  });
+  const dbOptions = getVisibleDbNumbers(dbCount, dbList, selectedDb).map(
+    (i) => {
+      const info = dbList.find((d) => d.db === i);
+      return {
+        value: String(i),
+        label: `db${i}`,
+        count: info?.size ?? 0,
+      };
+    },
+  );
 
   return (
     <>

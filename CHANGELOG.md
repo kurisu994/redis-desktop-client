@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### 🐛 修复
+
+- 修复 Redis 实例配置 `databases=256` 时，Data Browser 顶部 DB 下拉展开到 `db255` 的问题；现在默认只展示 `db0` ~ `db15`，并额外保留 `INFO keyspace` 中真实有数据的高位 DB。
+
 ---
 
 ## [0.2.9] — 2026-06-26
