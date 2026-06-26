@@ -5,4 +5,5 @@ pub mod export;
 pub mod keys;
 pub mod pubsub;
 pub mod server;
+pub mod ssh;
 pub mod values;

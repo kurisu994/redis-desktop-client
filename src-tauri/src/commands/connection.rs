@@ -1,11 +1,13 @@
+use crate::config::ssh_known_hosts::{SshKnownHostsStore, SshTofuManager};
 use crate::config::store::{
     ClusterConfig, ConnectionStore, SentinelConfig, SshConfig, StoredConnection, TlsConfig,
 };
 use crate::redis::client::{
     build_redis_url, open_ssh_tunnel_if_needed, sanitize_redis_error, RedisClientManager,
 };
-use crate::redis::ssh_tunnel::SshTunnel;
+use crate::redis::ssh_tunnel::{SshTunnel, SshTunnelContext};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use std::time::Instant;
 use tauri::State;
 
@@ -175,6 +177,9 @@ pub async fn list_connections(
 pub async fn connect_redis(
     store: State<'_, ConnectionStore>,
     pool: State<'_, RedisClientManager>,
+    known_hosts: State<'_, Arc<SshKnownHostsStore>>,
+    tofu_manager: State<'_, Arc<SshTofuManager>>,
+    app_handle: tauri::AppHandle,
     id: String,
 ) -> Result<(), String> {
     let connections = store.load_connections()?;
@@ -183,7 +188,13 @@ pub async fn connect_redis(
         .find(|c| c.id == id)
         .ok_or_else(|| format!("连接 {} 不存在", id))?;
 
-    pool.connect_with_config(config).await
+    let context = SshTunnelContext {
+        known_hosts: Arc::clone(known_hosts.inner()),
+        tofu_manager: Arc::clone(tofu_manager.inner()),
+        app_handle,
+        connection_id: id,
+    };
+    pool.connect_with_config(config, Some(&context)).await
 }
 
 /// 断开 Redis 连接
@@ -197,7 +208,12 @@ pub async fn disconnect_redis(
 
 /// 测试连接 — 根据连接配置执行 PING 并返回延迟
 #[tauri::command]
-pub async fn test_connection(config: ConnectionConfig) -> Result<TestResult, String> {
+pub async fn test_connection(
+    known_hosts: State<'_, Arc<SshKnownHostsStore>>,
+    tofu_manager: State<'_, Arc<SshTofuManager>>,
+    app_handle: tauri::AppHandle,
+    config: ConnectionConfig,
+) -> Result<TestResult, String> {
     validate_connection_config(&config)?;
     let start = Instant::now();
 
@@ -205,6 +221,13 @@ pub async fn test_connection(config: ConnectionConfig) -> Result<TestResult, Str
     let conn_type = config.connection_type.as_deref().unwrap_or("standalone");
     let tls_enabled = config.tls.as_ref().map(|t| t.enabled).unwrap_or(false);
     let scheme = if tls_enabled { "rediss" } else { "redis" };
+
+    let context = SshTunnelContext {
+        known_hosts: Arc::clone(known_hosts.inner()),
+        tofu_manager: Arc::clone(tofu_manager.inner()),
+        app_handle,
+        connection_id: config.id.clone(),
+    };
 
     match conn_type {
         "cluster" => {
@@ -253,6 +276,7 @@ pub async fn test_connection(config: ConnectionConfig) -> Result<TestResult, Str
                 &config.host,
                 config.port,
                 "standalone",
+                Some(&context),
             )
             .await?;
             let (host, port) = match &tunnel {
