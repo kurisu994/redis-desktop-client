@@ -185,6 +185,11 @@ pub struct ConnectionStore {
 }
 
 impl ConnectionStore {
+    /// 获取当前存储使用的 32 字节 Master Key（用于衍生其他加密存储）
+    pub fn master_key(&self) -> [u8; 32] {
+        self.master_key
+    }
+
     /// 初始化连接存储 — 加载或生成 Master Key
     pub fn new(app_data_dir: PathBuf) -> Result<Self, String> {
         let key_path = app_data_dir.join(MASTER_KEY_FILENAME);
