@@ -1,0 +1,4 @@
+# memory-bank: 个人日志只追加，不同人的新增块之间没有真正的冲突点，
+# 交给 git 自动合并即可。共识层（00-*.md / 1X-*.md）刻意不设 union——
+# 那里的冲突代表团队对约定的理解分叉了，必须人工对齐。
+memory-bank/journal/*.md merge=union

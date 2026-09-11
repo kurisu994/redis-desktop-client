@@ -1,10 +1,15 @@
+> 从旧版 progress.md 迁移，里程碑保留在此；后续新的会话流水请写 journal/<开发者>.md
+
 # 进度与版本历史
+
+> ⚠️ 迁移修正：本文件原为旧版 `progress.md`。其中 SSH / TOFU 相关能力曾被记作 0.3.0 / 0.3.1，
+> 实际以 **v0.2.9**（2026-06-26）发布。下表已按 git tag 与 `CHANGELOG.md` 修正。
 
 ## 当前状态
 
-- **最新版本**：v0.2.8（2026-05-23）
+- **最新版本**：v0.2.9（2026-06-26）
 - **开发阶段**：Phase 1 ~ Phase 6 全部完成 ✅；Post-Release 持续打磨期。
-- **当前进行中**：v0.3.1 发布前收尾，重点是 SSH known_hosts + TOFU、Standalone-only 契约、超时清理和文档同步。
+- **当前进行中**：v0.2.9 已发布，含 SSH known_hosts + TOFU、Standalone-only 契约、TOFU 超时清理、`~` 私钥路径展开与文档同步。
 - **遗留待办**（待证书或外部依赖）：macOS 代码签名、Windows 代码签名、连接分组（文件夹）。
 
 ## 开发阶段完成度
@@ -23,8 +28,7 @@
 
 | 版本      | 日期       | 核心变更                                                                                                             |
 | --------- | ---------- | -------------------------------------------------------------------------------------------------------------------- |
-| **0.3.1** | 2026-06-26 | 🔒 SSH known_hosts 校验 + TOFU 首次连接确认；发布前补齐 Standalone-only 契约、TOFU 超时、`~` 私钥路径和 SSH 密码显隐 |
-| **0.3.0** | 2026-06-26 | ✨ SSH 隧道后端（`russh` + N 跳 ProxyJump 等效）+ 连接对话框跳板列表 UI；🐛 IPC 字段名 camelCase 统一修复 silent bug |
+| **0.2.9** | 2026-06-26 | 🔒 SSH known_hosts 校验 + TOFU 首次连接确认；补齐 Standalone-only 契约、TOFU 超时、`~` 私钥路径和 SSH 密码显隐。同版本内含 ✨ SSH 隧道后端（`russh` + N 跳 ProxyJump 等效）+ 连接对话框跳板列表 UI；🐛 IPC 字段名 camelCase 统一修复 silent bug（这两项旧记录误标为 0.3.0 / 0.3.1） |
 | **0.2.8** | 2026-05-23 | 🐛 ReleaseNotesMarkdown 错误边界 + 下载进度重置；更新弹窗稳定性增强                                                  |
 | 0.2.7     | 2026-05-18 | 🔧 Key 过滤改为前端过滤（不再重新 SCAN）+ 空状态提示 + 扫描期间禁用过滤                                              |
 | 0.2.6     | 2026-05-15 | 🔧 Key 树形视图叶子节点缩进对齐                                                                                      |
@@ -103,6 +107,8 @@
 
 ## 关联记忆
 
-- 项目愿景与范围 → [[projectbrief]]
-- 当前会话动态 → [[activeContext]]
-- 架构约定 → [[systemPatterns]]
+> 迁移后旧枢纽已合并，指向见 `memory-bank/README.md` 的路径映射表。
+
+- 项目愿景与范围、业务约束 → `memory-bank/00-project.md`
+- 架构约定 → `memory-bank/10-frontend.md` / `memory-bank/20-backend.md`
+- 技术栈事实 → `memory-bank/30-deps.md` / `memory-bank/31-build-tools.md`

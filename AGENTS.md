@@ -46,4 +46,6 @@
 
 ## AI 会话收尾与记忆银行
 
-每次最终回复前，AI 必须检查本轮是否产生代码变更、重要决策、阻塞或下一步计划；如有，先更新 `memory-bank/activeContext.md`，记录当前状态、活跃文件、已做决策、下一步和阻塞。涉及里程碑、架构调整或长期约定变化时，同步更新 `memory-bank/progress.md`，最后再检查一下是否需要更新 `CHANGELOG.md`。
+每次最终回复前，AI 必须检查本轮是否产生代码变更、重要决策、阻塞或下一步计划；如有，先更新 `memory-bank/active/<branch>.md`（记录目标、验收标准、备注与阻塞），并把流水账追加到 `memory-bank/journal/<dev>.md`。涉及里程碑、架构调整或长期约定变化时，同步更新 `memory-bank/` 共识层文件（`00-project.md` / `1X`/`2X`/`3X-*.md`），最后再检查一下是否需要更新 `CHANGELOG.md`。
+
+记忆银行采用四层结构（共识层 / 任务层 / 个人层 / 归档层），完整写入规则与路径映射表见 `memory-bank/README.md`；`journal/` 只追加不修改历史，每条结尾留空行。
