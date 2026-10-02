@@ -49,6 +49,9 @@ jobs:
       - name: TypeScript type check
         run: pnpm exec tsc --noEmit
 
+      - name: AppImage metadata regression tests
+        run: node --test scripts/check-appimage.test.mjs
+
       - name: Install system dependencies (Linux)
         run: |
           sudo apt-get update
@@ -152,3 +155,7 @@ jobs:
           # 在普通的 CI 流水线中，临时禁用 Updater 包生成，避免因为找不到私钥而构建失败
           args: >-
             --target ${{ matrix.target }} --config '{"bundle": {"createUpdaterArtifacts": false}}'
+
+      - name: Check AppImage metadata (Linux)
+        if: runner.os == 'Linux'
+        run: node scripts/check-appimage.mjs src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage

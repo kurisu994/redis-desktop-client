@@ -32,6 +32,8 @@ paths:
 | `just fmt-rust`      | `cd src-tauri && cargo fmt --all`                                                          |
 | `just test`          | `test-rust`（无前端测试）                                                                  |
 | `just test-rust`     | `cd src-tauri && cargo test --all-features`                                                |
+| `just test-appimage` | Node 原生测试：AppDir 搬迁、绝对/悬空/越界链接和图标元数据                                 |
+| `just check-appimage <path>` | Linux 解包检查 AppImage；也可跨平台检查已解包的 AppDir                           |
 | `just clean`         | `rm -rf out .next && cargo clean`                                                          |
 | `just i18n-check`    | 对比 `en-US.json` 和 `zh-CN.json` 的 key，输出缺失项                                       |
 | `just version <ver>` | 同步更新 `package.json` / `Cargo.toml` / `tauri.conf.json` 版本号                          |

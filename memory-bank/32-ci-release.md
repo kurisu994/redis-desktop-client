@@ -16,12 +16,15 @@ paths:
 - 前端：ESLint + TypeScript 类型检查。
 - 后端：`cargo clippy --all-targets --all-features -- -D warnings` + `cargo test`。
 - 跨平台构建验证：macOS ARM / Intel、Linux、Windows。
+- Lint job 运行 AppImage 元数据回归测试；Linux 构建后在独立临时目录解包，检查 `.DirIcon`、desktop 和图标链接可迁移且可解析。
+- CI 不发布 Release，临时禁用 updater 产物签名。当前无 `workflow_dispatch`；需推送分支并向 `main` 开 PR 触发（仅推非 main 分支不会触发）。
 
 ## Release 流水线（`.github/workflows/release.yml`，Tag 触发）
 
 - 三平台并行 Tauri 构建。
 - 自动生成 `latest.json` 更新清单。
 - 自动创建 GitHub Release 并上传产物。
+- Tauri CLI 固定为 `2.12.0`：首个包含上游 [#15596](https://github.com/tauri-apps/tauri/pull/15596) 的版本，修复 AppImage `.DirIcon`/desktop 的绝对软链接。发版前应确认普通 CI 的 Linux 构建及元数据检查通过；历史已发布包不会因依赖升级自动改变。
 
 ## 版本与发布流程
 
