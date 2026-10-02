@@ -23,3 +23,18 @@
 - 用户在得知需要推送分支、开草稿 PR 才能触发普通 Linux CI 后批准「继续」。本轮授权覆盖提交、推送、草稿 PR 和范围内 CI 修复，不包含合并或发布。
 - GitHub 连接确认为 kurisu994，具有项目 push 权限；将核实 PR head 与实际 CI 提交，并以真实 Linux 构建和最终包解包结果作为验收。
 
+## 2026-10-02 AppImage 真实 Linux CI 验收通过
+
+- GPG 签名提交 `7804e917099d9f2d1fb09407866efa89026c0630` 已推送，草稿 PR：https://github.com/kurisu994/redis-desktop-client/pull/1 。GitHub 确认签名有效，PR head 与 CI head SHA 一致。
+- CI #107 / run 36960317566 completed/success，6 个 job 全绿：Lint、Test、Linux、macOS ARM/Intel、Windows。Rust 31/31，AppImage 元数据回归 6/6。
+- Linux job 110693361147 使用 CLI 2.12.0 实际生成 AppImage；最终包解包检查输出 `AppImage metadata OK`，验证了 .DirIcon 修复，无需追加代码修复。
+- PR 保持 draft/open，未合并、发布或部署；已发布 v0.2.9 未改变，GUI/目录完整收录测试仍需后续进行。
+- 该验收结果已写入 PR 描述与任务报告；这次收尾的 active/journal 追加保留本地，未追加会再次触发完整 CI 的文档提交。
+
+## 2026-10-02 补齐验收记录并处理 PR
+
+- 用户要求「提交和推送代码，然后把 pr 处理了」，授权补齐本任务文档并合并 PR #1；不授权 release、发布标签或部署。
+- 审查两份本地记录，均为 AGENTS.md 要求的任务验收历史，不含密钥或无关改动，纳入本次文档提交。
+- 检查 PR 无评论或 review 阻塞、没有冲突。确认只有 CI 与按 `v*` 标签触发的 Release；main 合并仅触发普通 CI。
+- 补充文档提交后按新 head 等待 CI，通过后将草稿转为就绪并合并；以合并后的 main CI 作为最终验证，不沿用旧 SHA 的检查结论。最新结果记录在 PR/Actions 和本机任务报告中。
+
