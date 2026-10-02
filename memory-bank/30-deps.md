@@ -44,7 +44,7 @@ paths:
 
 | 包                               | 版本    | 用途                             |
 | -------------------------------- | ------- | -------------------------------- |
-| **@tauri-apps/cli**              | ^2.10.0 | Tauri CLI                        |
+| **@tauri-apps/cli**              | 2.12.0  | Tauri CLI；修复 AppImage 绝对图标链接，固定打包器版本 |
 | **tailwindcss**                  | ^4      | Tailwind CSS 4（CSS-first）      |
 | **@tailwindcss/postcss**         | ^4      | PostCSS 插件                     |
 | **tw-animate-css**               | ^1.4.0  | Tailwind 动画类                  |

@@ -65,6 +65,14 @@ test: test-rust
 test-rust:
     cd src-tauri && cargo test --all-features
 
+# AppImage 根目录与可迁移软链接回归测试（跨平台）
+test-appimage:
+    node --test scripts/check-appimage.test.mjs
+
+# 检查构建产物（Linux）或已解包的 AppDir（跨平台）
+check-appimage path:
+    node scripts/check-appimage.mjs {{quote(path)}}
+
 # === 依赖管理 ===
 
 # 安装全部依赖（pnpm install + cargo fetch）
