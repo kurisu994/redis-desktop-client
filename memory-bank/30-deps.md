@@ -9,7 +9,7 @@ paths:
 
 # 30-deps — 依赖版本矩阵
 
-来源：`package.json` 与 `src-tauri/Cargo.toml`（当前版本 0.2.9）。**升级依赖时同步本文件。**
+来源：`package.json` 与 `src-tauri/Cargo.toml`（当前版本 0.2.10）。**升级依赖时同步本文件。**
 
 ## 前端运行时依赖
 
