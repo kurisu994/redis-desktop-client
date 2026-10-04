@@ -50,3 +50,7 @@
 
 复核收录 Test 37176964134：图标元数据无致命错误，实际启动因 Ubuntu 24.04 产物依赖 GLIBC_2.38/2.39 而在 22.04 失败。以远端 main 62f31cd 为基线，固定 CI/Release Linux 为 22.04，增加真实窗口启动和三种 locale 截图。复现 en-GB + zh-CN 偏好误选中文，修正检测归一化与 HTML lang；默认 README 翻译为英文，保留 README.zh-CN.md。已通过本地 lint/格式化/i18n/6 项元数据测试，继续真实 Linux CI 与界面验证。
 
+## 2026-10-04 — AppImage 构建缓存隔离
+
+初次 Ubuntu 22.04 CI 命中原 build-Linux-x64 缓存，链接旧 aws-lc 产物时出现 __isoc23_sscanf 未定义；仅修改 runner 不足以可靠迁移。CI 与 Release 的 Rust 打包缓存补充 matrix.os + target 键，确保重新编译本机依赖。浏览器中英切换、HTML lang 与重载偏好保持通过，实际配置的 8 种语言输入符合预期。
+

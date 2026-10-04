@@ -60,6 +60,7 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          key: ${{ matrix.os }}-${{ matrix.target }}
 
       - name: 从 CHANGELOG.md 提取发布说明
         id: changelog
