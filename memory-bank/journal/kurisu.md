@@ -54,3 +54,9 @@
 
 初次 Ubuntu 22.04 CI 命中原 build-Linux-x64 缓存，链接旧 aws-lc 产物时出现 __isoc23_sscanf 未定义；仅修改 runner 不足以可靠迁移。CI 与 Release 的 Rust 打包缓存补充 matrix.os + target 键，确保重新编译本机依赖。浏览器中英切换、HTML lang 与重载偏好保持通过，实际配置的 8 种语言输入符合预期。
 
+## 2026-10-04 — Ubuntu 22.04 真实启动验收
+
+PR #2 / CI 37181318391 在全新缓存下完成 Linux 构建，6 项图标回归及产物元数据通过；en_US、de_DE、zh_CN 三种 locale 均显示窗口并持续运行 20 秒。已人工查看实际 AppImage 截图：英语和德语系统均显示英文，中文系统显示中文，无白屏。macOS 双架构构建和 Rust 31 项测试通过；Windows 结果见 PR checks。保留 v0.2.10 已发布产物，后续需单独合并发布再请求收录测试。
+
+CI 37181318391 最终 Windows 构建亦成功，全部 6 个 job 通过；本次收尾仅提交验收文档，不修改已验证代码。
+
