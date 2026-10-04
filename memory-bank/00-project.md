@@ -15,7 +15,7 @@ description: 项目定位、业务背景、用户流、范围与业务级硬约�
 | ---------------------- | ------------------------------------------------- |
 | 产品名（Product Name） | Redis Desktop Client                              |
 | 应用标识（Bundle ID）  | `com.redis-desktop-client`                        |
-| 当前版本               | **0.2.10**（发布状态以 GitHub Releases 为准）      |
+| 当前版本               | **0.2.11**（发布状态以 GitHub Releases 为准）      |
 | 仓库地址               | https://github.com/kurisu994/redis-desktop-client |
 | License                | MIT                                               |
 | 作者                   | lucifer994@gmail.com                              |

@@ -18,7 +18,7 @@
 - 截图和日志：[appimage-smoke-ubuntu-22.04](https://github.com/kurisu994/redis-desktop-client/actions/runs/37181318391/artifacts/11295705991)，有效期至 2026-10-18。最后的文档提交不改变已验证的程序或构建配置。
 - 为 CI/Release 打包任务按 matrix.os + target 隔离 Rust 缓存，避免跨 Ubuntu 版本复用已编译依赖。
 
-## 发布边界
+## 后续状态
 
-- 本阶段准备并验证代码修复；不创建新 release/tag，不改已发布 v0.2.10。
-- 下一次正式发布后，收录 PR #5338 才能验证新的公开下载包。
+- 2026-10-04 用户已明确授权合并全部分支并发新版；PR #2 精确 head d866f4d 六项 CI 全通过，以 merge commit 161bd427 合入 main。
+- v0.2.11 发布验收转至 memory-bank/active/main.md；不修改已发布 v0.2.10。新公开包发布后，收录 PR #5338 才能验证本次修复。
