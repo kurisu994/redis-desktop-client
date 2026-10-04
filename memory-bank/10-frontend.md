@@ -117,4 +117,5 @@ src/
 
 - 文件：`src/i18n/locales/en-US.json` 和 `src/i18n/locales/zh-CN.json`
 - 语言检测：`i18next-browser-languagedetector`（系统语言 + localStorage 持久化）
+- 检测顺序：已保存的选择优先，其次系统首选语言；逐项将中文 locale 归一化为 `zh-CN`，其余归一化为 `en-US`，避免 `en-GB` 等被后续中文偏好抢占。HTML `lang` 默认英文，挂载和切换语言后与当前翻译同步。
 - 一致性校验：`just i18n-check`

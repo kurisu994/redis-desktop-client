@@ -1,0 +1,175 @@
+# Redis Desktop Client
+
+[English](README.md) | 简体中文
+
+跨平台 Redis 桌面客户端，基于 Tauri 2 + Next.js 16 + shadcn/ui 构建。
+
+默认跟随系统首选语言：中文环境显示简体中文，其余环境回退到英文。可通过语言菜单或设置切换语言；已保存的选择优先。
+
+## 技术栈
+
+- **桌面框架**：Tauri 2.x
+- **前端**：Next.js 16 (Turbopack) + React 19 + TypeScript
+- **UI 组件库**：shadcn/ui
+- **样式**：Tailwind CSS 4.x
+- **状态管理**：Zustand 5.x
+- **国际化**：i18next + react-i18next（中/英）
+- **图标**：lucide-react
+- **后端**：Rust (Edition 2021) + Tokio + redis-rs + russh
+- **高级连接**：SSH 隧道（N 跳、known_hosts + TOFU，当前仅 Standalone）、SSL/TLS、Sentinel、Cluster
+- **值编辑器**：原生 textarea + JSON 高亮叠层 + Hex dump（按格式切换）
+- **自动更新**：Tauri Updater Plugin（Ed25519 签名校验，支持 HTTP/HTTPS 更新代理）
+
+## 开发环境准备
+
+### 前置依赖
+
+- [Node.js](https://nodejs.org/) (LTS)
+- [pnpm](https://pnpm.io/) 10
+- [Rust](https://rustup.rs/) (MSRV 1.77.2)
+- [just](https://github.com/casey/just)（命令运行器）
+- Tauri 2 系统依赖（参考 [Tauri 官方文档](https://v2.tauri.app/start/prerequisites/)）
+
+用于分发的 Linux 包应在 **Ubuntu 22.04** 上构建，以保持 GLIBC 兼容性；CI 和 Release 使用同一基线。详见 [Tauri AppImage 说明](https://v2.tauri.app/distribute/appimage/#limitations)。
+
+### 安装依赖
+
+```bash
+just install
+```
+
+### 启动开发
+
+```bash
+# 启动 Tauri 完整开发环境（前后端热重载）
+just dev
+
+# 仅启动 Next.js 前端（localhost:3000）
+just dev-web
+```
+
+### 构建
+
+```bash
+# 生产构建（桌面应用）
+just build
+
+# 仅构建前端
+just build-web
+```
+
+## 常用命令
+
+| 命令                 | 说明                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `just dev`           | 启动 Tauri 开发模式                                                                                                |
+| `just dev-web`       | 仅启动前端                                                                                                         |
+| `just build`         | 生产环境构建应用（自动加载 `.env` 生成带签名的自动更新包）                                                         |
+| `just build-web`     | 仅构建 Next.js 前端资源                                                                                            |
+| `just build-debug`   | 构建 Debug 版本（含调试符号）                                                                                      |
+| `just lint`          | 完整代码检查（ESLint + tsc + Clippy）                                                                              |
+| `just lint-web`      | 仅前端代码检查（ESLint + tsc）                                                                                     |
+| `just lint-rust`     | 仅 Rust 代码检查（Clippy）                                                                                         |
+| `just fmt`           | 格式化全部代码                                                                                                     |
+| `just fmt-web`       | 仅格式化前端代码（Prettier）                                                                                       |
+| `just fmt-rust`      | 仅格式化 Rust 代码（cargo fmt）                                                                                    |
+| `just test-rust`     | Rust 单元测试                                                                                                      |
+| `just version <ver>` | 仅同步更新项目各配置版本号（如：`just version 0.2.5`）                                                             |
+| `just release <tag>` | 🚀 **一键发布**：自动更新版本号、Commit 变更、打 Tag 并推送 GitHub 触发自动化构建打包（如：`just release v0.2.5`） |
+| `just i18n-check`    | 检查翻译 key 完整性                                                                                                |
+| `just clean`         | 清理构建产物                                                                                                       |
+
+### AppImage 验证（Linux）
+
+```bash
+just test-appimage
+just check-appimage /path/to/Redis.Desktop.Client.AppImage
+just smoke-appimage /path/to/Redis.Desktop.Client.AppImage /tmp/appimage-smoke
+```
+
+启动验证需要 `xvfb`、`xdotool`、`imagemagick`、`dbus-x11`、`locales` 和 `fonts-noto-cjk`，并生成 `en_US.UTF-8`、`de_DE.UTF-8`、`zh_CN.UTF-8` locale。它检查三种环境下窗口持续显示 20 秒，并保存日志和截图供检查界面语言。
+
+## 项目结构
+
+```
+src/                        # 前端源码
+├── app/                    # Next.js App Router（layout, page, globals.css）
+├── components/             # React 组件
+│   ├── providers.tsx       # 全局 Provider（主题 + Tooltip + Toast + i18n）
+│   ├── error-boundary.tsx  # 错误边界
+│   ├── command-palette.tsx # ⌘K 命令面板
+│   ├── update-dialog.tsx   # 应用更新弹窗
+│   ├── ssh-tofu-dialog.tsx # SSH 首次连接指纹确认弹窗
+│   ├── confirm-danger-dialog.tsx # 删除/批量删除/FLUSHDB 等危险操作确认
+│   ├── ui/                 # shadcn/ui 基础组件（18 个）
+│   ├── layout/             # 布局组件（TitleBar, Sidebar, TabBar, Settings 等）
+│   ├── browser/            # 数据浏览器（key-list, key-tree, key-detail 等）
+│   │   └── viewers/        # 值查看/编辑器（string/hash/list/set/zset/stream/json/table/value-format-editor）
+│   ├── cli/                # CLI 终端
+│   ├── connection/         # 连接对话框（含导入导出）
+│   ├── monitor/            # 服务器监控（INFO, 实时图表, 慢查询, MONITOR 日志）
+│   └── pubsub/             # 发布订阅
+├── hooks/                  # 自定义 Hooks（全局快捷键、拖拽排序、更新检查、SSH TOFU 监听）
+├── lib/                    # 工具函数（Tauri IPC 封装 + 更新代理设置 + cn 工具）
+├── stores/                 # Zustand 状态仓库（app, connection, browser, cli, monitor, pubsub）
+└── i18n/                   # 国际化配置与翻译文件
+
+src-tauri/                  # Rust 后端
+├── src/
+│   ├── lib.rs              # Tauri 入口
+│   ├── commands/           # Tauri Command（connection, keys, values, cli, server, pubsub, data, export, ssh）
+│   ├── redis/              # Redis 客户端与 SSH 隧道（client, types, ssh_tunnel）
+│   └── config/             # 配置管理（store, encryption, ssh_known_hosts）
+└── tauri.conf.json         # Tauri 配置
+
+docs/                       # 项目文档
+├── REQUIREMENTS.md         # 产品需求文档
+└── DEVELOPMENT_PLAN.md     # 开发计划
+
+AGENTS.md                   # AI 助手协作规范
+CHANGELOG.md                # 变更日志
+memory-bank/                # 项目长期记忆与动态上下文
+```
+
+## 安装
+
+前往 [Releases](https://github.com/kurisu994/redis-desktop-client/releases) 下载最新版本。
+
+| 平台                          | 文件                          |
+| ----------------------------- | ----------------------------- |
+| macOS (Apple Silicon / Intel) | `.dmg`                        |
+| Windows (x64)                 | `.exe` 安装包 或 `.msi`       |
+| Linux (x64)                   | `.AppImage` / `.deb` / `.rpm` |
+
+> [!NOTE]
+> 本项目暂未配置代码签名证书，macOS 和 Windows 首次打开时可能会弹出安全提示。请按以下方式处理。
+
+### macOS
+
+安装 `.dmg` 后首次打开如果提示**"已损坏，无法打开"**，在终端执行：
+
+```bash
+xattr -cr /Applications/Redis\ Desktop\ Client.app
+```
+
+然后重新打开应用即可。
+
+### Windows
+
+首次运行如果弹出 **SmartScreen** 提示"Windows 已保护你的电脑"：
+
+1. 点击 **"更多信息"**
+2. 点击 **"仍然运行"**
+
+### Linux
+
+AppImage 需要添加执行权限：
+
+```bash
+chmod +x Redis.Desktop.Client_*.AppImage
+./Redis.Desktop.Client_*.AppImage
+```
+
+## License
+
+MIT

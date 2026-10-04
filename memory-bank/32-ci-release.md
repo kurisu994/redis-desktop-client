@@ -16,7 +16,9 @@ paths:
 - 前端：ESLint + TypeScript 类型检查。
 - 后端：`cargo clippy --all-targets --all-features -- -D warnings` + `cargo test`。
 - 跨平台构建验证：macOS ARM / Intel、Linux、Windows。
+- Linux 打包固定使用 `ubuntu-22.04`（glibc 2.35），与 Release 保持一致；不要改为 `ubuntu-latest`，否则新 glibc 依赖会破坏旧系统兼容性。
 - Lint job 运行 AppImage 元数据回归测试；Linux 构建后在独立临时目录解包，检查 `.DirIcon`、desktop 和图标链接可迁移且可解析。
+- Linux 产物经 Xvfb / D-Bus 启动验证，在独立 HOME/XDG 目录分别使用 en_US、de_DE、zh_CN locale，要求运行 20 秒并显示窗口；日志和截图上传至 `appimage-smoke-ubuntu-22.04` artifact，截图用于检查渲染与语言（窗口检查本身不验证文案）。
 - CI 不发布 Release，临时禁用 updater 产物签名。当前无 `workflow_dispatch`；需推送分支并向 `main` 开 PR 触发（仅推非 main 分支不会触发）。
 
 ## Release 流水线（`.github/workflows/release.yml`，Tag 触发）

@@ -45,3 +45,8 @@
 - 对比 v0.2.9：仅有此前已合入的 DB 下拉修复、AppImage 修复及文档/工具调整；无新增未验证应用改动。发布说明保留两项用户可见修复。
 - 通过 `just version` 同步配置，并同步 Cargo.lock 根包版本及记忆银行版本事实；保持依赖、Updater 公钥与签名流程不变。按 `just release v0.2.10` 的步骤分步执行，在确认发布提交成功后才推标签，触发现有四目标 Release 工作流，后续核对公开附件和 `.DirIcon`，不覆盖旧版本，不向目录维护方发消息。
 - 最终发布 SHA、构建和公开产物验收结果记录在 v0.2.10 Release、对应 Actions 与本机发布报告中。
+
+## 2026-10-04 — AppImage Linux 启动与默认英文
+
+复核收录 Test 37176964134：图标元数据无致命错误，实际启动因 Ubuntu 24.04 产物依赖 GLIBC_2.38/2.39 而在 22.04 失败。以远端 main 62f31cd 为基线，固定 CI/Release Linux 为 22.04，增加真实窗口启动和三种 locale 截图。复现 en-GB + zh-CN 偏好误选中文，修正检测归一化与 HTML lang；默认 README 翻译为英文，保留 README.zh-CN.md。已通过本地 lint/格式化/i18n/6 项元数据测试，继续真实 Linux CI 与界面验证。
+

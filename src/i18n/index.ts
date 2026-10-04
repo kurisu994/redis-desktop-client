@@ -23,6 +23,9 @@ i18n
       order: ["localStorage", "navigator"],
       caches: ["localStorage"],
       lookupLocalStorage: "i18nextLng",
+      // 先归一化每个偏好，避免 en-GB 等首选语言被后面的 zh-CN 抢占。
+      convertDetectedLanguage: (language: string) =>
+        /^zh(?:[-_]|$)/i.test(language) ? "zh-CN" : "en-US",
     },
   });
 
