@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="zh-CN"
+      lang="en-US"
       suppressHydrationWarning
       autoCapitalize="off"
       autoCorrect="off"

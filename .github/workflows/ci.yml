@@ -109,7 +109,8 @@ jobs:
             target: aarch64-apple-darwin
           - os: macos-latest
             target: x86_64-apple-darwin
-          - os: ubuntu-latest
+          # Match the oldest supported Linux runtime (glibc 2.35).
+          - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
           - os: windows-latest
             target: x86_64-pc-windows-msvc
@@ -146,6 +147,7 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          key: ${{ matrix.os }}-${{ matrix.target }}
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -159,3 +161,26 @@ jobs:
       - name: Check AppImage metadata (Linux)
         if: runner.os == 'Linux'
         run: node scripts/check-appimage.mjs src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
+
+      - name: Install AppImage smoke test dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb xdotool imagemagick dbus-x11 locales fonts-noto-cjk
+          sudo locale-gen en_US.UTF-8 de_DE.UTF-8 zh_CN.UTF-8
+
+      - name: Smoke test AppImage on Ubuntu 22.04
+        if: runner.os == 'Linux'
+        run: |
+          xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- \
+            bash scripts/smoke-appimage.sh \
+            src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage \
+            "$RUNNER_TEMP/appimage-smoke"
+
+      - name: Upload AppImage startup logs and screenshots
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: appimage-smoke-ubuntu-22.04
+          path: ${{ runner.temp }}/appimage-smoke
+          if-no-files-found: ignore
+          retention-days: 14

@@ -45,3 +45,18 @@
 - 对比 v0.2.9：仅有此前已合入的 DB 下拉修复、AppImage 修复及文档/工具调整；无新增未验证应用改动。发布说明保留两项用户可见修复。
 - 通过 `just version` 同步配置，并同步 Cargo.lock 根包版本及记忆银行版本事实；保持依赖、Updater 公钥与签名流程不变。按 `just release v0.2.10` 的步骤分步执行，在确认发布提交成功后才推标签，触发现有四目标 Release 工作流，后续核对公开附件和 `.DirIcon`，不覆盖旧版本，不向目录维护方发消息。
 - 最终发布 SHA、构建和公开产物验收结果记录在 v0.2.10 Release、对应 Actions 与本机发布报告中。
+
+## 2026-10-04 — AppImage Linux 启动与默认英文
+
+复核收录 Test 37176964134：图标元数据无致命错误，实际启动因 Ubuntu 24.04 产物依赖 GLIBC_2.38/2.39 而在 22.04 失败。以远端 main 62f31cd 为基线，固定 CI/Release Linux 为 22.04，增加真实窗口启动和三种 locale 截图。复现 en-GB + zh-CN 偏好误选中文，修正检测归一化与 HTML lang；默认 README 翻译为英文，保留 README.zh-CN.md。已通过本地 lint/格式化/i18n/6 项元数据测试，继续真实 Linux CI 与界面验证。
+
+## 2026-10-04 — AppImage 构建缓存隔离
+
+初次 Ubuntu 22.04 CI 命中原 build-Linux-x64 缓存，链接旧 aws-lc 产物时出现 __isoc23_sscanf 未定义；仅修改 runner 不足以可靠迁移。CI 与 Release 的 Rust 打包缓存补充 matrix.os + target 键，确保重新编译本机依赖。浏览器中英切换、HTML lang 与重载偏好保持通过，实际配置的 8 种语言输入符合预期。
+
+## 2026-10-04 — Ubuntu 22.04 真实启动验收
+
+PR #2 / CI 37181318391 在全新缓存下完成 Linux 构建，6 项图标回归及产物元数据通过；en_US、de_DE、zh_CN 三种 locale 均显示窗口并持续运行 20 秒。已人工查看实际 AppImage 截图：英语和德语系统均显示英文，中文系统显示中文，无白屏。macOS 双架构构建和 Rust 31 项测试通过；Windows 结果见 PR checks。保留 v0.2.10 已发布产物，后续需单独合并发布再请求收录测试。
+
+CI 37181318391 最终 Windows 构建亦成功，全部 6 个 job 通过；本次收尾仅提交验收文档，不修改已验证代码。
+
