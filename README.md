@@ -1,159 +1,169 @@
 # Redis Desktop Client
 
-跨平台 Redis 桌面客户端，基于 Tauri 2 + Next.js 16 + shadcn/ui 构建。
+English | [简体中文](README.zh-CN.md)
 
-## 技术栈
+A cross-platform Redis desktop client built with Tauri 2, Next.js 16, and shadcn/ui.
 
-- **桌面框架**：Tauri 2.x
-- **前端**：Next.js 16 (Turbopack) + React 19 + TypeScript
-- **UI 组件库**：shadcn/ui
-- **样式**：Tailwind CSS 4.x
-- **状态管理**：Zustand 5.x
-- **国际化**：i18next + react-i18next（中/英）
-- **图标**：lucide-react
-- **后端**：Rust (Edition 2021) + Tokio + redis-rs + russh
-- **高级连接**：SSH 隧道（N 跳、known_hosts + TOFU，当前仅 Standalone）、SSL/TLS、Sentinel、Cluster
-- **值编辑器**：原生 textarea + JSON 高亮叠层 + Hex dump（按格式切换）
-- **自动更新**：Tauri Updater Plugin（Ed25519 签名校验，支持 HTTP/HTTPS 更新代理）
+Browse and edit Redis data, manage connections, run commands, monitor servers, and work with Pub/Sub in one desktop app.
 
-## 开发环境准备
+The interface follows your preferred system language: Chinese locales use Simplified Chinese, and other locales fall back to English. You can change the language in the language menu or Settings; a saved choice takes priority.
 
-### 前置依赖
+## Installation
 
-- [Node.js](https://nodejs.org/) (LTS)
-- [pnpm](https://pnpm.io/)
-- [Rust](https://rustup.rs/) (MSRV 1.77.2)
-- [just](https://github.com/casey/just)（命令运行器）
-- Tauri 2 系统依赖（参考 [Tauri 官方文档](https://v2.tauri.app/start/prerequisites/)）
+Download a package from [Releases](https://github.com/kurisu994/redis-desktop-client/releases).
 
-### 安装依赖
-
-```bash
-just install
-```
-
-### 启动开发
-
-```bash
-# 启动 Tauri 完整开发环境（前后端热重载）
-just dev
-
-# 仅启动 Next.js 前端（localhost:3000）
-just dev-web
-```
-
-### 构建
-
-```bash
-# 生产构建（桌面应用）
-just build
-
-# 仅构建前端
-just build-web
-```
-
-## 常用命令
-
-| 命令                 | 说明                                                                                                               |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `just dev`           | 启动 Tauri 开发模式                                                                                                |
-| `just dev-web`       | 仅启动前端                                                                                                         |
-| `just build`         | 生产环境构建应用（自动加载 `.env` 生成带签名的自动更新包）                                                         |
-| `just build-web`     | 仅构建 Next.js 前端资源                                                                                            |
-| `just build-debug`   | 构建 Debug 版本（含调试符号）                                                                                      |
-| `just lint`          | 完整代码检查（ESLint + tsc + Clippy）                                                                              |
-| `just lint-web`      | 仅前端代码检查（ESLint + tsc）                                                                                     |
-| `just lint-rust`     | 仅 Rust 代码检查（Clippy）                                                                                         |
-| `just fmt`           | 格式化全部代码                                                                                                     |
-| `just fmt-web`       | 仅格式化前端代码（Prettier）                                                                                       |
-| `just fmt-rust`      | 仅格式化 Rust 代码（cargo fmt）                                                                                    |
-| `just test-rust`     | Rust 单元测试                                                                                                      |
-| `just version <ver>` | 仅同步更新项目各配置版本号（如：`just version 0.2.5`）                                                             |
-| `just release <tag>` | 🚀 **一键发布**：自动更新版本号、Commit 变更、打 Tag 并推送 GitHub 触发自动化构建打包（如：`just release v0.2.5`） |
-| `just i18n-check`    | 检查翻译 key 完整性                                                                                                |
-| `just clean`         | 清理构建产物                                                                                                       |
-
-## 项目结构
-
-```
-src/                        # 前端源码
-├── app/                    # Next.js App Router（layout, page, globals.css）
-├── components/             # React 组件
-│   ├── providers.tsx       # 全局 Provider（主题 + Tooltip + Toast + i18n）
-│   ├── error-boundary.tsx  # 错误边界
-│   ├── command-palette.tsx # ⌘K 命令面板
-│   ├── update-dialog.tsx   # 应用更新弹窗
-│   ├── ssh-tofu-dialog.tsx # SSH 首次连接指纹确认弹窗
-│   ├── confirm-danger-dialog.tsx # 删除/批量删除/FLUSHDB 等危险操作确认
-│   ├── ui/                 # shadcn/ui 基础组件（18 个）
-│   ├── layout/             # 布局组件（TitleBar, Sidebar, TabBar, Settings 等）
-│   ├── browser/            # 数据浏览器（key-list, key-tree, key-detail 等）
-│   │   └── viewers/        # 值查看/编辑器（string/hash/list/set/zset/stream/json/table/value-format-editor）
-│   ├── cli/                # CLI 终端
-│   ├── connection/         # 连接对话框（含导入导出）
-│   ├── monitor/            # 服务器监控（INFO, 实时图表, 慢查询, MONITOR 日志）
-│   └── pubsub/             # 发布订阅
-├── hooks/                  # 自定义 Hooks（全局快捷键、拖拽排序、更新检查、SSH TOFU 监听）
-├── lib/                    # 工具函数（Tauri IPC 封装 + 更新代理设置 + cn 工具）
-├── stores/                 # Zustand 状态仓库（app, connection, browser, cli, monitor, pubsub）
-└── i18n/                   # 国际化配置与翻译文件
-
-src-tauri/                  # Rust 后端
-├── src/
-│   ├── lib.rs              # Tauri 入口
-│   ├── commands/           # Tauri Command（connection, keys, values, cli, server, pubsub, data, export, ssh）
-│   ├── redis/              # Redis 客户端与 SSH 隧道（client, types, ssh_tunnel）
-│   └── config/             # 配置管理（store, encryption, ssh_known_hosts）
-└── tauri.conf.json         # Tauri 配置
-
-docs/                       # 项目文档
-├── REQUIREMENTS.md         # 产品需求文档
-└── DEVELOPMENT_PLAN.md     # 开发计划
-
-AGENTS.md                   # AI 助手协作规范
-CHANGELOG.md                # 变更日志
-memory-bank/                # 项目长期记忆与动态上下文
-```
-
-## 安装
-
-前往 [Releases](https://github.com/kurisu994/redis-desktop-client/releases) 下载最新版本。
-
-| 平台                  | 文件                          |
-| --------------------- | ----------------------------- |
-| macOS (Apple Silicon) | `.dmg`                        |
-| Windows (x64)         | `.exe` 安装包 或 `.msi`       |
-| Linux (x64)           | `.AppImage` / `.deb` / `.rpm` |
+| Platform                      | Package                        |
+| ----------------------------- | ------------------------------ |
+| macOS (Apple Silicon / Intel) | `.dmg`                         |
+| Windows (x64)                 | `.exe` installer or `.msi`     |
+| Linux (x64)                   | `.AppImage`, `.deb`, or `.rpm` |
 
 > [!NOTE]
-> 本项目暂未配置代码签名证书，macOS 和 Windows 首次打开时可能会弹出安全提示。请按以下方式处理。
+> macOS and Windows packages are not currently code-signed, so the operating system may show a warning when you first open the app.
 
 ### macOS
 
-安装 `.dmg` 后首次打开如果提示**"已损坏，无法打开"**，在终端执行：
+If macOS reports that the app is damaged after installing the `.dmg`, verify that you downloaded it from this repository's Releases page, then remove the quarantine attribute:
 
 ```bash
 xattr -cr /Applications/Redis\ Desktop\ Client.app
 ```
 
-然后重新打开应用即可。
+Open the app again.
 
 ### Windows
 
-首次运行如果弹出 **SmartScreen** 提示"Windows 已保护你的电脑"：
-
-1. 点击 **"更多信息"**
-2. 点击 **"仍然运行"**
+If SmartScreen shows **Windows protected your PC**, select **More info**, then **Run anyway** after checking that the installer came from this repository's Releases page.
 
 ### Linux
 
-AppImage 需要添加执行权限：
+Make the AppImage executable, then run it:
 
 ```bash
 chmod +x Redis.Desktop.Client_*.AppImage
 ./Redis.Desktop.Client_*.AppImage
 ```
 
+## Features and technology
+
+- **Data browser:** String, Hash, List, Set, Sorted Set, Stream, and RedisJSON support, with tree and list views, TTL management, and import/export.
+- **Connections:** Standalone, Sentinel, Cluster, SSL/TLS, and multiple SSH hops with known_hosts verification and trust on first use. SSH currently supports Standalone connections only.
+- **Tools:** Command console, server monitoring, slow logs, MONITOR logs, and Pub/Sub.
+- **Interface:** Light and dark themes, English and Simplified Chinese, keyboard shortcuts, and a command palette.
+- **Desktop:** Tauri 2.x with a Rust (Edition 2021), Tokio, redis-rs, and russh backend.
+- **Frontend:** Next.js 16 (Turbopack), React 19, TypeScript, shadcn/ui, Tailwind CSS 4.x, Zustand 5.x, i18next, react-i18next, and lucide-react.
+- **Value editor:** Native textarea with a JSON highlighting overlay and hex dump, with selectable formats.
+- **Updates:** Tauri Updater with Ed25519 signature verification and optional HTTP/HTTPS update proxies.
+
+## Development
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (LTS; CI uses Node.js 22)
+- [pnpm](https://pnpm.io/) 10
+- [Rust](https://rustup.rs/) (stable; the package declares MSRV 1.77.2)
+- [just](https://github.com/casey/just), the command runner
+- [Tauri 2 system dependencies](https://v2.tauri.app/start/prerequisites/)
+
+Use **Ubuntu 22.04** for distributable Linux builds to preserve GLIBC compatibility. CI and Release use the same baseline. See [Tauri's AppImage limitations](https://v2.tauri.app/distribute/appimage/#limitations).
+
+### Install dependencies
+
+```bash
+just install
+```
+
+### Run the app
+
+```bash
+# Full Tauri development environment with frontend and backend hot reload
+just dev
+
+# Frontend only at localhost:3000
+just dev-web
+```
+
+### Build
+
+```bash
+# Production desktop build
+just build
+
+# Frontend static export only
+just build-web
+```
+
+## Commands
+
+| Command              | Description                                                         |
+| -------------------- | ------------------------------------------------------------------- |
+| `just dev`           | Start Tauri development mode                                        |
+| `just dev-web`       | Start the frontend only                                             |
+| `just build`         | Build the production app; loads `.env` for signed updater artifacts |
+| `just build-web`     | Build the Next.js frontend                                          |
+| `just build-debug`   | Build a debug app with symbols                                      |
+| `just lint`          | Run ESLint, TypeScript checks, and Clippy                           |
+| `just lint-web`      | Run ESLint and TypeScript checks                                    |
+| `just lint-rust`     | Run Clippy                                                          |
+| `just fmt`           | Format frontend and Rust code                                       |
+| `just fmt-web`       | Format frontend code with Prettier                                  |
+| `just fmt-rust`      | Format Rust code with cargo fmt                                     |
+| `just test-rust`     | Run Rust unit tests                                                 |
+| `just i18n-check`    | Check translation key consistency                                   |
+| `just version <ver>` | Synchronize project version fields                                  |
+| `just release <tag>` | Update the version, commit, tag, and push to trigger a release      |
+| `just clean`         | Remove build outputs                                                |
+
+### AppImage validation (Linux)
+
+```bash
+just test-appimage
+just check-appimage /path/to/Redis.Desktop.Client.AppImage
+just smoke-appimage /path/to/Redis.Desktop.Client.AppImage /tmp/appimage-smoke
+```
+
+The smoke check requires `xvfb`, `xdotool`, `imagemagick`, `dbus-x11`, `locales`, and `fonts-noto-cjk`, with the `en_US.UTF-8`, `de_DE.UTF-8`, and `zh_CN.UTF-8` locales generated. It checks that a window remains visible for 20 seconds in each environment and saves logs and screenshots for language review.
+
+## Project structure
+
+```text
+src/                        # Frontend source
+├── app/                    # Next.js App Router, layout, and global styles
+├── components/
+│   ├── providers.tsx       # Theme, tooltips, toasts, and i18n
+│   ├── error-boundary.tsx
+│   ├── command-palette.tsx
+│   ├── update-dialog.tsx
+│   ├── ssh-tofu-dialog.tsx # First-use SSH fingerprint confirmation
+│   ├── confirm-danger-dialog.tsx
+│   ├── ui/                # Shared shadcn/ui components
+│   ├── layout/            # Title bar, sidebar, tabs, settings, welcome page
+│   ├── browser/           # Key lists, tree, and detail views
+│   │   └── viewers/        # Type-specific value viewers and editors
+│   ├── cli/               # Command console
+│   ├── connection/        # Connection dialogs and import/export
+│   ├── monitor/           # Server information, charts, slow logs, MONITOR
+│   └── pubsub/            # Publish and subscribe
+├── hooks/                 # Shortcuts, drag ordering, updates, SSH TOFU
+├── lib/                   # Tauri IPC wrappers, update settings, utilities
+├── stores/                # App, connection, browser, CLI, monitor, Pub/Sub
+└── i18n/                  # Language configuration and translations
+
+src-tauri/                 # Rust backend
+├── src/
+│   ├── lib.rs             # Tauri entry point
+│   ├── commands/          # IPC commands
+│   ├── redis/             # Redis clients and SSH tunnels
+│   └── config/            # Encrypted settings and SSH known_hosts storage
+└── tauri.conf.json
+
+docs/                      # Product requirements and development plans
+scripts/                   # Build, release, and AppImage validation tools
+AGENTS.md                  # Contributor guidance for coding assistants
+CHANGELOG.md               # Release history
+memory-bank/               # Project conventions and task context
+```
+
 ## License
 
-MIT
+[MIT](LICENSE)

@@ -2,6 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { useTranslation } from "react-i18next";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import "@/i18n";
@@ -29,6 +30,12 @@ function disableTextInputAssistance(root: ParentNode): void {
 /** 全局 Provider 组件，集成主题切换 + Tooltip + i18n */
 export function Providers({ children }: { children: React.ReactNode }) {
   const mounted = useHasMounted();
+  const { i18n } = useTranslation();
+  const language = i18n.resolvedLanguage ?? "en-US";
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   /** 监听动态弹窗和虚拟列表中的输入框，统一关闭文本辅助 */
   useEffect(() => {

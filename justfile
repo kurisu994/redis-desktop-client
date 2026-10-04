@@ -73,6 +73,10 @@ test-appimage:
 check-appimage path:
     node scripts/check-appimage.mjs {{quote(path)}}
 
+# Linux/X11 启动验证，保存三种系统语言的日志与截图（需要 Xvfb 等依赖）
+smoke-appimage path output:
+    xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- bash scripts/smoke-appimage.sh {{quote(path)}} {{quote(output)}}
+
 # === 依赖管理 ===
 
 # 安装全部依赖（pnpm install + cargo fetch）
