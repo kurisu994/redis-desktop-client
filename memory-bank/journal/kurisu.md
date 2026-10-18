@@ -77,3 +77,9 @@ main 发布提交 f6919c1 的六项 CI 全成功后推送 v0.2.11 标签，Relea
 - cargo test 50 项通过，clippy -D warnings 通过，tsc --noEmit 通过。
 
 
+## 2026-10-19 审查前端摸底 + 独立项
+
+- 开分支 `fix/review-frontend-export`（自 origin/main `277bf4f`）。
+- 独立改：测试失败 toast、含密导出警告、RENAME 覆盖确认。
+- 缺口等白厄：密码脱敏、export v2 元数据、能力标志适配。
+

@@ -239,16 +239,22 @@ export function ConnectionDialog() {
           message: t("connection.latency", { ms: result.latency_ms }),
         });
       } else {
+        const message = t(result.message, { defaultValue: result.message });
         setTestState({
           status: "error",
-          message: t(result.message, { defaultValue: result.message }),
+          message,
         });
+        toast.error(
+          `${t("connection.testFailed")}: ${message || t("connection.testFailed")}`,
+        );
       }
     } catch (err) {
+      const message = translateIpcError(err, t);
       setTestState({
         status: "error",
-        message: translateIpcError(err, t),
+        message,
       });
+      toast.error(`${t("connection.testFailed")}: ${message}`);
     }
   }, [buildConfig, t]);
 
