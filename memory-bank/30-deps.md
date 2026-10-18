@@ -71,7 +71,8 @@ paths:
 | **tauri-plugin-opener**    | 2.5.3     | 外部链接                                              |
 | **tauri-plugin-process**   | 2         | 重启进程                                              |
 | **tauri-plugin-updater**   | 2         | 应用更新（Ed25519 签名校验）                          |
-| **redis**                  | 0.29      | Redis 客户端（tokio-comp + aio + connection-manager） |
+| **redis**                  | 0.29      | Redis 客户端（tokio-comp、aio、connection-manager、tokio-rustls-comp、tls-rustls-webpki-roots、tls-rustls-insecure、sentinel） |
+| **rustls**                 | 0.23      | 为 redis TLS 安装 ring CryptoProvider                  |
 | **tokio**                  | 1（full） | 异步运行时                                            |
 | **serde** / **serde_json** | 1.0       | 序列化（含 derive）                                   |
 | **thiserror**              | 2         | 错误类型派生                                          |

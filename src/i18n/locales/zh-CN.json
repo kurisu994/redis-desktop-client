@@ -414,6 +414,37 @@
       "unsupported_for_cluster_sentinel": "Cluster/Sentinel 模式暂不支持 SSH 隧道",
       "host_key_mismatch": "SSH 主机指纹与已信任记录不符，连接已中断以防止中间人攻击",
       "host_key_rejected": "已拒绝信任 SSH 主机公钥，连接失败"
+    },
+    "cluster": {
+      "unsupported": "暂不支持 Redis Cluster。应用会拒绝连接，而不是静默把种子节点当成单机。"
+    },
+    "sentinel": {
+      "no_nodes": "Sentinel 模式至少需要一个 Sentinel 节点",
+      "no_master_name": "必须填写 Sentinel master 名称",
+      "master_not_found": "无法从 Sentinel 解析当前 master"
+    },
+    "tls": {
+      "cert_read_failed": "读取 TLS 证书或私钥文件失败",
+      "client_cert_incomplete": "客户端证书和私钥必须同时填写"
+    },
+    "connection": {
+      "not_connected": "该连接尚未建立",
+      "not_found": "找不到连接配置",
+      "invalid_url": "Redis 地址无法解析"
+    },
+    "export": {
+      "unsupported_version": "不支持该连接导出文件版本"
+    }
+  },
+  "capability": {
+    "tls": {
+      "supported": "TLS 使用 rustls。经 SSH 隧道拨号时会跳过证书主机名校验，因为流量走的是本地转发端口。"
+    },
+    "sentinel": {
+      "degraded": "Sentinel 会连接到建立连接时发现的 master。不支持实时故障转移，也不支持 SSH 隧道。"
+    },
+    "cluster": {
+      "unsupported": "Cluster 模式不可用。连接会被拒绝，而不会把种子节点伪装成整个集群。"
     }
   }
 }

@@ -26,6 +26,26 @@ const BLOCKED_COMMANDS: &[&str] = &[
     "MODULE",
     "SLAVEOF",
     "REPLICAOF",
+    // 脚本 / ACL / 全库扫描，和上面的管理命令同一类
+    "EVAL",
+    "EVALSHA",
+    "EVAL_RO",
+    "EVALSHA_RO",
+    "FCALL",
+    "FCALL_RO",
+    "FUNCTION",
+    "SCRIPT",
+    "ACL",
+    "KEYS",
+    // 会改掉按 db 钉住的连接，或把多路复用连接拖进独占模式
+    "SELECT",
+    "SWAPDB",
+    "MONITOR",
+    "SUBSCRIBE",
+    "PSUBSCRIBE",
+    "SSUBSCRIBE",
+    "SYNC",
+    "PSYNC",
 ];
 
 /// 检查命令是否在黑名单中
@@ -45,23 +65,15 @@ pub async fn execute_command(
     db: u32,
     command: String,
 ) -> Result<CommandResult, String> {
-    let mut conn = pool.get_connection(&id).await?;
-
-    // 切换数据库
-    redis::cmd("SELECT")
-        .arg(db)
-        .query_async::<()>(&mut conn)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    // 解析命令字符串
     let args = parse_command(&command)?;
     if args.is_empty() {
         return Err("空命令".to_string());
     }
 
-    // 检查危险命令黑名单
+    // 检查危险命令黑名单。数据库由连接池按 db 参数钉住，不允许 CLI 再 SELECT。
     check_command_blocked(&args[0])?;
+
+    let mut conn = pool.get_connection(&id, db).await?;
 
     // 构建并执行命令
     let start = std::time::Instant::now();
@@ -248,5 +260,16 @@ mod tests {
     fn test_parse_unclosed_quote() {
         let result = parse_command(r#"SET key "hello"#);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn blocks_eval_acl_keys_and_select() {
+        for cmd in [
+            "EVAL", "evalsha", "ACL", "KEYS", "SELECT", "FCALL", "SCRIPT",
+        ] {
+            assert!(check_command_blocked(cmd).is_err(), "{cmd} 应被禁用");
+        }
+        assert!(check_command_blocked("SCAN").is_ok());
+        assert!(check_command_blocked("GET").is_ok());
     }
 }

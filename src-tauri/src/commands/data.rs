@@ -38,16 +38,7 @@ pub async fn export_keys(
     db: u8,
     keys: Vec<String>,
 ) -> Result<String, String> {
-    let mut conn = manager.get_connection(&id).await?;
-
-    // 切换数据库
-    if db > 0 {
-        redis::cmd("SELECT")
-            .arg(db)
-            .query_async::<()>(&mut conn)
-            .await
-            .map_err(|e| e.to_string())?;
-    }
+    let mut conn = manager.get_connection(&id, u32::from(db)).await?;
 
     let mut exported_keys = Vec::new();
 
@@ -127,16 +118,7 @@ pub async fn import_keys(
     conflict_strategy: String,
 ) -> Result<KeyImportResult, String> {
     let data: KeyExportData = serde_json::from_str(&json).map_err(|e| e.to_string())?;
-    let mut conn = manager.get_connection(&id).await?;
-
-    // 切换数据库
-    if db > 0 {
-        redis::cmd("SELECT")
-            .arg(db)
-            .query_async::<()>(&mut conn)
-            .await
-            .map_err(|e| e.to_string())?;
-    }
+    let mut conn = manager.get_connection(&id, u32::from(db)).await?;
 
     let total = data.keys.len();
     let mut imported = 0;

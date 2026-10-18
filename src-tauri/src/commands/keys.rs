@@ -63,14 +63,7 @@ pub async fn scan_keys(
 ) -> Result<ScanResult, String> {
     validate_count(count, MAX_SCAN_COUNT)?;
 
-    let mut conn = pool.get_connection(&id).await?;
-
-    // 切换数据库
-    redis::cmd("SELECT")
-        .arg(db)
-        .query_async::<()>(&mut conn)
-        .await
-        .map_err(|e| e.to_string())?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     // SCAN 扫描
     let scan_pattern = if pattern.is_empty() {
@@ -123,7 +116,7 @@ pub async fn get_db_info(
     pool: State<'_, RedisClientManager>,
     id: String,
 ) -> Result<DbInfo, String> {
-    let mut conn = pool.get_connection(&id).await?;
+    let mut conn = pool.get_server_connection(&id).await?;
 
     // 获取数据库数量配置
     let config: Vec<String> = redis::cmd("CONFIG")
@@ -173,12 +166,9 @@ pub async fn select_database(
     id: String,
     db: u32,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    redis::cmd("SELECT")
-        .arg(db)
-        .query_async::<()>(&mut conn)
-        .await
-        .map_err(|e| e.to_string())
+    // 预热该 db 的独立连接。真正的命令走同一条已钉住的连接，不再 SELECT。
+    let _conn = pool.get_connection(&id, db).await?;
+    Ok(())
 }
 
 /// 获取 Key 详细信息 — TYPE + TTL + MEMORY USAGE + OBJECT ENCODING
@@ -189,13 +179,7 @@ pub async fn get_key_info(
     db: u32,
     key: String,
 ) -> Result<KeyInfo, String> {
-    let mut conn = pool.get_connection(&id).await?;
-
-    redis::cmd("SELECT")
-        .arg(db)
-        .query_async::<()>(&mut conn)
-        .await
-        .map_err(|e| e.to_string())?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     // Pipeline 批量获取信息
     let mut pipe = redis::pipe();
@@ -276,13 +260,7 @@ pub async fn delete_keys(
     db: u32,
     keys: Vec<String>,
 ) -> Result<u64, String> {
-    let mut conn = pool.get_connection(&id).await?;
-
-    redis::cmd("SELECT")
-        .arg(db)
-        .query_async::<()>(&mut conn)
-        .await
-        .map_err(|e| e.to_string())?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     let count: u64 = conn.del(&keys).await.map_err(|e| e.to_string())?;
     Ok(count)
@@ -297,13 +275,7 @@ pub async fn rename_key(
     old_key: String,
     new_key: String,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-
-    redis::cmd("SELECT")
-        .arg(db)
-        .query_async::<()>(&mut conn)
-        .await
-        .map_err(|e| e.to_string())?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     conn.rename(&old_key, &new_key)
         .await
@@ -319,13 +291,7 @@ pub async fn set_key_ttl(
     key: String,
     ttl: i64,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-
-    redis::cmd("SELECT")
-        .arg(db)
-        .query_async::<()>(&mut conn)
-        .await
-        .map_err(|e| e.to_string())?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     if ttl < 0 {
         conn.persist(&key).await.map_err(|e| e.to_string())
@@ -343,13 +309,7 @@ pub async fn copy_key(
     src: String,
     dst: String,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-
-    redis::cmd("SELECT")
-        .arg(db)
-        .query_async::<()>(&mut conn)
-        .await
-        .map_err(|e| e.to_string())?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     let dump: Vec<u8> = redis::cmd("DUMP")
         .arg(&src)

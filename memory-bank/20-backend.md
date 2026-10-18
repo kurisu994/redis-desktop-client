@@ -38,17 +38,19 @@ src-tauri/src/
 - **统一响应结构**：所有 Tauri Command 返回 `IpcResponse<T>`，前端 IPC 封装层统一处理 ok/err。
 - **错误信息走 i18n key**：Rust 端不返回语言文本，返回 i18n key 由前端翻译。
 - **IPC 字段命名**：结构体统一 `rename_all = camelCase` + 老字段 `alias`，保证前后端字段名一致；磁盘上的 snake_case 老数据经 `serde(default)` + `alias` 自动迁移。
-- **连接池**：`RedisClientManager` 用 `HashMap<connection_id, MultiplexedConnection> + Mutex` 管理多连接；Pub/Sub 使用**独立连接**（非复用），通过 `redis://pubsub` Event 向前端推送消息。
-- **加密**：密码用 **AES-256-GCM** 加密；Master Key 在首次启动生成并持久化到独立 `master-key` 文件，不与 `connections.json` 混存。
+- **连接池**：`RedisClientManager` 按 `(connection_id, db)` 保存 `ConnectionManager`。数据库写进连接 URL，命令路径不再 `SELECT`，避免 Browser/CLI 抢同一条多路复用连接。Pub/Sub 与 MONITOR 使用会话里已经解析好的端点（SSH 本地端口 + rustls），禁止绕过隧道直连。
+- **TLS**：Redis 连接使用 `tokio-rustls-comp` + webpki roots。自定义 CA / 客户端证书从 `TlsConfig` 路径读取。`skipVerify` 或 SSH 隧道转发时追加 `#insecure`，因为本地转发地址和证书主机名不一致。
+- **Sentinel / Cluster**：Sentinel 会向哨兵查询当前 master 再连接数据节点，不支持实时故障转移，也不支持 SSH。Cluster 明确拒绝连接，不再把种子节点当成单机。能力由 `get_backend_capabilities` 返回 `supported` / `degraded` / `unsupported`。
+- **加密**：Redis 密码、SSH 密码 / passphrase、Sentinel 密码都用 **AES-256-GCM**。历史明文 Sentinel 密码在下次加载时迁移。Master Key 只存在独立 `master-key` 文件（Unix 权限 `0600`），不读环境变量，不写进 `connections.json`。列表 IPC 不返回这些明文。
 - **SSH 隧道**：`redis/ssh_tunnel.rs` 基于 `russh` 建立 N 跳隧道；当前仅 Standalone 连接可启用 SSH，Sentinel / Cluster over SSH 后续独立设计。同一连接从 SSH 改为非 SSH 后重连会清理旧隧道。
 - **SSH 主机信任**：`config/ssh_known_hosts.rs` 独立管理加密指纹和 TOFU pending 请求；未知主机通过 `ssh:tofu-request` 事件让前端确认，指纹失配硬拒绝；pending 有超时清理，避免连接流程永久挂起。
 - **异步**：所有 Redis 操作走 `tokio` 异步运行时；后台监控/订阅任务通过 `tauri::async_runtime::spawn`，注意任务句柄管理避免泄漏（v0.2.3 修复过 MONITOR 任务泄漏）。
-- **TLS 切换**：`client.rs` 根据连接配置自动切换 `redis://` / `rediss://`。
+- **TLS 切换**：`redis/endpoint.rs` 在启用 TLS 时用 rustls 打开 `rediss://`，并加载 CA / 客户端证书。
 - **Tauri Event 通道**：`redis://pubsub`（Pub/Sub 消息）、`redis://monitor`（实时指标）、`redis://import-progress` / `redis://export-progress`（导入导出进度）、`redis://update-progress`（更新下载进度）、`ssh:tofu-request`（SSH 首次连接指纹确认）。
 
 ## 数据存储
 
-- **连接配置**：`{AppData}/connections.json`（密码 AES-256-GCM 加密）。
+- **连接配置**：`{AppData}/connections.json`（Redis 密码、SSH 机密、Sentinel 密码均为 AES-256-GCM）。
 - **SSH known_hosts**：`{AppData}/ssh-known-hosts.json`（指纹 AES-256-GCM 加密）。
 - **Master Key**：`{AppData}/master-key`（独立文件，应用启动时自动生成）。
 - **用户偏好**：`localStorage`（主题、语言、命名空间分隔符、自动更新开关、更新代理）。

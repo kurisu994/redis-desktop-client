@@ -68,3 +68,12 @@ CI 37181318391 最终 Windows 构建亦成功，全部 6 个 job 通过；本次
 
 main 发布提交 f6919c1 的六项 CI 全成功后推送 v0.2.11 标签，Release 37183580423 四平台全部成功。17 个公开附件摘要、7 份 updater 签名、11 个更新清单平台及 latest 端点验证通过。公开 AppImage 的 .DirIcon 相对链接正常，174 个 ELF 的最高 GLIBC 需求为 2.35；旧 v0.2.10 附件未改动。原始本机干净 main 已快进同步。结论归档至 archive/2026-10/v0.2.11-release.md；收录 PR #5338 的新包重测仍待后续执行。
 
+## 2026-10-18 连接隔离与 TLS/机密
+
+- 按 db 拆开 ConnectionManager，命令路径不再 SELECT。Cluster 直接拒绝，Sentinel 只连接发现到的 master。
+- Redis TLS 改走 rustls。Pub/Sub 和 MONITOR 复用会话端点，不再绕过 SSH/TLS 明文直连。
+- Sentinel 密码纳入 AES-GCM，并迁移历史明文。列表接口脱敏；导出 v2 保留 SSH/TLS 元数据。
+- 新增 get_backend_capabilities 与 duplicate_connection，给前端对齐文案和复制连接。
+- cargo test 50 项通过，clippy -D warnings 通过，tsc --noEmit 通过。
+
+

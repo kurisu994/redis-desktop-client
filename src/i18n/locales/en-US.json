@@ -414,6 +414,37 @@
       "unsupported_for_cluster_sentinel": "SSH tunnel is not supported for Cluster/Sentinel yet",
       "host_key_mismatch": "SSH host key fingerprint does not match the trusted record; connection aborted to prevent man-in-the-middle attack",
       "host_key_rejected": "SSH host key was rejected; connection failed"
+    },
+    "cluster": {
+      "unsupported": "Redis Cluster is not available. The app rejects the connection instead of silently talking to a single seed node."
+    },
+    "sentinel": {
+      "no_nodes": "Sentinel mode needs at least one Sentinel node",
+      "no_master_name": "Sentinel master name is required",
+      "master_not_found": "Could not resolve the current Sentinel master"
+    },
+    "tls": {
+      "cert_read_failed": "Failed to read the TLS certificate or key file",
+      "client_cert_incomplete": "Client certificate and private key must be provided together"
+    },
+    "connection": {
+      "not_connected": "This connection is not open",
+      "not_found": "Connection configuration was not found",
+      "invalid_url": "The Redis address could not be parsed"
+    },
+    "export": {
+      "unsupported_version": "This connection export file version is not supported"
+    }
+  },
+  "capability": {
+    "tls": {
+      "supported": "TLS uses rustls. With an SSH tunnel, certificate hostname checks are skipped because traffic is dialed through the local forward."
+    },
+    "sentinel": {
+      "degraded": "Sentinel connects to the master discovered at connect time. Live failover and SSH tunnels are not supported."
+    },
+    "cluster": {
+      "unsupported": "Cluster mode is unavailable. Connections are rejected instead of pretending a seed node is the whole cluster."
     }
   }
 }

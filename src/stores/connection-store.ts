@@ -13,6 +13,14 @@ export interface SshHop {
   password?: string;
   privateKeyPath?: string;
   passphrase?: string;
+  /** 列表接口：磁盘上已有密码，响应里不会带明文 */
+  hasPassword?: boolean;
+  /** 列表接口：磁盘上已有 passphrase */
+  hasPassphrase?: boolean;
+  /** 保存时为 true 则清空已存跳板密码 */
+  clearPassword?: boolean;
+  /** 保存时为 true 则清空已存 passphrase */
+  clearPassphrase?: boolean;
 }
 
 /**
@@ -45,8 +53,12 @@ export interface SentinelConfig {
   nodes: { host: string; port: number }[];
   /** Master 名称 */
   masterName: string;
-  /** Sentinel 密码 */
+  /** Sentinel 密码。列表接口不返回明文。 */
   sentinelPassword?: string;
+  /** 列表接口：磁盘上已有 Sentinel 密码 */
+  hasSentinelPassword?: boolean;
+  /** 保存时为 true 则清空已存 Sentinel 密码 */
+  clearPassword?: boolean;
 }
 
 /** Cluster 配置 */
@@ -62,7 +74,12 @@ export interface ConnectionConfig {
   host: string;
   port: number;
   username?: string;
+  /** 列表接口始终省略明文。保存时 null/缺省表示保留，空字符串或 clearPassword 表示清空。 */
   password?: string;
+  /** 列表接口：磁盘上已有 Redis 密码 */
+  hasPassword?: boolean;
+  /** 保存时为 true 则清空已存 Redis 密码 */
+  clearPassword?: boolean;
   db: number;
   group?: string;
   /** 连接类型 */
@@ -75,6 +92,40 @@ export interface ConnectionConfig {
   sentinel?: SentinelConfig;
   /** Cluster 配置 */
   cluster?: ClusterConfig;
+}
+
+/** 后端能力状态，与 `get_backend_capabilities` 对齐 */
+export type CapabilityStatus = "supported" | "degraded" | "unsupported";
+
+export interface CapabilityFlag {
+  status: CapabilityStatus;
+  detailKey?: string | null;
+  dataConnection: boolean;
+  ssh: boolean;
+  tls: boolean;
+}
+
+/** 密码 IPC 与导出格式约定，供前端按后端真实行为展示 */
+export interface BackendCapabilities {
+  tls: CapabilityFlag;
+  sentinel: CapabilityFlag;
+  cluster: CapabilityFlag;
+  passwordIpc: {
+    listRedactsSecrets: boolean;
+    nullMeans: string;
+    emptyStringMeans: string;
+    clearFlag: string;
+    duplicateCommand: string;
+  };
+  exportSchema: {
+    version: number;
+    preservesSsh: boolean;
+    preservesTls: boolean;
+    preservesSentinel: boolean;
+    preservesCluster: boolean;
+    secretsIncludedOnlyWhen: string;
+    redactedField: string;
+  };
 }
 
 /** 测试连接结果 */

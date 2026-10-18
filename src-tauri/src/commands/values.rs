@@ -54,17 +54,6 @@ pub struct CreateKeyPayload {
     pub position: Option<String>,
 }
 
-// ============ 辅助宏：SELECT 数据库 ============
-
-/// 切换到指定 db 的辅助函数
-async fn select_db(conn: &mut redis::aio::ConnectionManager, db: u32) -> Result<(), String> {
-    redis::cmd("SELECT")
-        .arg(db)
-        .query_async::<()>(conn)
-        .await
-        .map_err(|e| e.to_string())
-}
-
 // ============ 读取命令 ============
 
 /// 获取 String 类型的值（支持二进制数据，lossy 转换）
@@ -75,8 +64,7 @@ pub async fn get_string_value(
     db: u32,
     key: String,
 ) -> Result<String, String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
     let raw: Vec<u8> = conn.get(&key).await.map_err(|e| e.to_string())?;
     Ok(String::from_utf8_lossy(&raw).into_owned())
 }
@@ -91,8 +79,7 @@ pub async fn get_string_value_partial(
     start: i64,
     end: i64,
 ) -> Result<String, String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
     let raw: Vec<u8> = redis::cmd("GETRANGE")
         .arg(&key)
         .arg(start)
@@ -125,8 +112,7 @@ pub async fn get_hash_value(
     count: u64,
 ) -> Result<HashScanResult, String> {
     validate_value_count(count)?;
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     let match_pattern = if pattern.is_empty() {
         "*".to_string()
@@ -181,8 +167,7 @@ pub async fn get_list_value(
     start: i64,
     stop: i64,
 ) -> Result<Vec<String>, String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
     let raw: Vec<Vec<u8>> = conn
         .lrange(&key, start as isize, stop as isize)
         .await
@@ -205,8 +190,7 @@ pub async fn get_set_value(
     count: u64,
 ) -> Result<SetScanResult, String> {
     validate_value_count(count)?;
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     let match_pattern = if pattern.is_empty() {
         "*".to_string()
@@ -256,8 +240,7 @@ pub async fn get_zset_value(
     start: i64,
     stop: i64,
 ) -> Result<Vec<ZSetMember>, String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     let raw: Vec<(Vec<u8>, f64)> = conn
         .zrange_withscores(&key, start as isize, stop as isize)
@@ -285,8 +268,7 @@ pub async fn get_stream_value(
     count: u64,
 ) -> Result<Vec<StreamEntry>, String> {
     validate_value_count(count)?;
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     let start_id = if start.is_empty() {
         "-".to_string()
@@ -363,8 +345,7 @@ pub async fn set_string_value(
     value: String,
     ttl: Option<i64>,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     if let Some(t) = ttl {
         if t > 0 {
@@ -389,8 +370,7 @@ pub async fn set_hash_field(
     field: String,
     value: String,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
     conn.hset(&key, &field, &value)
         .await
         .map_err(|e| e.to_string())
@@ -405,8 +385,7 @@ pub async fn delete_hash_field(
     key: String,
     field: String,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
     conn.hdel(&key, &field).await.map_err(|e| e.to_string())
 }
 
@@ -420,8 +399,7 @@ pub async fn add_list_element(
     value: String,
     position: String,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     if position == "head" {
         conn.lpush(&key, &value).await.map_err(|e| e.to_string())
@@ -440,8 +418,7 @@ pub async fn set_list_element(
     index: i64,
     value: String,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
     conn.lset(&key, index as isize, &value)
         .await
         .map_err(|e| e.to_string())
@@ -456,8 +433,7 @@ pub async fn delete_list_element(
     key: String,
     index: i64,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     // 使用唯一占位符标记要删除的元素
     let placeholder = format!("__DELETED_{}_{}", uuid::Uuid::new_v4(), index);
@@ -478,8 +454,7 @@ pub async fn add_set_member(
     key: String,
     member: String,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
     conn.sadd(&key, &member).await.map_err(|e| e.to_string())
 }
 
@@ -492,8 +467,7 @@ pub async fn delete_set_member(
     key: String,
     member: String,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
     conn.srem(&key, &member).await.map_err(|e| e.to_string())
 }
 
@@ -507,8 +481,7 @@ pub async fn add_zset_member(
     member: String,
     score: f64,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
     conn.zadd(&key, &member, score)
         .await
         .map_err(|e| e.to_string())
@@ -523,8 +496,7 @@ pub async fn delete_zset_member(
     key: String,
     member: String,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
     conn.zrem(&key, &member).await.map_err(|e| e.to_string())
 }
 
@@ -537,8 +509,7 @@ pub async fn add_stream_entry(
     key: String,
     fields: Vec<(String, String)>,
 ) -> Result<String, String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     let mut cmd = redis::cmd("XADD");
     cmd.arg(&key).arg("*");
@@ -561,8 +532,7 @@ pub async fn delete_stream_entry(
     key: String,
     entry_id: String,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     redis::cmd("XDEL")
         .arg(&key)
@@ -589,8 +559,7 @@ pub async fn create_key(
         score,
         position,
     } = payload;
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     match key_type.as_str() {
         "string" => {
@@ -679,8 +648,7 @@ pub async fn get_json_value(
     key: String,
     path: Option<String>,
 ) -> Result<String, String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     let json_path = path.unwrap_or_else(|| "$".to_string());
     let result: String = redis::cmd("JSON.GET")
@@ -702,8 +670,7 @@ pub async fn set_json_value(
     path: String,
     value: String,
 ) -> Result<(), String> {
-    let mut conn = pool.get_connection(&id).await?;
-    select_db(&mut conn, db).await?;
+    let mut conn = pool.get_connection(&id, db).await?;
 
     redis::cmd("JSON.SET")
         .arg(&key)

@@ -25,7 +25,8 @@ tauri-plugin-store = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tokio = { version = "1", features = ["full"] }
-redis = { version = "0.29", features = ["tokio-comp", "aio", "connection-manager"] }
+redis = { version = "0.29", features = ["tokio-comp", "aio", "connection-manager", "tokio-rustls-comp", "tls-rustls-webpki-roots", "tls-rustls-insecure", "sentinel"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
 thiserror = "2"
 aes-gcm = "0.10"
 rand = "0.8"

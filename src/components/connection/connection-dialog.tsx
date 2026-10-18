@@ -33,6 +33,8 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
+import { CapabilityNotice } from "@/components/connection/capability-notice";
+import { translateIpcError } from "@/lib/tauri-api";
 import {
   useConnectionStore,
   type ConnectionConfig,
@@ -237,12 +239,15 @@ export function ConnectionDialog() {
           message: t("connection.latency", { ms: result.latency_ms }),
         });
       } else {
-        setTestState({ status: "error", message: result.message });
+        setTestState({
+          status: "error",
+          message: t(result.message, { defaultValue: result.message }),
+        });
       }
     } catch (err) {
       setTestState({
         status: "error",
-        message: err instanceof Error ? err.message : String(err),
+        message: translateIpcError(err, t),
       });
     }
   }, [buildConfig, t]);
@@ -337,6 +342,10 @@ export function ConnectionDialog() {
                       </SelectItem>
                     </SelectContent>
                   </Select>
+                  {(connectionType === "sentinel" ||
+                    connectionType === "cluster") && (
+                    <CapabilityNotice mode={connectionType} />
+                  )}
                 </div>
 
                 {/* Standalone 主机配置 */}

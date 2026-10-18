@@ -1,3 +1,4 @@
+pub mod capabilities;
 pub mod cli;
 pub mod connection;
 pub mod data;

@@ -56,10 +56,28 @@ pub struct SshHop {
     /// 认证方式: "password" | "privateKey"
     pub auth_type: String,
     /// 密码（运行时明文，落盘前 AES-256-GCM 加密）
+    #[serde(default)]
     pub password: Option<String>,
     pub private_key_path: Option<String>,
     /// 私钥 passphrase（运行时明文，落盘前 AES-256-GCM 加密）
+    #[serde(default)]
     pub passphrase: Option<String>,
+    /// IPC 只读：磁盘上是否存有密码。不回写。
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub has_password: bool,
+    /// IPC 只读：磁盘上是否存有 passphrase。不回写。
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub has_passphrase: bool,
+    /// IPC 写入：true 时清空已保存的跳板密码。
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub clear_password: bool,
+    /// IPC 写入：true 时清空已保存的 passphrase。
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub clear_passphrase: bool,
+}
+
+fn is_false(value: &bool) -> bool {
+    !*value
 }
 
 /// SSH 隧道配置 — 支持任意 N 跳串联
@@ -122,6 +140,10 @@ impl<'de> Deserialize<'de> for SshConfig {
                     password,
                     private_key_path,
                     passphrase,
+                    has_password: false,
+                    has_passphrase: false,
+                    clear_password: false,
+                    clear_passphrase: false,
                 }],
             }),
         }
@@ -163,6 +185,12 @@ pub struct SentinelConfig {
     pub master_name: String,
     #[serde(default, alias = "sentinel_password")]
     pub sentinel_password: Option<String>,
+    /// IPC 只读：磁盘上是否存有 Sentinel 密码。
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub has_sentinel_password: bool,
+    /// IPC 写入：true 时清空已保存的 Sentinel 密码。
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub clear_password: bool,
 }
 
 /// Cluster 节点
@@ -210,6 +238,7 @@ impl ConnectionStore {
         let mut connections: Vec<StoredConnection> =
             serde_json::from_str(&content).map_err(|e| e.to_string())?;
 
+        let mut legacy_sentinel_password = false;
         for conn in &mut connections {
             self.decrypt_secret_field(&mut conn.password)?;
             if let Some(ref mut ssh) = conn.ssh {
@@ -218,6 +247,15 @@ impl ConnectionStore {
                     self.decrypt_secret_field(&mut hop.passphrase)?;
                 }
             }
+            if let Some(ref mut sentinel) = conn.sentinel {
+                if self.decrypt_sentinel_password(&mut sentinel.sentinel_password)? {
+                    legacy_sentinel_password = true;
+                }
+            }
+        }
+        if legacy_sentinel_password {
+            log::warn!("检测到未加密的 Sentinel 密码，正在用 AES-GCM 重新写回");
+            self.save_connections(&connections)?;
         }
         Ok(connections)
     }
@@ -233,6 +271,9 @@ impl ConnectionStore {
                     self.encrypt_secret_field(&mut hop.password)?;
                     self.encrypt_secret_field(&mut hop.passphrase)?;
                 }
+            }
+            if let Some(ref mut sentinel) = conn.sentinel {
+                self.encrypt_secret_field(&mut sentinel.sentinel_password)?;
             }
         }
 
@@ -285,6 +326,23 @@ impl ConnectionStore {
         Ok(())
     }
 
+    /// 解密 Sentinel 密码。历史版本曾把该字段明文落盘，解密失败时保留原文并要求回写。
+    fn decrypt_sentinel_password(&self, field: &mut Option<String>) -> Result<bool, String> {
+        let Some(value) = field.as_ref() else {
+            return Ok(false);
+        };
+        if value.is_empty() {
+            return Ok(false);
+        }
+        match encryption::decrypt_password(&self.master_key, value) {
+            Ok(plain) => {
+                *field = Some(plain);
+                Ok(false)
+            }
+            Err(_) => Ok(true),
+        }
+    }
+
     /// 重新排序连接 — 按给定的 ID 列表顺序重排持久化
     pub fn reorder_connections(&self, ordered_ids: &[String]) -> Result<(), String> {
         let connections = self.load_connections()?;
@@ -301,6 +359,74 @@ impl ConnectionStore {
             }
         }
         self.save_connections(&reordered)
+    }
+}
+
+/// 合并已保存的机密。
+///
+/// - `clear_password == true` 或字段为 `Some("")`：清空 Redis 密码
+/// - 字段为 `None`：保留 `existing` 里的值（新建连接则保持为空）
+/// - 字段为 `Some(非空)`：使用新值
+///
+/// SSH 跳板按 host + port + username 匹配旧机密。Sentinel 密码同样遵守这三条。
+pub fn merge_connection_secrets(
+    incoming: &mut StoredConnection,
+    existing: Option<&StoredConnection>,
+    clear_password: bool,
+) {
+    merge_optional_secret(
+        &mut incoming.password,
+        existing.and_then(|conn| conn.password.as_ref()),
+        clear_password,
+    );
+
+    let old_hops = existing
+        .and_then(|conn| conn.ssh.as_ref())
+        .map(|ssh| ssh.hops.as_slice())
+        .unwrap_or(&[]);
+    if let Some(ssh) = incoming.ssh.as_mut() {
+        for hop in &mut ssh.hops {
+            let matched = old_hops.iter().find(|old| {
+                old.host == hop.host && old.port == hop.port && old.username == hop.username
+            });
+            merge_optional_secret(
+                &mut hop.password,
+                matched.and_then(|old| old.password.as_ref()),
+                hop.clear_password,
+            );
+            merge_optional_secret(
+                &mut hop.passphrase,
+                matched.and_then(|old| old.passphrase.as_ref()),
+                hop.clear_passphrase,
+            );
+            hop.has_password = false;
+            hop.has_passphrase = false;
+            hop.clear_password = false;
+            hop.clear_passphrase = false;
+        }
+    }
+
+    if let Some(sentinel) = incoming.sentinel.as_mut() {
+        let old_password = existing
+            .and_then(|conn| conn.sentinel.as_ref())
+            .and_then(|item| item.sentinel_password.as_ref());
+        merge_optional_secret(
+            &mut sentinel.sentinel_password,
+            old_password,
+            sentinel.clear_password,
+        );
+        sentinel.has_sentinel_password = false;
+        sentinel.clear_password = false;
+    }
+}
+
+fn merge_optional_secret(incoming: &mut Option<String>, existing: Option<&String>, clear: bool) {
+    if clear || incoming.as_deref().is_some_and(|value| value.is_empty()) {
+        *incoming = None;
+        return;
+    }
+    if incoming.is_none() {
+        *incoming = existing.cloned();
     }
 }
 
@@ -372,6 +498,10 @@ mod tests {
                 password: Some("p".to_string()),
                 private_key_path: None,
                 passphrase: None,
+                has_password: false,
+                has_passphrase: false,
+                clear_password: false,
+                clear_passphrase: false,
             }],
         };
         let json = serde_json::to_string(&cfg).unwrap();
@@ -468,5 +598,107 @@ mod tests {
         }"#;
         let conn: StoredConnection = serde_json::from_str(json_new).unwrap();
         assert_eq!(conn.connection_type, "cluster");
+    }
+
+    fn temp_store() -> (std::path::PathBuf, ConnectionStore) {
+        let dir = std::env::temp_dir().join(format!("rdc-store-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let store = ConnectionStore::new(dir.clone()).unwrap();
+        (dir, store)
+    }
+
+    fn sentinel_connection() -> StoredConnection {
+        StoredConnection {
+            id: "c1".into(),
+            name: "sentinel".into(),
+            host: "127.0.0.1".into(),
+            port: 6379,
+            username: None,
+            password: Some("redis-secret".into()),
+            db: 0,
+            group: None,
+            connection_type: "sentinel".into(),
+            ssh: None,
+            tls: None,
+            sentinel: Some(SentinelConfig {
+                nodes: vec![SentinelNode {
+                    host: "10.0.0.2".into(),
+                    port: 26379,
+                }],
+                master_name: "mymaster".into(),
+                sentinel_password: Some("sent-secret".into()),
+                has_sentinel_password: false,
+                clear_password: false,
+            }),
+            cluster: None,
+        }
+    }
+
+    #[test]
+    fn sentinel_password_is_encrypted_at_rest() {
+        let (dir, store) = temp_store();
+        store.upsert_connection(sentinel_connection()).unwrap();
+        let raw = std::fs::read_to_string(dir.join(CONNECTIONS_FILENAME)).unwrap();
+        assert!(
+            !raw.contains("sent-secret"),
+            "Sentinel 密码不应明文落盘: {raw}"
+        );
+        assert!(!raw.contains("redis-secret"), "Redis 密码不应明文落盘");
+        let loaded = store.load_connections().unwrap();
+        assert_eq!(
+            loaded[0]
+                .sentinel
+                .as_ref()
+                .unwrap()
+                .sentinel_password
+                .as_deref(),
+            Some("sent-secret")
+        );
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn legacy_plaintext_sentinel_password_is_migrated() {
+        let (dir, store) = temp_store();
+        store.upsert_connection(sentinel_connection()).unwrap();
+        let path = dir.join(CONNECTIONS_FILENAME);
+        let raw = std::fs::read_to_string(&path).unwrap();
+        let mut value: serde_json::Value = serde_json::from_str(&raw).unwrap();
+        value[0]["sentinel"]["sentinelPassword"] = serde_json::Value::String("sent-secret".into());
+        std::fs::write(&path, serde_json::to_string_pretty(&value).unwrap()).unwrap();
+
+        let loaded = store.load_connections().unwrap();
+        assert_eq!(
+            loaded[0]
+                .sentinel
+                .as_ref()
+                .unwrap()
+                .sentinel_password
+                .as_deref(),
+            Some("sent-secret")
+        );
+        let migrated = std::fs::read_to_string(&path).unwrap();
+        assert!(
+            !migrated.contains("\"sentinelPassword\": \"sent-secret\"")
+                && !migrated.contains("\"sentinelPassword\":\"sent-secret\""),
+            "迁移后不应再保留明文: {migrated}"
+        );
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn merge_keeps_omitted_secret_and_clears_empty_string() {
+        let existing = sentinel_connection();
+        let mut incoming = sentinel_connection();
+        incoming.password = None;
+        incoming.sentinel.as_mut().unwrap().sentinel_password = Some(String::new());
+        merge_connection_secrets(&mut incoming, Some(&existing), false);
+        assert_eq!(incoming.password.as_deref(), Some("redis-secret"));
+        assert!(incoming
+            .sentinel
+            .as_ref()
+            .unwrap()
+            .sentinel_password
+            .is_none());
     }
 }

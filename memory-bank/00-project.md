@@ -37,7 +37,7 @@ Redis 是后端服务最广泛使用的内存数据库，但官方未提供 GUI 
 
 ## 范围（What's In）
 
-- **连接管理**：基础连接、SSL/TLS、Sentinel、Cluster、SSH（`russh` N 跳隧道，known_hosts + TOFU，当前仅 Standalone 接入）、加密存储、导入导出。
+- **连接管理**：基础连接、rustls TLS、Sentinel（连接时解析 master，无实时故障转移）、Cluster（明确不可用，拒绝静默单节点）、SSH（`russh` N 跳隧道，known_hosts + TOFU，仅 Standalone）、加密存储、导入导出 v2。
 - **数据浏览**：树形 / 平铺 Key 浏览器；7 种数据类型（String / Hash / List / Set / ZSet / Stream / RedisJSON）全量增删改查；TTL、内存、编码方式展示。
 - **多格式值编辑器**：原生 textarea + JSON 高亮叠层 + Hex dump，支持 Text/JSON/XML/YAML/HTML/CSS/JS/TS/SQL/Markdown/Hex 切换。
 - **CLI 控制台**：内置自定义终端，100+ 命令补全、多 Tab、命令历史。
@@ -146,7 +146,7 @@ Monitor 页面 Tabs
 
 | 约束维度        | 要求                                                                                                                                         |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| 安全 — 密码     | 连接密码、SSH 密码和私钥 passphrase 本地 **AES-256-GCM 加密**存储；Master Key 自动生成并保存到独立 `master-key` 文件。SSH 私钥只存路径不存内容。 |
+| 安全 — 密码     | 连接密码、SSH 密码 / passphrase、Sentinel 密码本地 **AES-256-GCM** 存储。Master Key 只存在独立 `master-key` 文件。列表和测试回填都不把明文交回前端。SSH 私钥只存路径。 |
 | 安全 — SSH      | SSH known_hosts 指纹独立加密存储；首次连接通过 TOFU 弹窗确认，指纹失配硬拒绝。当前 SSH 仅支持 Standalone 连接。                              |
 | 安全 — 操作     | 删除 Key、批量删除、FLUSHDB / FLUSHALL 等危险操作必须经过统一 `ConfirmDangerDialog` 二次确认；FLUSH 类需输入确认文本。                       |
 | 安全 — 更新     | 应用更新包必须经 Ed25519 签名校验（公钥已硬编码到 `tauri.conf.json`），更新源固定为 GitHub Releases `latest.json`。                          |
@@ -160,7 +160,7 @@ Monitor 页面 Tabs
 ## 数据安全约束
 
 - 不记录密码、Master Key、私钥内容到日志。
-- 不允许在 Sentinel / Cluster 连接上启用 SSH；后续支持需单独设计多节点隧道协调。
+- 不允许在 Sentinel / Cluster 连接上启用 SSH。Cluster 当前直接拒绝连接。Sentinel 只连接发现到的 master，不跟随实时故障转移。
 - `.env`、签名密钥、`master-key` 文件不进入版本控制（`.gitignore` 已配置）。
 - 修改更新、文件系统、进程调用、Redis 连接逻辑时，PR 描述必须说明安全影响（AGENTS.md 要求）。
 - Tauri capabilities 最小权限：仅 `default.json` 中已批准的权限可用，新增需保持最小范围。
