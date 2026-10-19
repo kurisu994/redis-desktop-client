@@ -83,3 +83,11 @@ main 发布提交 f6919c1 的六项 CI 全成功后推送 v0.2.11 标签，Relea
 - 独立改：测试失败 toast、含密导出警告、RENAME 覆盖确认。
 - 缺口等白厄：密码脱敏、export v2 元数据、能力标志适配。
 
+
+
+## 2026-10-19 清除密码方案 1
+
+- 开拓者确认方案 1：空框保留；另加「清除密码」勾选发 clearPassword:true。
+- 改 connection-dialog（standalone/sentinel/cluster）+ 中英文 i18n。
+- 待 lint 通过后提交并推 origin/fix/review-frontend-export。
+

@@ -49,6 +49,8 @@
     "host": "主机",
     "port": "端口",
     "password": "密码",
+    "passwordKeepHint": "留空则保留已保存的密码",
+    "clearPassword": "清除已保存的密码",
     "username": "用户名 (ACL)",
     "database": "数据库",
     "connect": "连接",

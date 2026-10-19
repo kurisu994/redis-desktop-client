@@ -49,6 +49,8 @@
     "host": "Host",
     "port": "Port",
     "password": "Password",
+    "passwordKeepHint": "Leave blank to keep the saved password",
+    "clearPassword": "Clear saved password",
     "username": "Username (ACL)",
     "database": "Database",
     "connect": "Connect",
