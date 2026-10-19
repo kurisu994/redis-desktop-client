@@ -1,5 +1,4 @@
-use crate::config::store::ConnectionStore;
-use crate::redis::client::{build_redis_url, RedisClientManager};
+use crate::redis::client::{sanitize_redis_error, RedisClientManager};
 use redis::AsyncCommands;
 use serde::Serialize;
 use tauri::Emitter;
@@ -19,7 +18,7 @@ pub async fn publish_message(
     channel: String,
     message: String,
 ) -> Result<PublishResult, String> {
-    let mut conn = manager.get_connection(&id).await?;
+    let mut conn = manager.get_server_connection(&id).await?;
     let receivers: u64 = conn
         .publish(&channel, &message)
         .await
@@ -34,32 +33,16 @@ pub async fn publish_message(
 #[tauri::command]
 pub async fn subscribe_channels(
     manager: State<'_, RedisClientManager>,
-    store: State<'_, ConnectionStore>,
     app: tauri::AppHandle,
     id: String,
     channels: Vec<String>,
 ) -> Result<(), String> {
-    // 验证主连接存在
-    let _ = manager.get_connection(&id).await?;
-
-    // 从存储中读取连接配置以创建独立 PubSub 连接
-    let connections = store.load_connections().map_err(|e| e.to_string())?;
-    let config = connections
-        .iter()
-        .find(|c| c.id == id)
-        .ok_or_else(|| format!("找不到连接配置: {}", id))?;
-
-    let url = build_redis_url(
-        "redis",
-        &config.host,
-        config.port,
-        config.username.as_deref(),
-        config.password.as_deref(),
-        config.db,
-    )?;
-
-    let client = redis::Client::open(url).map_err(|e| e.to_string())?;
-    let mut pubsub = client.get_async_pubsub().await.map_err(|e| e.to_string())?;
+    // 独立订阅连接复用会话端点，SSH / TLS 与数据面一致，不会退回明文直连。
+    let client = manager.open_dedicated_client(&id, 0).await?;
+    let mut pubsub = client
+        .get_async_pubsub()
+        .await
+        .map_err(|err| sanitize_redis_error(&err.to_string()))?;
 
     for ch in &channels {
         // 支持模式订阅（包含 * 或 ?）

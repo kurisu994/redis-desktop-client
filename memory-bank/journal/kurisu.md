@@ -68,3 +68,37 @@ CI 37181318391 最终 Windows 构建亦成功，全部 6 个 job 通过；本次
 
 main 发布提交 f6919c1 的六项 CI 全成功后推送 v0.2.11 标签，Release 37183580423 四平台全部成功。17 个公开附件摘要、7 份 updater 签名、11 个更新清单平台及 latest 端点验证通过。公开 AppImage 的 .DirIcon 相对链接正常，174 个 ELF 的最高 GLIBC 需求为 2.35；旧 v0.2.10 附件未改动。原始本机干净 main 已快进同步。结论归档至 archive/2026-10/v0.2.11-release.md；收录 PR #5338 的新包重测仍待后续执行。
 
+## 2026-10-18 连接隔离与 TLS/机密
+
+- 按 db 拆开 ConnectionManager，命令路径不再 SELECT。Cluster 直接拒绝，Sentinel 只连接发现到的 master。
+- Redis TLS 改走 rustls。Pub/Sub 和 MONITOR 复用会话端点，不再绕过 SSH/TLS 明文直连。
+- Sentinel 密码纳入 AES-GCM，并迁移历史明文。列表接口脱敏；导出 v2 保留 SSH/TLS 元数据。
+- 新增 get_backend_capabilities 与 duplicate_connection，给前端对齐文案和复制连接。
+- cargo test 50 项通过，clippy -D warnings 通过，tsc --noEmit 通过。
+
+## 2026-10-19 — PR #3 review 连接隔离修复
+
+- 核对当前仓库有效 Git 作者为 Kurisu（通过 `git var GIT_AUTHOR_IDENT` 及配置来源），仅在 `cursor/security-connection-isolation-dd25` 的 `8f9e02e` 基线上工作。
+- 补禁 RESET 及认证/协议、CLIENT、事务、订阅等共享会话命令；SSH + TLS 改为仅放宽主机名验证，保留证书链验证；懒建连用 generation 拒绝断开或重连后的旧结果。
+- 以真实 rustls 握手和 oneshot 控制竞态验证修复；新增三层密码 IPC 契约回归，未改 clearPassword 语义，也未合并前端 `8bdd464` 分支。证书私钥只在内存生成，rcgen 仅为测试依赖。
+- 独立复核 PASS：`just test-rust` 62/62、严格 `just lint-rust`、`just lint-web`、`just build-web`、`just i18n-check`、`just fmt` 均通过；现有 russh future-incompat 提示未扩围处理。
+- `just dev` 成功编译并启动原生窗口，确认新建连接与 SSL/TLS 页可打开；原生 UI 自动化点击开关会退出弹窗，未据此宣称完整交互验收。TLS 安全边界已有真实握手回归和源码独立复核。
+- 已同步中英文 README、连接契约文档、CHANGELOG 和必要记忆层；交付限定提交并推送 PR #3 同名分支，不合并 main。
+
+
+## 2026-10-19 审查前端摸底 + 独立项
+
+- 开分支 `fix/review-frontend-export`（自 origin/main `277bf4f`）。
+- 独立改：测试失败 toast、含密导出警告、RENAME 覆盖确认。
+- 缺口等白厄：密码脱敏、export v2 元数据、能力标志适配。
+
+
+
+## 2026-10-19 清除密码方案 1
+
+- 开拓者确认方案 1：空框保留；另加「清除密码」勾选发 clearPassword:true。
+- 改 connection-dialog（standalone/sentinel/cluster）+ 中英文 i18n。
+- 待 lint 通过后提交并推 origin/fix/review-frontend-export。
+
+- 已提交 2c71c94 并推 origin/fix/review-frontend-export（非强推）。
+

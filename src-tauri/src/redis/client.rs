@@ -1,136 +1,172 @@
 use crate::config::store::StoredConnection;
+use crate::redis::endpoint::RedisEndpoint;
+use crate::redis::sentinel;
 use crate::redis::ssh_tunnel::{self, SshTunnel, SshTunnelContext};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-/// Redis 客户端管理器 — 管理多个 Redis 连接的生命周期
-/// 使用 ConnectionManager 自动处理断线重连
+pub use crate::redis::endpoint::sanitize_redis_error;
+
+/// 一条已建立的逻辑连接。不同 db 各有独立的 `ConnectionManager`，互不 SELECT。
+struct Session {
+    /// 每次重连生成新令牌，防止旧的异步建连结果混入同名新会话。
+    generation: uuid::Uuid,
+    endpoint: RedisEndpoint,
+    by_db: HashMap<u32, redis::aio::ConnectionManager>,
+    /// 只为把隧道活到会话结束。字段本身不读取，drop 时关闭本地转发。
+    #[allow(dead_code)]
+    tunnel: Option<SshTunnel>,
+}
+
+/// Redis 客户端管理器。
+///
+/// 连接按 `(connection_id, db)` 隔离。Browser 和 CLI 即使同时访问不同数据库，
+/// 也不会共用一条会改变 SELECT 状态的多路复用连接。
 pub struct RedisClientManager {
-    clients: Arc<Mutex<HashMap<String, redis::aio::ConnectionManager>>>,
-    /// SSH 隧道句柄 — 与连接共享生命周期，disconnect / drop 时一并清理
-    tunnels: Arc<Mutex<HashMap<String, SshTunnel>>>,
-    /// PubSub 订阅任务句柄 — 用于取消订阅
+    sessions: Arc<Mutex<HashMap<String, Session>>>,
     subscribers: Arc<Mutex<HashMap<String, tauri::async_runtime::JoinHandle<()>>>>,
+    monitors: Arc<Mutex<HashMap<String, tauri::async_runtime::JoinHandle<()>>>>,
 }
 
 impl RedisClientManager {
     pub fn new() -> Self {
         Self {
-            clients: Arc::new(Mutex::new(HashMap::new())),
-            tunnels: Arc::new(Mutex::new(HashMap::new())),
+            sessions: Arc::new(Mutex::new(HashMap::new())),
             subscribers: Arc::new(Mutex::new(HashMap::new())),
+            monitors: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
-    /// 根据完整连接配置建立连接并加入管理池
-    ///
-    /// 若 `config.ssh.enabled = true` 且为 standalone 连接，先建立 SSH 隧道，
-    /// 再以本地 127.0.0.1:local_port 作为实际 Redis 地址。Cluster / Sentinel
-    /// 走 SSH 涉及多节点隧道协调，暂未实现（阶段 3 范围）。
+    /// 根据完整连接配置建立会话，并先钉住配置里的默认 db。
     pub async fn connect_with_config(
         &self,
         config: &StoredConnection,
         context: Option<&SshTunnelContext>,
     ) -> Result<(), String> {
-        let tls_enabled = config.tls.as_ref().map(|t| t.enabled).unwrap_or(false);
-        let scheme = if tls_enabled { "rediss" } else { "redis" };
-        let conn_type = config.connection_type.as_str();
-
-        // 仅 standalone 模式支持 SSH 隧道（阶段 3 范围）
-        let tunnel = open_ssh_tunnel_if_needed(
-            config.ssh.as_ref(),
-            &config.host,
-            config.port,
-            conn_type,
-            context,
-        )
-        .await?;
-        let (effective_host, effective_port) = match &tunnel {
-            Some(t) => {
-                let addr = t.local_addr();
-                (addr.ip().to_string(), addr.port())
-            }
-            None => (config.host.clone(), config.port),
-        };
-
-        let url = build_redis_url(
-            scheme,
-            &effective_host,
-            effective_port,
-            config.username.as_deref(),
-            config.password.as_deref(),
-            config.db,
-        )?;
-
-        let client = redis::Client::open(url).map_err(|e| sanitize_redis_error(&e.to_string()))?;
-        let conn = client
-            .get_connection_manager()
-            .await
-            .map_err(|e| sanitize_redis_error(&e.to_string()))?;
-
-        // 锁顺序：先 clients 再 tunnels（与 disconnect 一致避免死锁）
-        let mut clients = self.clients.lock().await;
-        clients.insert(config.id.clone(), conn);
-        self.replace_tunnel(config.id.clone(), tunnel).await;
+        let (endpoint, tunnel) = prepare_data_endpoint(config, context).await?;
+        let db = u32::from(config.db);
+        let conn = endpoint.open_manager(db).await?;
+        let mut sessions = self.sessions.lock().await;
+        sessions.insert(
+            config.id.clone(),
+            Session {
+                generation: uuid::Uuid::new_v4(),
+                endpoint,
+                by_db: HashMap::from([(db, conn)]),
+                tunnel,
+            },
+        );
         Ok(())
     }
 
-    async fn replace_tunnel(&self, id: String, tunnel: Option<SshTunnel>) {
-        let mut tunnels = self.tunnels.lock().await;
-        match tunnel {
-            Some(t) => {
-                tunnels.insert(id, t);
-            }
-            None => {
-                tunnels.remove(&id);
-            }
-        }
-    }
-
-    /// 断开连接并从池中移除（同时释放 SSH 隧道）
+    /// 断开连接并释放 SSH 隧道、Pub/Sub 和 MONITOR 任务。
     pub async fn disconnect(&self, id: &str) -> Result<(), String> {
-        let mut clients = self.clients.lock().await;
-        clients.remove(id);
-        let mut tunnels = self.tunnels.lock().await;
-        tunnels.remove(id);
+        self.unregister_subscriber(id).await;
+        self.unregister_monitor(id).await;
+        let mut sessions = self.sessions.lock().await;
+        sessions.remove(id);
         Ok(())
     }
 
-    /// 获取连接引用（用于执行命令）
-    pub async fn get_connection(&self, id: &str) -> Result<redis::aio::ConnectionManager, String> {
-        let clients = self.clients.lock().await;
-        clients
-            .get(id)
-            .cloned()
-            .ok_or_else(|| format!("连接 {} 不存在或未连接", id))
+    /// 取得已经钉在 `db` 上的连接。没有则通过同一端点（含 SSH/TLS）懒创建。
+    pub async fn get_connection(
+        &self,
+        id: &str,
+        db: u32,
+    ) -> Result<redis::aio::ConnectionManager, String> {
+        let (endpoint, generation) = {
+            let sessions = self.sessions.lock().await;
+            let session = sessions
+                .get(id)
+                .ok_or_else(|| "error.connection.not_connected".to_string())?;
+            if let Some(conn) = session.by_db.get(&db) {
+                return Ok(conn.clone());
+            }
+            // 端点和令牌必须在同一把锁内快照，不能在重连后重新读取端点。
+            (session.endpoint.clone(), session.generation)
+        };
+        let conn = endpoint.open_manager(db).await?;
+        let mut sessions = self.sessions.lock().await;
+        let session = sessions
+            .get_mut(id)
+            .filter(|session| session.generation == generation)
+            .ok_or_else(|| "error.connection.not_connected".to_string())?;
+        // 校验和插入持有同一把锁；过期结果直接丢弃，不返回给调用方。
+        Ok(session
+            .by_db
+            .entry(db)
+            .or_insert_with(|| conn.clone())
+            .clone())
     }
 
-    /// 检查连接是否存在
+    /// 服务器级命令（INFO / SLOWLOG / PUBLISH）使用任意一条已钉住的连接，不再 SELECT。
+    pub async fn get_server_connection(
+        &self,
+        id: &str,
+    ) -> Result<redis::aio::ConnectionManager, String> {
+        let sessions = self.sessions.lock().await;
+        let session = sessions
+            .get(id)
+            .ok_or_else(|| "error.connection.not_connected".to_string())?;
+        session
+            .by_db
+            .values()
+            .next()
+            .cloned()
+            .ok_or_else(|| "error.connection.not_connected".to_string())
+    }
+
+    /// 为 Pub/Sub 或 MONITOR 打开独立客户端。端点与数据连接相同，因此会走 SSH 和 rustls。
+    pub async fn open_dedicated_client(&self, id: &str, db: u32) -> Result<redis::Client, String> {
+        let endpoint = self.endpoint_of(id).await?;
+        endpoint.open_client(db)
+    }
+
+    async fn endpoint_of(&self, id: &str) -> Result<RedisEndpoint, String> {
+        let sessions = self.sessions.lock().await;
+        sessions
+            .get(id)
+            .map(|session| session.endpoint.clone())
+            .ok_or_else(|| "error.connection.not_connected".to_string())
+    }
+
     #[allow(dead_code)]
     pub async fn is_connected(&self, id: &str) -> bool {
-        let clients = self.clients.lock().await;
-        clients.contains_key(id)
+        let sessions = self.sessions.lock().await;
+        sessions.contains_key(id)
     }
 
-    /// 注册 PubSub 订阅任务句柄
     pub async fn register_subscriber(
         &self,
         id: String,
         handle: tauri::async_runtime::JoinHandle<()>,
     ) {
         let mut subscribers = self.subscribers.lock().await;
-        // 如果已有同连接的任务，先取消旧任务
         if let Some(old) = subscribers.remove(&id) {
             old.abort();
         }
         subscribers.insert(id, handle);
     }
 
-    /// 取消指定连接的 PubSub 订阅
     pub async fn unregister_subscriber(&self, id: &str) {
         let mut subscribers = self.subscribers.lock().await;
         if let Some(handle) = subscribers.remove(id) {
+            handle.abort();
+        }
+    }
+
+    pub async fn register_monitor(&self, id: String, handle: tauri::async_runtime::JoinHandle<()>) {
+        let mut monitors = self.monitors.lock().await;
+        if let Some(old) = monitors.remove(&id) {
+            old.abort();
+        }
+        monitors.insert(id, handle);
+    }
+
+    pub async fn unregister_monitor(&self, id: &str) {
+        let mut monitors = self.monitors.lock().await;
+        if let Some(handle) = monitors.remove(id) {
             handle.abort();
         }
     }
@@ -142,43 +178,68 @@ impl Default for RedisClientManager {
     }
 }
 
-/// 构建 Redis URL — 使用 url crate 进行结构化编码，避免特殊字符破坏 URL 解析
-pub fn build_redis_url(
-    scheme: &str,
-    host: &str,
-    port: u16,
-    username: Option<&str>,
-    password: Option<&str>,
-    db: u8,
-) -> Result<String, String> {
-    let mut url = url::Url::parse(&format!("{}://{}:{}/{}", scheme, host, port, db))
-        .map_err(|e| format!("无效的 Redis URL: {}", e))?;
-    if let Some(user) = username {
-        url.set_username(user)
-            .map_err(|_| "设置用户名失败".to_string())?;
+/// 解析最终数据端点。
+///
+/// - Cluster：直接拒绝，避免把种子节点当成单机静默连上。
+/// - Sentinel：向 Sentinel 查询当前 master，再连数据节点。
+/// - Standalone：可选 SSH 隧道，Redis 拨本地转发端口。
+pub async fn prepare_data_endpoint(
+    config: &StoredConnection,
+    context: Option<&SshTunnelContext>,
+) -> Result<(RedisEndpoint, Option<SshTunnel>), String> {
+    match config.connection_type.as_str() {
+        "cluster" => Err("error.cluster.unsupported".to_string()),
+        "sentinel" => {
+            if config.ssh.as_ref().is_some_and(|ssh| ssh.enabled) {
+                return Err("error.ssh.unsupported_for_cluster_sentinel".to_string());
+            }
+            let (host, port) = sentinel::resolve_master(config).await?;
+            Ok((
+                RedisEndpoint {
+                    host,
+                    port,
+                    username: config.username.clone(),
+                    password: config.password.clone(),
+                    tls: config.tls.clone(),
+                    via_ssh_tunnel: false,
+                },
+                None,
+            ))
+        }
+        _ => {
+            let tunnel = open_ssh_tunnel_if_needed(
+                config.ssh.as_ref(),
+                &config.host,
+                config.port,
+                "standalone",
+                context,
+            )
+            .await?;
+            let (host, port, via_ssh_tunnel) = match &tunnel {
+                Some(tunnel) => {
+                    let addr = tunnel.local_addr();
+                    (addr.ip().to_string(), addr.port(), true)
+                }
+                None => (config.host.clone(), config.port, false),
+            };
+            Ok((
+                RedisEndpoint {
+                    host,
+                    port,
+                    username: config.username.clone(),
+                    password: config.password.clone(),
+                    tls: config.tls.clone(),
+                    via_ssh_tunnel,
+                },
+                tunnel,
+            ))
+        }
     }
-    if let Some(pwd) = password {
-        url.set_password(Some(pwd))
-            .map_err(|_| "设置密码失败".to_string())?;
-    }
-    Ok(url.to_string())
 }
 
-/// 对包含 Redis URL 的错误信息进行脱敏，防止密码泄露
-pub fn sanitize_redis_error(err: &str) -> String {
-    // 匹配 redis://user:password@host 或 redis://:password@host
-    let re = regex::Regex::new(r"(redis(?:s)?://)[^@]+@").unwrap();
-    re.replace_all(err, "${1}***@").to_string()
-}
-
-/// 若启用 SSH 隧道则建立之；返回 None 表示不需要隧道
+/// 若启用 SSH 隧道则建立之；返回 None 表示不需要隧道。
 ///
-/// - `ssh`：当前连接的 SSH 配置（None 或 disabled 时直接返回 None）
-/// - `target_host` / `target_port`：隧道桥接到的最终 Redis 端点
-/// - `conn_type`："standalone" / "sentinel" / "cluster"；阶段 3 仅 standalone 走 SSH
-/// - `context`：包含 known_hosts 存储、TOFU 管理器与 AppHandle，首次连接时需要
-///
-/// 错误返回 SshTunnelError 对应的 i18n key，由前端翻译展示
+/// 错误返回 i18n key，由前端翻译展示。
 pub async fn open_ssh_tunnel_if_needed(
     ssh: Option<&crate::config::store::SshConfig>,
     target_host: &str,
@@ -193,33 +254,171 @@ pub async fn open_ssh_tunnel_if_needed(
         return Ok(None);
     }
     if conn_type != "standalone" {
-        // Cluster / Sentinel 走 SSH 涉及多节点隧道协调，暂不支持
         return Err("error.ssh.unsupported_for_cluster_sentinel".to_string());
     }
     let Some(ctx) = context else {
-        // 启用 SSH 但未提供上下文（理论上不应发生），保守拒绝
         return Err("error.ssh.host_key_rejected".to_string());
     };
     let tunnel = ssh_tunnel::open(ssh, target_host, target_port, ctx)
         .await
-        .map_err(|e| e.i18n_key().to_string())?;
+        .map_err(|err| err.i18n_key().to_string())?;
     Ok(Some(tunnel))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::store::{ClusterConfig, ClusterNode, SentinelConfig};
+
+    fn bare_config(connection_type: &str) -> StoredConnection {
+        StoredConnection {
+            id: "id".into(),
+            name: "name".into(),
+            host: "127.0.0.1".into(),
+            port: 6379,
+            username: None,
+            password: None,
+            db: 0,
+            group: None,
+            connection_type: connection_type.into(),
+            ssh: None,
+            tls: None,
+            sentinel: None,
+            cluster: Some(ClusterConfig {
+                nodes: vec![ClusterNode {
+                    host: "10.0.0.1".into(),
+                    port: 7000,
+                }],
+            }),
+        }
+    }
 
     #[tokio::test]
-    async fn clear_tunnel_for_connection_removes_stale_entry() {
+    async fn cluster_is_rejected_without_dialing() {
+        let err = match prepare_data_endpoint(&bare_config("cluster"), None).await {
+            Err(err) => err,
+            Ok(_) => panic!("Cluster 不应建立数据连接"),
+        };
+        assert_eq!(err, "error.cluster.unsupported");
+    }
+
+    #[tokio::test]
+    async fn sentinel_without_nodes_is_rejected() {
+        let mut config = bare_config("sentinel");
+        config.cluster = None;
+        config.sentinel = Some(SentinelConfig {
+            nodes: vec![],
+            master_name: "mymaster".into(),
+            sentinel_password: None,
+            has_sentinel_password: false,
+            clear_password: false,
+        });
+        let err = match prepare_data_endpoint(&config, None).await {
+            Err(err) => err,
+            Ok(_) => panic!("没有 Sentinel 节点时不应建立连接"),
+        };
+        assert_eq!(err, "error.sentinel.no_nodes");
+    }
+
+    /// 挂起旧端点的真实 Redis 握手，在断开/重连后才放行，避免依赖 sleep 碰竞态。
+    async fn finish_stale_connection(reconnect: bool) {
+        use crate::redis::test_support::paused_redis_server;
+        use std::time::Duration;
+
+        let manager = Arc::new(RedisClientManager::new());
+        let (old_addr, accepted, resume, old_server) = paused_redis_server();
+        let mut old_config = bare_config("standalone");
+        old_config.port = old_addr.port();
+        let (old_endpoint, _) = prepare_data_endpoint(&old_config, None).await.unwrap();
+        manager.sessions.lock().await.insert(
+            old_config.id.clone(),
+            Session {
+                generation: uuid::Uuid::new_v4(),
+                endpoint: old_endpoint,
+                by_db: HashMap::new(),
+                tunnel: None,
+            },
+        );
+        let pending_manager = Arc::clone(&manager);
+        let pending = tokio::spawn(async move { pending_manager.get_connection("id", 3).await });
+        tokio::time::timeout(Duration::from_secs(5), accepted)
+            .await
+            .unwrap()
+            .unwrap();
+        manager.disconnect("id").await.unwrap();
+
+        let new_server = if reconnect {
+            let (addr, _, resume, server) = paused_redis_server();
+            resume.send(()).unwrap();
+            let mut config = old_config;
+            config.port = addr.port();
+            tokio::time::timeout(
+                Duration::from_secs(5),
+                manager.connect_with_config(&config, None),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+            Some(server)
+        } else {
+            None
+        };
+
+        resume.send(()).unwrap();
+        let result = tokio::time::timeout(Duration::from_secs(5), pending)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(matches!(result, Err(ref err) if err == "error.connection.not_connected"));
+        {
+            let sessions = manager.sessions.lock().await;
+            if reconnect {
+                let session = sessions.get("id").unwrap();
+                assert_eq!(session.by_db.len(), 1);
+                assert!(session.by_db.contains_key(&0));
+                assert!(!session.by_db.contains_key(&3), "旧连接不得插入新会话");
+            } else {
+                assert!(!sessions.contains_key("id"), "断开后不得复活旧会话");
+            }
+        }
+        manager.disconnect("id").await.unwrap();
+        old_server.await.unwrap();
+        if let Some(server) = new_server {
+            server.await.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn reconnect_rejects_old_lazy_connection() {
+        finish_stale_connection(true).await;
+    }
+
+    #[tokio::test]
+    async fn disconnect_rejects_pending_lazy_connection() {
+        finish_stale_connection(false).await;
+    }
+
+    #[tokio::test]
+    async fn disconnect_removes_session_and_tunnel() {
         let manager = RedisClientManager::new();
-        manager.tunnels.lock().await.insert(
+        manager.sessions.lock().await.insert(
             "conn-1".into(),
-            SshTunnel::test_handle("127.0.0.1:0".parse().unwrap()),
+            Session {
+                generation: uuid::Uuid::new_v4(),
+                endpoint: RedisEndpoint {
+                    host: "127.0.0.1".into(),
+                    port: 1,
+                    username: None,
+                    password: None,
+                    tls: None,
+                    via_ssh_tunnel: true,
+                },
+                by_db: HashMap::new(),
+                tunnel: Some(SshTunnel::test_handle("127.0.0.1:0".parse().unwrap())),
+            },
         );
 
-        manager.replace_tunnel("conn-1".into(), None).await;
-
-        assert!(!manager.tunnels.lock().await.contains_key("conn-1"));
+        manager.disconnect("conn-1").await.unwrap();
+        assert!(!manager.sessions.lock().await.contains_key("conn-1"));
     }
 }

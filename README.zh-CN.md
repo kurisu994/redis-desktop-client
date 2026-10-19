@@ -16,7 +16,7 @@
 - **国际化**：i18next + react-i18next（中/英）
 - **图标**：lucide-react
 - **后端**：Rust (Edition 2021) + Tokio + redis-rs + russh
-- **高级连接**：SSH 隧道（N 跳、known_hosts + TOFU，当前仅 Standalone）、SSL/TLS、Sentinel、Cluster
+- **高级连接**：Standalone、SSL/TLS、SSH 隧道（N 跳、known_hosts + TOFU，仅 Standalone）。Sentinel 在连接时解析 master，故障转移后需重连；Cluster 当前不支持，会明确拒绝连接。SSH + TLS 仅跳过证书主机名校验，仍验证证书链。
 - **值编辑器**：原生 textarea + JSON 高亮叠层 + Hex dump（按格式切换）
 - **自动更新**：Tauri Updater Plugin（Ed25519 签名校验，支持 HTTP/HTTPS 更新代理）
 

@@ -47,7 +47,7 @@ chmod +x Redis.Desktop.Client_*.AppImage
 ## Features and technology
 
 - **Data browser:** String, Hash, List, Set, Sorted Set, Stream, and RedisJSON support, with tree and list views, TTL management, and import/export.
-- **Connections:** Standalone, Sentinel, Cluster, SSL/TLS, and multiple SSH hops with known_hosts verification and trust on first use. SSH currently supports Standalone connections only.
+- **Connections:** Standalone, SSL/TLS, and multiple SSH hops with known_hosts verification and trust on first use. Sentinel resolves the master when connecting; reconnect after failover. Cluster is currently unsupported and connections are rejected. SSH supports Standalone only; with TLS, only certificate hostname checks are skipped while certificate chain validation remains enabled.
 - **Tools:** Command console, server monitoring, slow logs, MONITOR logs, and Pub/Sub.
 - **Interface:** Light and dark themes, English and Simplified Chinese, keyboard shortcuts, and a command palette.
 - **Desktop:** Tauri 2.x with a Rust (Edition 2021), Tokio, redis-rs, and russh backend.

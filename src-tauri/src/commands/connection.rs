@@ -1,11 +1,10 @@
 use crate::config::ssh_known_hosts::{SshKnownHostsStore, SshTofuManager};
 use crate::config::store::{
-    ClusterConfig, ConnectionStore, SentinelConfig, SshConfig, StoredConnection, TlsConfig,
+    merge_connection_secrets, ClusterConfig, ConnectionStore, SentinelConfig, SshConfig,
+    StoredConnection, TlsConfig,
 };
-use crate::redis::client::{
-    build_redis_url, open_ssh_tunnel_if_needed, sanitize_redis_error, RedisClientManager,
-};
-use crate::redis::ssh_tunnel::{SshTunnel, SshTunnelContext};
+use crate::redis::client::{prepare_data_endpoint, sanitize_redis_error, RedisClientManager};
+use crate::redis::ssh_tunnel::SshTunnelContext;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Instant;
@@ -23,7 +22,15 @@ pub struct ConnectionConfig {
     pub host: String,
     pub port: u16,
     pub username: Option<String>,
+    /// 读取接口始终为 null。写入时：null/缺省保留已存密码，空字符串或 `clearPassword` 清空，非空则更新。
+    #[serde(default)]
     pub password: Option<String>,
+    /// 列表接口标记磁盘上是否已有 Redis 密码。前端不应再期待收到明文。
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub has_password: bool,
+    /// 为 true 时清空已保存的 Redis 密码。
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub clear_password: bool,
     pub db: u8,
     pub group: Option<String>,
     /// 连接类型: standalone / sentinel / cluster
@@ -41,6 +48,10 @@ pub struct ConnectionConfig {
 
 fn default_connection_type() -> Option<String> {
     Some("standalone".to_string())
+}
+
+fn is_false(value: &bool) -> bool {
+    !*value
 }
 
 /// 测试连接结果
@@ -110,31 +121,40 @@ fn validate_connection_config(config: &ConnectionConfig) -> Result<(), String> {
     Ok(())
 }
 
-/// 保存连接配置（新建或更新）
+/// 保存连接配置（新建或更新）。省略的机密沿用磁盘上的旧值。
 #[tauri::command]
 pub async fn save_connection(
     store: State<'_, ConnectionStore>,
     config: ConnectionConfig,
 ) -> Result<(), String> {
     validate_connection_config(&config)?;
-    let stored = StoredConnection {
-        id: config.id,
-        name: config.name,
-        host: config.host,
-        port: config.port,
-        username: config.username,
-        password: config.password,
-        db: config.db,
-        group: config.group,
-        connection_type: config
-            .connection_type
-            .unwrap_or_else(|| "standalone".to_string()),
-        ssh: config.ssh,
-        tls: config.tls,
-        sentinel: config.sentinel,
-        cluster: config.cluster,
-    };
+    let (mut stored, clear_password) = into_stored(config);
+    let existing = store
+        .load_connections()?
+        .into_iter()
+        .find(|conn| conn.id == stored.id);
+    merge_connection_secrets(&mut stored, existing.as_ref(), clear_password);
     store.upsert_connection(stored)
+}
+
+/// 复制连接。机密只在后端复制，避免前端拿不到明文就把密码弄丢。
+#[tauri::command]
+pub async fn duplicate_connection(
+    store: State<'_, ConnectionStore>,
+    id: String,
+    name: String,
+) -> Result<(), String> {
+    if name.trim().is_empty() {
+        return Err("连接名称不能为空".to_string());
+    }
+    let mut source = store
+        .load_connections()?
+        .into_iter()
+        .find(|conn| conn.id == id)
+        .ok_or_else(|| "error.connection.not_found".to_string())?;
+    source.id = uuid::Uuid::new_v4().to_string();
+    source.name = name;
+    store.upsert_connection(source)
 }
 
 /// 删除连接配置
@@ -155,24 +175,7 @@ pub async fn list_connections(
     store: State<'_, ConnectionStore>,
 ) -> Result<Vec<ConnectionConfig>, String> {
     let connections = store.load_connections()?;
-    Ok(connections
-        .into_iter()
-        .map(|c| ConnectionConfig {
-            id: c.id,
-            name: c.name,
-            host: c.host,
-            port: c.port,
-            username: c.username,
-            password: c.password,
-            db: c.db,
-            group: c.group,
-            connection_type: Some(c.connection_type),
-            ssh: c.ssh,
-            tls: c.tls,
-            sentinel: c.sentinel,
-            cluster: c.cluster,
-        })
-        .collect())
+    Ok(connections.into_iter().map(redact_connection).collect())
 }
 
 /// 连接到 Redis 服务器
@@ -212,6 +215,7 @@ pub async fn disconnect_redis(
 /// 测试连接 — 根据连接配置执行 PING 并返回延迟
 #[tauri::command]
 pub async fn test_connection(
+    store: State<'_, ConnectionStore>,
     known_hosts: State<'_, Arc<SshKnownHostsStore>>,
     tofu_manager: State<'_, Arc<SshTofuManager>>,
     app_handle: tauri::AppHandle,
@@ -219,88 +223,39 @@ pub async fn test_connection(
 ) -> Result<TestResult, String> {
     validate_connection_config(&config)?;
     let start = Instant::now();
-
-    // 根据连接类型判断
-    let conn_type = config.connection_type.as_deref().unwrap_or("standalone");
-    let tls_enabled = config.tls.as_ref().map(|t| t.enabled).unwrap_or(false);
-    let scheme = if tls_enabled { "rediss" } else { "redis" };
+    let (mut stored, clear_password) = into_stored(config);
+    let existing = store
+        .load_connections()
+        .ok()
+        .and_then(|connections| connections.into_iter().find(|conn| conn.id == stored.id));
+    merge_connection_secrets(&mut stored, existing.as_ref(), clear_password);
 
     let context = SshTunnelContext {
         known_hosts: Arc::clone(known_hosts.inner()),
         tofu_manager: Arc::clone(tofu_manager.inner()),
         app_handle,
-        connection_id: config.id.clone(),
+        connection_id: stored.id.clone(),
     };
-
-    match conn_type {
-        "cluster" => {
-            // Cluster 模式：使用第一个种子节点测试
-            let nodes = config
-                .cluster
-                .as_ref()
-                .and_then(|c| c.nodes.first())
-                .map(|n| (n.host.as_str(), n.port))
-                .unwrap_or((config.host.as_str(), config.port));
-            let url = build_redis_url(
-                scheme,
-                nodes.0,
-                nodes.1,
-                config.username.as_deref(),
-                config.password.as_deref(),
-                0,
-            )?;
-            test_single_connection(&url, start).await
-        }
-        "sentinel" => {
-            // Sentinel 模式：测试第一个 sentinel 节点连通性
-            let node = config
-                .sentinel
-                .as_ref()
-                .and_then(|s| s.nodes.first())
-                .map(|n| (n.host.as_str(), n.port))
-                .unwrap_or((config.host.as_str(), config.port));
-            let url = build_redis_url(
-                scheme,
-                node.0,
-                node.1,
-                None,
-                config
-                    .sentinel
-                    .as_ref()
-                    .and_then(|s| s.sentinel_password.as_deref()),
-                0,
-            )?;
-            test_single_connection(&url, start).await
-        }
-        _ => {
-            // Standalone 模式：如启用 SSH 隧道则先建临时隧道再 PING
-            let tunnel = open_ssh_tunnel_if_needed(
-                config.ssh.as_ref(),
-                &config.host,
-                config.port,
-                "standalone",
-                Some(&context),
-            )
-            .await?;
-            let (host, port) = match &tunnel {
-                Some(t) => {
-                    let a = t.local_addr();
-                    (a.ip().to_string(), a.port())
-                }
-                None => (config.host.clone(), config.port),
-            };
-            let url = build_redis_url(
-                scheme,
-                &host,
-                port,
-                config.username.as_deref(),
-                config.password.as_deref(),
-                config.db,
-            )?;
-            // tunnel 持有到测试结束自然 drop（关闭 listener + 释放跳板 session）
-            test_single_connection_with_tunnel(&url, start, tunnel).await
-        }
-    }
+    let (endpoint, tunnel) = prepare_data_endpoint(&stored, Some(&context)).await?;
+    let client = endpoint
+        .open_client(u32::from(stored.db))
+        .map_err(|err| sanitize_redis_error(&err))?;
+    let mut conn = client
+        .get_multiplexed_async_connection()
+        .await
+        .map_err(|err| sanitize_redis_error(&err.to_string()))?;
+    let pong: String = redis::cmd("PING")
+        .query_async(&mut conn)
+        .await
+        .map_err(|err| sanitize_redis_error(&err.to_string()))?;
+    // tunnel 持有到测试结束自然 drop
+    drop(tunnel);
+    let latency = start.elapsed().as_millis() as u64;
+    Ok(TestResult {
+        success: pong == "PONG",
+        latency_ms: latency,
+        message: pong,
+    })
 }
 
 /// 重新排序连接列表
@@ -312,34 +267,73 @@ pub async fn reorder_connections(
     store.reorder_connections(&ordered_ids)
 }
 
-/// 测试单个连接（cluster/sentinel 走该入口，无 SSH）
-async fn test_single_connection(url: &str, start: Instant) -> Result<TestResult, String> {
-    test_single_connection_with_tunnel(url, start, None).await
+fn into_stored(config: ConnectionConfig) -> (StoredConnection, bool) {
+    let clear_password = config.clear_password;
+    let stored = StoredConnection {
+        id: config.id,
+        name: config.name,
+        host: config.host,
+        port: config.port,
+        username: config.username,
+        password: config.password,
+        db: config.db,
+        group: config.group,
+        connection_type: config
+            .connection_type
+            .unwrap_or_else(|| "standalone".to_string()),
+        ssh: config.ssh,
+        tls: config.tls,
+        sentinel: config.sentinel,
+        cluster: config.cluster,
+    };
+    (stored, clear_password)
 }
 
-/// 测试单个连接，可选携带 SSH 隧道（standalone + ssh 走该入口）
-///
-/// `_tunnel` 仅用于保活：函数返回时 drop，listener 关闭，跳板 session 释放。
-async fn test_single_connection_with_tunnel(
-    url: &str,
-    start: Instant,
-    _tunnel: Option<SshTunnel>,
-) -> Result<TestResult, String> {
-    let client = redis::Client::open(url).map_err(|e| sanitize_redis_error(&e.to_string()))?;
-    let mut conn = client
-        .get_multiplexed_async_connection()
-        .await
-        .map_err(|e| sanitize_redis_error(&e.to_string()))?;
-    let pong: String = redis::cmd("PING")
-        .query_async(&mut conn)
-        .await
-        .map_err(|e| sanitize_redis_error(&e.to_string()))?;
-    let latency = start.elapsed().as_millis() as u64;
-    Ok(TestResult {
-        success: pong == "PONG",
-        latency_ms: latency,
-        message: pong,
-    })
+/// 返回给前端的连接配置。密码、SSH 机密和 Sentinel 密码一律抹掉。
+pub(crate) fn redact_connection(mut conn: StoredConnection) -> ConnectionConfig {
+    let has_password = conn
+        .password
+        .as_ref()
+        .is_some_and(|value| !value.is_empty());
+    conn.password = None;
+    if let Some(ssh) = conn.ssh.as_mut() {
+        for hop in &mut ssh.hops {
+            hop.has_password = hop.password.as_ref().is_some_and(|value| !value.is_empty());
+            hop.has_passphrase = hop
+                .passphrase
+                .as_ref()
+                .is_some_and(|value| !value.is_empty());
+            hop.password = None;
+            hop.passphrase = None;
+            hop.clear_password = false;
+            hop.clear_passphrase = false;
+        }
+    }
+    if let Some(sentinel) = conn.sentinel.as_mut() {
+        sentinel.has_sentinel_password = sentinel
+            .sentinel_password
+            .as_ref()
+            .is_some_and(|value| !value.is_empty());
+        sentinel.sentinel_password = None;
+        sentinel.clear_password = false;
+    }
+    ConnectionConfig {
+        id: conn.id,
+        name: conn.name,
+        host: conn.host,
+        port: conn.port,
+        username: conn.username,
+        password: None,
+        has_password,
+        clear_password: false,
+        db: conn.db,
+        group: conn.group,
+        connection_type: Some(conn.connection_type),
+        ssh: conn.ssh,
+        tls: conn.tls,
+        sentinel: conn.sentinel,
+        cluster: conn.cluster,
+    }
 }
 
 #[cfg(test)]
@@ -356,6 +350,8 @@ mod tests {
             port: 6379,
             username: None,
             password: None,
+            has_password: false,
+            clear_password: false,
             db: 0,
             group: None,
             connection_type: Some("standalone".into()),
@@ -375,6 +371,10 @@ mod tests {
             password: Some("pw".into()),
             private_key_path: None,
             passphrase: None,
+            has_password: false,
+            has_passphrase: false,
+            clear_password: false,
+            clear_passphrase: false,
         }
     }
 
@@ -453,5 +453,125 @@ mod tests {
             hops: vec![],
         });
         assert!(validate_connection_config(&cfg).is_ok());
+    }
+
+    #[test]
+    fn password_ipc_preserves_or_clears_secrets_at_every_level() {
+        use serde_json::{json, Value};
+
+        let mut original = base_config();
+        original.password = Some("stored-test-secret".into());
+        let mut hop = ssh_hop_password("test-jump");
+        hop.password = original.password.clone();
+        original.ssh = Some(SshConfig {
+            enabled: true,
+            hops: vec![hop],
+        });
+        original.sentinel = Some(SentinelConfig {
+            nodes: vec![],
+            master_name: "test-master".into(),
+            sentinel_password: original.password.clone(),
+            has_sentinel_password: false,
+            clear_password: false,
+        });
+        let (existing, _) = into_stored(original.clone());
+
+        for (value, clear, expected) in [
+            (None, false, Some("stored-test-secret")),
+            (Some(Value::Null), false, Some("stored-test-secret")),
+            (Some(json!("")), false, None),
+            (None, true, None),
+            (Some(json!("new-test-secret")), true, None),
+            (
+                Some(json!("new-test-secret")),
+                false,
+                Some("new-test-secret"),
+            ),
+        ] {
+            let mut payload = serde_json::to_value(&original).unwrap();
+            for (pointer, field) in [
+                ("", "password"),
+                ("/ssh/hops/0", "password"),
+                ("/sentinel", "sentinelPassword"),
+            ] {
+                let object = payload
+                    .pointer_mut(pointer)
+                    .unwrap()
+                    .as_object_mut()
+                    .unwrap();
+                object.remove(field);
+                if let Some(value) = &value {
+                    object.insert(field.into(), value.clone());
+                }
+                object.insert("clearPassword".into(), json!(clear));
+            }
+            let config: ConnectionConfig = serde_json::from_value(payload).unwrap();
+            let (mut incoming, clear_password) = into_stored(config);
+            merge_connection_secrets(&mut incoming, Some(&existing), clear_password);
+            assert_eq!(incoming.password.as_deref(), expected);
+            assert_eq!(
+                incoming.ssh.as_ref().unwrap().hops[0].password.as_deref(),
+                expected
+            );
+            assert_eq!(
+                incoming
+                    .sentinel
+                    .as_ref()
+                    .unwrap()
+                    .sentinel_password
+                    .as_deref(),
+                expected
+            );
+            assert!(!incoming.ssh.as_ref().unwrap().hops[0].clear_password);
+            assert!(!incoming.sentinel.as_ref().unwrap().clear_password);
+        }
+    }
+
+    #[test]
+    fn redact_connection_strips_every_secret() {
+        let mut hop = ssh_hop_password("jump");
+        hop.passphrase = Some("phrase".into());
+        let stored = StoredConnection {
+            id: "id".into(),
+            name: "name".into(),
+            host: "127.0.0.1".into(),
+            port: 6379,
+            username: None,
+            password: Some("redis-secret".into()),
+            db: 0,
+            group: None,
+            connection_type: "sentinel".into(),
+            ssh: Some(SshConfig {
+                enabled: true,
+                hops: vec![hop],
+            }),
+            tls: None,
+            sentinel: Some(crate::config::store::SentinelConfig {
+                nodes: vec![],
+                master_name: "mymaster".into(),
+                sentinel_password: Some("sent-secret".into()),
+                has_sentinel_password: false,
+                clear_password: false,
+            }),
+            cluster: None,
+        };
+        let public = redact_connection(stored);
+        let json = serde_json::to_string(&public).unwrap();
+        assert!(public.has_password);
+        assert!(public.password.is_none());
+        assert!(public.ssh.as_ref().unwrap().hops[0].has_password);
+        assert!(public.ssh.as_ref().unwrap().hops[0].has_passphrase);
+        assert!(public.ssh.as_ref().unwrap().hops[0].password.is_none());
+        assert!(public.sentinel.as_ref().unwrap().has_sentinel_password);
+        assert!(public
+            .sentinel
+            .as_ref()
+            .unwrap()
+            .sentinel_password
+            .is_none());
+        assert!(!json.contains("redis-secret"));
+        assert!(!json.contains("sent-secret"));
+        assert!(!json.contains("\"phrase\""));
+        assert!(!json.contains("\"pw\""));
     }
 }

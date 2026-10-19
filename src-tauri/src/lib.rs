@@ -5,6 +5,7 @@ mod redis;
 use config::ssh_known_hosts::{SshKnownHostsStore, SshTofuManager};
 use config::store::ConnectionStore;
 use redis::client::RedisClientManager;
+use redis::endpoint::install_rustls_provider;
 use std::sync::Arc;
 use tauri::Manager;
 
@@ -30,6 +31,9 @@ pub fn run() {
             app.handle()
                 .plugin(tauri_plugin_updater::Builder::new().build())?;
 
+            // rustls 0.23 需要在第一次 TLS 握手前装好 CryptoProvider
+            install_rustls_provider();
+
             // 初始化连接存储（加密密钥 + 持久化目录）
             let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
             let store = ConnectionStore::new(app_data_dir.clone())
@@ -53,6 +57,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::capabilities::get_backend_capabilities,
             commands::connection::test_connection,
             commands::connection::save_connection,
             commands::connection::delete_connection,
@@ -60,6 +65,7 @@ pub fn run() {
             commands::connection::connect_redis,
             commands::connection::disconnect_redis,
             commands::connection::reorder_connections,
+            commands::connection::duplicate_connection,
             commands::ssh::ssh_tofu_decide,
             commands::ssh::list_ssh_known_hosts,
             commands::ssh::remove_ssh_known_host,

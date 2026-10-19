@@ -49,6 +49,8 @@
     "host": "Host",
     "port": "Port",
     "password": "Password",
+    "passwordKeepHint": "Leave blank to keep the saved password",
+    "clearPassword": "Clear saved password",
     "username": "Username (ACL)",
     "database": "Database",
     "connect": "Connect",
@@ -89,7 +91,7 @@
     "tlsCaCert": "CA Certificate",
     "tlsClientCert": "Client Certificate",
     "tlsClientKey": "Client Key",
-    "tlsSkipVerify": "Skip certificate verification (insecure)",
+    "tlsSkipVerify": "Skip all certificate checks, including trust chain and hostname (insecure)",
     "sentinelMaster": "Master Name",
     "sentinelNodes": "Sentinel Nodes",
     "sentinelPasswordLabel": "Sentinel Password",
@@ -106,6 +108,8 @@
     "exportConnections": "Export Connections",
     "importConnections": "Import Connections",
     "includePassword": "Include passwords",
+    "includePasswordWarning": "The export will contain plaintext secrets such as Redis and SSH passwords. Store it only in a safe place and do not share it over chat or insecure channels.",
+    "exportFailed": "Failed to export connections",
     "conflictStrategy": "Conflict strategy",
     "conflictSkip": "Skip",
     "conflictOverwrite": "Overwrite",
@@ -172,6 +176,9 @@
     "persist": "Persist",
     "copyKey": "Copy Key",
     "renameKey": "Rename Key",
+    "renameOverwriteTitle": "Confirm overwrite rename",
+    "renameOverwriteMessage": "If the target key \"{{key}}\" already exists, Redis RENAME will overwrite it with no undo. Continue?",
+    "renameFailed": "Failed to rename key",
     "newKeyName": "New key name",
     "destinationKey": "Destination key name",
     "addFavorite": "Add to Favorites",
@@ -414,6 +421,37 @@
       "unsupported_for_cluster_sentinel": "SSH tunnel is not supported for Cluster/Sentinel yet",
       "host_key_mismatch": "SSH host key fingerprint does not match the trusted record; connection aborted to prevent man-in-the-middle attack",
       "host_key_rejected": "SSH host key was rejected; connection failed"
+    },
+    "cluster": {
+      "unsupported": "Redis Cluster is not available. The app rejects the connection instead of silently talking to a single seed node."
+    },
+    "sentinel": {
+      "no_nodes": "Sentinel mode needs at least one Sentinel node",
+      "no_master_name": "Sentinel master name is required",
+      "master_not_found": "Could not resolve the current Sentinel master"
+    },
+    "tls": {
+      "cert_read_failed": "Failed to read the TLS certificate or key file",
+      "client_cert_incomplete": "Client certificate and private key must be provided together"
+    },
+    "connection": {
+      "not_connected": "This connection is not open",
+      "not_found": "Connection configuration was not found",
+      "invalid_url": "The Redis address could not be parsed"
+    },
+    "export": {
+      "unsupported_version": "This connection export file version is not supported"
+    }
+  },
+  "capability": {
+    "tls": {
+      "supported": "TLS uses rustls. SSH tunnels skip only certificate hostname checks for the local forward; certificate trust chains, validity periods and signatures are still verified unless you explicitly skip all checks. This does not verify the Redis hostname; use a dedicated CA where possible."
+    },
+    "sentinel": {
+      "degraded": "Sentinel connects to the master discovered at connect time. Live failover and SSH tunnels are not supported."
+    },
+    "cluster": {
+      "unsupported": "Cluster mode is unavailable. Connections are rejected instead of pretending a seed node is the whole cluster."
     }
   }
 }

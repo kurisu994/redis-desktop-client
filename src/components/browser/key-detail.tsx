@@ -9,6 +9,7 @@ import { deleteKeys, setKeyTtl, copyKey, renameKey } from "@/lib/tauri-api";
 import { Clock, Trash2, MoreVertical, Copy, Pencil, Star } from "lucide-react";
 import { TtlDialog } from "./ttl-dialog";
 import { ConfirmDangerDialog } from "@/components/confirm-danger-dialog";
+import { toast } from "sonner";
 
 /** 类型标签配色 */
 const TYPE_BADGE: Record<string, string> = {
@@ -59,6 +60,8 @@ export function KeyDetail({
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showRenameConfirm, setShowRenameConfirm] = useState(false);
+  const [pendingRenameName, setPendingRenameName] = useState("");
 
   /** 实时倒计时：基于 keyInfo.ttl 记录加载时刻，每秒递减 */
   const ttlLoadedAtRef = useRef(0);
@@ -127,13 +130,31 @@ export function KeyDetail({
     onCopied(dst, keyInfo.key_type);
   };
 
-  /** 重命名 Key */
-  const handleRename = async () => {
+  /** 请求重命名：弹出覆盖确认（Redis RENAME 会覆盖已存在目标键） */
+  const handleRenameRequest = () => {
     if (!connectionId || !newName.trim()) return;
     const trimmedName = newName.trim();
-    await renameKey(connectionId, selectedDb, keyName, trimmedName);
-    setRenaming(false);
-    onRenamed(keyName, trimmedName);
+    if (trimmedName === keyName) {
+      setRenaming(false);
+      return;
+    }
+    setPendingRenameName(trimmedName);
+    setShowRenameConfirm(true);
+  };
+
+  /** 确认后执行重命名 */
+  const handleConfirmRename = async () => {
+    if (!connectionId || !pendingRenameName) return;
+    try {
+      await renameKey(connectionId, selectedDb, keyName, pendingRenameName);
+      setRenaming(false);
+      setShowRenameConfirm(false);
+      onRenamed(keyName, pendingRenameName);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`${t("keyDetail.renameFailed")}: ${message}`);
+      throw err;
+    }
   };
 
   /** 格式化字节大小 */
@@ -156,10 +177,10 @@ export function KeyDetail({
                   className="text-xl font-mono bg-transparent border-b border-primary outline-none flex-1"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleRename()}
+                  onKeyDown={(e) => e.key === "Enter" && handleRenameRequest()}
                   autoFocus
                 />
-                <Button size="sm" onClick={handleRename}>
+                <Button size="sm" onClick={handleRenameRequest}>
                   {t("actions.confirm")}
                 </Button>
                 <Button
@@ -316,6 +337,22 @@ export function KeyDetail({
               {keyName}
             </code>{" "}
             吗？
+          </span>
+        }
+      />
+
+      {/* RENAME 覆盖确认：目标键若已存在会被 Redis 直接覆盖 */}
+      <ConfirmDangerDialog
+        isOpen={showRenameConfirm}
+        onClose={() => {
+          setShowRenameConfirm(false);
+          setPendingRenameName("");
+        }}
+        onConfirm={handleConfirmRename}
+        title={t("keyDetail.renameOverwriteTitle")}
+        message={
+          <span className="text-sm text-muted-foreground">
+            {t("keyDetail.renameOverwriteMessage", { key: pendingRenameName })}
           </span>
         }
       />

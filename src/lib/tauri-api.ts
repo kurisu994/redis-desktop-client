@@ -1,4 +1,8 @@
-import type { ConnectionConfig, TestResult } from "@/stores/connection-store";
+import type {
+  BackendCapabilities,
+  ConnectionConfig,
+  TestResult,
+} from "@/stores/connection-store";
 import type { KeyEntry, KeyInfo, DbSize } from "@/stores/browser-store";
 import { getActiveUpdateProxyUrl } from "@/lib/update-settings";
 
@@ -48,6 +52,48 @@ function handleMock<T>(cmd: string, args?: Record<string, unknown>): T {
   switch (cmd) {
     case "list_connections":
       return [...mockConnections] as T;
+    case "get_backend_capabilities":
+      return {
+        tls: {
+          status: "supported",
+          detailKey: "capability.tls.supported",
+          dataConnection: true,
+          ssh: true,
+          tls: true,
+        },
+        sentinel: {
+          status: "degraded",
+          detailKey: "capability.sentinel.degraded",
+          dataConnection: true,
+          ssh: false,
+          tls: true,
+        },
+        cluster: {
+          status: "unsupported",
+          detailKey: "capability.cluster.unsupported",
+          dataConnection: false,
+          ssh: false,
+          tls: false,
+        },
+        passwordIpc: {
+          listRedactsSecrets: true,
+          nullMeans: "keep",
+          emptyStringMeans: "clear",
+          clearFlag: "clearPassword",
+          duplicateCommand: "duplicate_connection",
+        },
+        exportSchema: {
+          version: 2,
+          preservesSsh: true,
+          preservesTls: true,
+          preservesSentinel: true,
+          preservesCluster: true,
+          secretsIncludedOnlyWhen: "includePassword=true",
+          redactedField: "secretsRedacted",
+        },
+      } as T;
+    case "duplicate_connection":
+      return undefined as T;
     case "save_connection": {
       const config = args?.config as ConnectionConfig;
       const idx = mockConnections.findIndex((c) => c.id === config.id);
@@ -373,9 +419,34 @@ export async function removeSshKnownHost(
 
 // ============ 连接管理 API ============
 
-/** 获取所有连接配置 */
+/** 获取所有连接配置。响应中的密码字段已被后端抹掉。 */
 export async function listConnections(): Promise<ConnectionConfig[]> {
   return invoke<ConnectionConfig[]>("list_connections");
+}
+
+/** 后端真实能力与 IPC 约定。Sentinel / Cluster / TLS 的文案应使用返回的 detailKey。 */
+export async function getBackendCapabilities(): Promise<BackendCapabilities> {
+  return invoke<BackendCapabilities>("get_backend_capabilities");
+}
+
+/**
+ * 复制连接。机密在后端复制。
+ * 不要把 listConnections 的脱敏结果改个 id 再 saveConnection。
+ */
+export async function duplicateConnection(
+  id: string,
+  name: string,
+): Promise<void> {
+  return invoke("duplicate_connection", { id, name });
+}
+
+/** 把后端返回的 i18n key 译成当前语言；普通错误文本原样展示。 */
+export function translateIpcError(
+  err: unknown,
+  t: (key: string, options?: { defaultValue?: string }) => string,
+): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  return t(raw, { defaultValue: raw });
 }
 
 /** 保存连接配置（新建或更新） */
@@ -716,7 +787,12 @@ export async function createKey(params: CreateKeyParams): Promise<void> {
 
 // ============ 导入导出 API ============
 
-/** 导出连接配置 */
+/**
+ * 导出连接配置。
+ * 当前后端固定返回 schema v2：保留 SSH / TLS / Sentinel / Cluster 元数据。
+ * `includePassword === false` 时机密被省略，JSON 里 `secretsRedacted` 为 true。
+ * 覆盖导入这种文件不会清掉目标机器上已有的机密。
+ */
 export async function exportConnections(
   ids?: string[],
   includePassword: boolean = false,

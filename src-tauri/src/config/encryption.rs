@@ -6,10 +6,13 @@ use std::path::Path;
 
 /// 加密后的数据格式：base64(nonce + ciphertext)
 ///
-/// nonce 固定 12 字节，拼接在密文前面
-/// 获取或生成 Master Key — 首次运行生成并持久化到文件
+/// nonce 固定 12 字节，拼接在密文前面。
+///
+/// Master Key 只从 `key_path` 这个文件读取或创建。不接受环境变量、IPC 参数或
+/// `connections.json` 里的副本，避免密钥跟着配置导出或出现在进程环境里。
 pub fn get_or_create_master_key(key_path: &Path) -> Result<[u8; 32], String> {
     if key_path.exists() {
+        restrict_key_file(key_path)?;
         let content = std::fs::read_to_string(key_path).map_err(|e| e.to_string())?;
         let key_bytes = BASE64.decode(content.trim()).map_err(|e| e.to_string())?;
         if key_bytes.len() != 32 {
@@ -25,19 +28,30 @@ pub fn get_or_create_master_key(key_path: &Path) -> Result<[u8; 32], String> {
             std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
         std::fs::write(key_path, &key_b64).map_err(|e| e.to_string())?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut perm = std::fs::metadata(key_path)
-                .map_err(|e| e.to_string())?
-                .permissions();
-            perm.set_mode(0o600);
-            std::fs::set_permissions(key_path, perm).map_err(|e| e.to_string())?;
-        }
+        restrict_key_file(key_path)?;
         let mut arr = [0u8; 32];
         arr.copy_from_slice(key.as_slice());
         Ok(arr)
     }
+}
+
+/// 把密钥文件收紧到仅所有者可读写。非 Unix 平台没有对应权限位，跳过。
+fn restrict_key_file(path: &Path) -> Result<(), String> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let meta = std::fs::metadata(path).map_err(|e| e.to_string())?;
+        if meta.permissions().mode() & 0o077 != 0 {
+            let mut perm = meta.permissions();
+            perm.set_mode(0o600);
+            std::fs::set_permissions(path, perm).map_err(|e| e.to_string())?;
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = path;
+    }
+    Ok(())
 }
 
 /// 加密密码 — 返回 base64 编码的 (nonce + ciphertext)
@@ -94,5 +108,30 @@ mod tests {
         let encrypted = encrypt_password(&key, "").unwrap();
         let decrypted = decrypt_password(&key, &encrypted).unwrap();
         assert_eq!(decrypted, "");
+    }
+
+    #[test]
+    fn master_key_is_file_only_and_mode_0600() {
+        let dir = std::env::temp_dir().join(format!("rdc-key-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("master-key");
+        let first = get_or_create_master_key(&path).unwrap();
+        let second = get_or_create_master_key(&path).unwrap();
+        assert_eq!(first, second);
+        let raw = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(raw.trim().len(), 44);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = std::fs::metadata(&path).unwrap().permissions().mode() & 0o777;
+            assert_eq!(mode, 0o600);
+            let mut perm = std::fs::metadata(&path).unwrap().permissions();
+            perm.set_mode(0o644);
+            std::fs::set_permissions(&path, perm).unwrap();
+            let _ = get_or_create_master_key(&path).unwrap();
+            let tightened = std::fs::metadata(&path).unwrap().permissions().mode() & 0o777;
+            assert_eq!(tightened, 0o600);
+        }
+        let _ = std::fs::remove_dir_all(dir);
     }
 }

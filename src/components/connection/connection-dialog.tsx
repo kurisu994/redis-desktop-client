@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectTrigger,
@@ -33,6 +34,8 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
+import { CapabilityNotice } from "@/components/connection/capability-notice";
+import { translateIpcError } from "@/lib/tauri-api";
 import {
   useConnectionStore,
   type ConnectionConfig,
@@ -94,7 +97,8 @@ export function ConnectionDialog() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [db, setDb] = useState("0");
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  /** 编辑时勾选则清空已存 Redis 密码；空框且未勾选表示保留 */
+  const [clearPassword, setClearPassword] = useState(false);
   const [testState, setTestState] = useState<TestState>({ status: "idle" });
   const [saving, setSaving] = useState(false);
 
@@ -126,7 +130,7 @@ export function ConnectionDialog() {
     if (!isDialogOpen) return;
     setTestState({ status: "idle" });
     setSaving(false);
-    setIsPasswordVisible(false);
+    setClearPassword(false);
     if (editingConnection) {
       setName(editingConnection.name);
       setHost(editingConnection.host);
@@ -191,7 +195,9 @@ export function ConnectionDialog() {
       host,
       port: Number.isNaN(parseInt(port, 10)) ? 6379 : parseInt(port, 10),
       username: username || undefined,
-      password: password || undefined,
+      // 空框 / undefined = 保留已存密码；勾选清除则显式 clearPassword
+      password: clearPassword ? undefined : password || undefined,
+      clearPassword: clearPassword || undefined,
       db: Number.isNaN(parseInt(db, 10)) ? 0 : parseInt(db, 10),
       connectionType,
     };
@@ -215,6 +221,7 @@ export function ConnectionDialog() {
     port,
     username,
     password,
+    clearPassword,
     db,
     connectionType,
     isSshSupported,
@@ -237,13 +244,22 @@ export function ConnectionDialog() {
           message: t("connection.latency", { ms: result.latency_ms }),
         });
       } else {
-        setTestState({ status: "error", message: result.message });
+        const message = t(result.message, { defaultValue: result.message });
+        setTestState({
+          status: "error",
+          message,
+        });
+        toast.error(
+          `${t("connection.testFailed")}: ${message || t("connection.testFailed")}`,
+        );
       }
     } catch (err) {
+      const message = translateIpcError(err, t);
       setTestState({
         status: "error",
-        message: err instanceof Error ? err.message : String(err),
+        message,
       });
+      toast.error(`${t("connection.testFailed")}: ${message}`);
     }
   }, [buildConfig, t]);
 
@@ -337,6 +353,10 @@ export function ConnectionDialog() {
                       </SelectItem>
                     </SelectContent>
                   </Select>
+                  {(connectionType === "sentinel" ||
+                    connectionType === "cluster") && (
+                    <CapabilityNotice mode={connectionType} />
+                  )}
                 </div>
 
                 {/* Standalone 主机配置 */}
@@ -369,12 +389,15 @@ export function ConnectionDialog() {
                         onChange={(e) => setUsername(e.target.value)}
                       />
                     </div>
-                    <PasswordInput
-                      label={t("connection.password")}
-                      value={password}
-                      onValueChange={setPassword}
-                      isVisible={isPasswordVisible}
-                      onToggle={() => setIsPasswordVisible(!isPasswordVisible)}
+                    <RedisPasswordField
+                      password={password}
+                      setPassword={setPassword}
+                      clearPassword={clearPassword}
+                      setClearPassword={setClearPassword}
+                      isEditing={isEditing}
+                      hasStoredPassword={!!editingConnection?.hasPassword}
+                      t={t}
+                      checkboxId="clear-redis-password-standalone"
                     />
                     <div className="space-y-2">
                       <Label>{t("connection.database")}</Label>
@@ -400,6 +423,10 @@ export function ConnectionDialog() {
                     setUsername={setUsername}
                     password={password}
                     setPassword={setPassword}
+                    clearPassword={clearPassword}
+                    setClearPassword={setClearPassword}
+                    isEditing={isEditing}
+                    hasStoredPassword={!!editingConnection?.hasPassword}
                     db={db}
                     setDb={setDb}
                     t={t}
@@ -415,6 +442,10 @@ export function ConnectionDialog() {
                     setUsername={setUsername}
                     password={password}
                     setPassword={setPassword}
+                    clearPassword={clearPassword}
+                    setClearPassword={setClearPassword}
+                    isEditing={isEditing}
+                    hasStoredPassword={!!editingConnection?.hasPassword}
                     t={t}
                   />
                 )}
@@ -466,6 +497,9 @@ export function ConnectionDialog() {
                 </div>
                 {tls.enabled && (
                   <>
+                    <p className="text-xs text-muted-foreground">
+                      {t("capability.tls.supported")}
+                    </p>
                     <div className="space-y-2">
                       <Label>{t("connection.tlsCaCert")}</Label>
                       <Input
@@ -561,6 +595,69 @@ export function ConnectionDialog() {
   );
 }
 
+/** Redis 密码：空框保留；编辑时可勾选清除已存密码 */
+function RedisPasswordField({
+  password,
+  setPassword,
+  clearPassword,
+  setClearPassword,
+  isEditing,
+  hasStoredPassword,
+  t,
+  checkboxId = "clear-redis-password",
+}: {
+  password: string;
+  setPassword: (v: string) => void;
+  clearPassword: boolean;
+  setClearPassword: (v: boolean) => void;
+  isEditing: boolean;
+  hasStoredPassword: boolean;
+  t: (key: string) => string;
+  checkboxId?: string;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const showClear = isEditing && hasStoredPassword;
+  return (
+    <div className="space-y-2">
+      <PasswordInput
+        label={t("connection.password")}
+        value={clearPassword ? "" : password}
+        onValueChange={(v) => {
+          if (clearPassword) setClearPassword(false);
+          setPassword(v);
+        }}
+        isVisible={isVisible}
+        onToggle={() => setIsVisible((v) => !v)}
+        disabled={clearPassword}
+        placeholder={
+          showClear && !clearPassword
+            ? t("connection.passwordKeepHint")
+            : undefined
+        }
+      />
+      {showClear && (
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id={checkboxId}
+            checked={clearPassword}
+            onCheckedChange={(checked) => {
+              const next = !!checked;
+              setClearPassword(next);
+              if (next) setPassword("");
+            }}
+          />
+          <label
+            htmlFor={checkboxId}
+            className="text-sm cursor-pointer text-muted-foreground"
+          >
+            {t("connection.clearPassword")}
+          </label>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** 密码输入框（带显隐切换） */
 function PasswordInput({
   label,
@@ -568,12 +665,16 @@ function PasswordInput({
   onValueChange,
   isVisible,
   onToggle,
+  disabled,
+  placeholder,
 }: {
   label: string;
   value: string;
   onValueChange: (v: string) => void;
   isVisible: boolean;
   onToggle: () => void;
+  disabled?: boolean;
+  placeholder?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -584,6 +685,8 @@ function PasswordInput({
           onChange={(e) => onValueChange(e.target.value)}
           type={isVisible ? "text" : "password"}
           className="pr-10"
+          disabled={disabled}
+          placeholder={placeholder}
         />
         <button
           type="button"
@@ -610,6 +713,10 @@ function SentinelForm({
   setUsername,
   password,
   setPassword,
+  clearPassword,
+  setClearPassword,
+  isEditing,
+  hasStoredPassword,
   db,
   setDb,
   t,
@@ -624,6 +731,10 @@ function SentinelForm({
   setUsername: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
+  clearPassword: boolean;
+  setClearPassword: (v: boolean) => void;
+  isEditing: boolean;
+  hasStoredPassword: boolean;
   db: string;
   setDb: (v: string) => void;
   t: (key: string) => string;
@@ -699,14 +810,16 @@ function SentinelForm({
         <Label>{t("connection.username")}</Label>
         <Input value={username} onChange={(e) => setUsername(e.target.value)} />
       </div>
-      <div className="space-y-2">
-        <Label>{t("connection.password")}</Label>
-        <Input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          type="password"
-        />
-      </div>
+      <RedisPasswordField
+        password={password}
+        setPassword={setPassword}
+        clearPassword={clearPassword}
+        setClearPassword={setClearPassword}
+        isEditing={isEditing}
+        hasStoredPassword={hasStoredPassword}
+        t={t}
+        checkboxId="clear-redis-password-sentinel"
+      />
       <div className="space-y-2">
         <Label>{t("connection.database")}</Label>
         <Input
@@ -727,6 +840,10 @@ function ClusterForm({
   setUsername,
   password,
   setPassword,
+  clearPassword,
+  setClearPassword,
+  isEditing,
+  hasStoredPassword,
   t,
 }: {
   nodes: { host: string; port: number }[];
@@ -735,6 +852,10 @@ function ClusterForm({
   setUsername: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
+  clearPassword: boolean;
+  setClearPassword: (v: boolean) => void;
+  isEditing: boolean;
+  hasStoredPassword: boolean;
   t: (key: string) => string;
 }) {
   return (
@@ -792,14 +913,16 @@ function ClusterForm({
         <Label>{t("connection.username")}</Label>
         <Input value={username} onChange={(e) => setUsername(e.target.value)} />
       </div>
-      <div className="space-y-2">
-        <Label>{t("connection.password")}</Label>
-        <Input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          type="password"
-        />
-      </div>
+      <RedisPasswordField
+        password={password}
+        setPassword={setPassword}
+        clearPassword={clearPassword}
+        setClearPassword={setClearPassword}
+        isEditing={isEditing}
+        hasStoredPassword={hasStoredPassword}
+        t={t}
+        checkboxId="clear-redis-password-cluster"
+      />
     </>
   );
 }

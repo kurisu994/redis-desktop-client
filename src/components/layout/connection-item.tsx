@@ -16,9 +16,10 @@ import {
   connectRedis,
   disconnectRedis,
   deleteConnection as deleteConnectionApi,
-  saveConnection,
+  duplicateConnection,
   listConnections,
   getDbInfo,
+  translateIpcError,
 } from "@/lib/tauri-api";
 import type { DragProps } from "@/hooks/use-connection-drag";
 
@@ -106,7 +107,7 @@ export function ConnectionItem({
     } catch (err) {
       setConnectionStatus(connection.id, "disconnected");
       toast.error(t("connection.testFailed"), {
-        description: err instanceof Error ? err.message : String(err),
+        description: translateIpcError(err, t),
       });
     }
   }, [
@@ -149,12 +150,11 @@ export function ConnectionItem({
     },
     edit: () => openDialog(connection),
     duplicate: async () => {
-      const dup: ConnectionConfig = {
-        ...connection,
-        id: crypto.randomUUID(),
-        name: `${connection.name} (${t("actions.copy")})`,
-      };
-      await saveConnection(dup);
+      // 机密只在后端复制。列表里的配置已经脱敏，不能再整份 save。
+      await duplicateConnection(
+        connection.id,
+        `${connection.name} (${t("actions.copy")})`,
+      );
       setConnections(await listConnections());
     },
     delete: async () => {
