@@ -91,3 +91,5 @@ main 发布提交 f6919c1 的六项 CI 全成功后推送 v0.2.11 标签，Relea
 - 改 connection-dialog（standalone/sentinel/cluster）+ 中英文 i18n。
 - 待 lint 通过后提交并推 origin/fix/review-frontend-export。
 
+- 已提交 2c71c94 并推 origin/fix/review-frontend-export（非强推）。
+
