@@ -38,10 +38,10 @@ src-tauri/src/
 - **统一响应结构**：所有 Tauri Command 返回 `IpcResponse<T>`，前端 IPC 封装层统一处理 ok/err。
 - **错误信息走 i18n key**：Rust 端不返回语言文本，返回 i18n key 由前端翻译。
 - **IPC 字段命名**：结构体统一 `rename_all = camelCase` + 老字段 `alias`，保证前后端字段名一致；磁盘上的 snake_case 老数据经 `serde(default)` + `alias` 自动迁移。
-- **连接池**：`RedisClientManager` 按 `(connection_id, db)` 保存 `ConnectionManager`。数据库写进连接 URL，命令路径不再 `SELECT`，避免 Browser/CLI 抢同一条多路复用连接。Pub/Sub 与 MONITOR 使用会话里已经解析好的端点（SSH 本地端口 + rustls），禁止绕过隧道直连。
-- **TLS**：Redis 连接使用 `tokio-rustls-comp` + webpki roots。自定义 CA / 客户端证书从 `TlsConfig` 路径读取。`skipVerify` 或 SSH 隧道转发时追加 `#insecure`，因为本地转发地址和证书主机名不一致。
+- **连接池**：`RedisClientManager` 按 `(connection_id, db)` 保存 `ConnectionManager`。数据库写进连接 URL，命令路径不再 `SELECT`，避免 Browser/CLI 抢同一条多路复用连接。每次会话使用独立 generation 令牌，懒建连在同锁内快照端点与令牌、完成后校验令牌再插入；断开或重连后的旧结果直接丢弃。CLI 禁止 RESET、AUTH/HELLO、CLIENT、事务等共享会话状态命令。Pub/Sub 与 MONITOR 使用会话里已经解析好的端点（SSH 本地端口 + rustls），禁止绕过隧道直连。
+- **TLS**：Redis 连接使用 `tokio-rustls-comp` + webpki roots。自定义 CA / 客户端证书从 `TlsConfig` 路径读取。仅用户显式启用 `skipVerify` 时追加 `#insecure`，关闭证书链与主机名等全部校验。SSH 隧道使用 redis-rs 的 `set_danger_accept_invalid_hostnames`，仅放宽本地转发地址的主机名校验，仍验证证书链、有效期和签名；建议配置专用 CA。此标志必须在 `build_with_tls` 加载 CA / mTLS 参数后设置，避免被覆盖。
 - **Sentinel / Cluster**：Sentinel 会向哨兵查询当前 master 再连接数据节点，不支持实时故障转移，也不支持 SSH。Cluster 明确拒绝连接，不再把种子节点当成单机。能力由 `get_backend_capabilities` 返回 `supported` / `degraded` / `unsupported`。
-- **加密**：Redis 密码、SSH 密码 / passphrase、Sentinel 密码都用 **AES-256-GCM**。历史明文 Sentinel 密码在下次加载时迁移。Master Key 只存在独立 `master-key` 文件（Unix 权限 `0600`），不读环境变量，不写进 `connections.json`。列表 IPC 不返回这些明文。
+- **加密**：Redis 密码、SSH 密码 / passphrase、Sentinel 密码都用 **AES-256-GCM**。历史明文 Sentinel 密码在下次加载时迁移。Master Key 只存在独立 `master-key` 文件（Unix 权限 `0600`），不读环境变量，不写进 `connections.json`。列表 IPC 不返回这些明文。Redis / SSH / Sentinel 的密码写入契约为 null/缺省保留、空字符串或 `clearPassword: true` 清空；清空标志优先于新密码，详见 `docs/CONNECTION_CONTRACT.md`。
 - **SSH 隧道**：`redis/ssh_tunnel.rs` 基于 `russh` 建立 N 跳隧道；当前仅 Standalone 连接可启用 SSH，Sentinel / Cluster over SSH 后续独立设计。同一连接从 SSH 改为非 SSH 后重连会清理旧隧道。
 - **SSH 主机信任**：`config/ssh_known_hosts.rs` 独立管理加密指纹和 TOFU pending 请求；未知主机通过 `ssh:tofu-request` 事件让前端确认，指纹失配硬拒绝；pending 有超时清理，避免连接流程永久挂起。
 - **异步**：所有 Redis 操作走 `tokio` 异步运行时；后台监控/订阅任务通过 `tauri::async_runtime::spawn`，注意任务句柄管理避免泄漏（v0.2.3 修复过 MONITOR 任务泄漏）。

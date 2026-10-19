@@ -2,24 +2,25 @@
 
 ## 目标
 
-修复连接隔离、TLS、Sentinel/Cluster 假支持、Pub/Sub 与 MONITOR 绕过隧道、Sentinel 密码明文，并给出前端可对齐的 IPC 契约。
+在 PR #3 的既有连接隔离基线 `8f9e02e` 上修复 review C1 / C2 / C3 / L1；保持密码 IPC 契约，不合并其他分支。
 
 ## 验收标准
 
-- [x] 同一连接的不同 db 使用独立 `ConnectionManager`，命令路径不再 `SELECT`
-- [x] Cluster 连接被拒绝；Sentinel 连接解析出的 master
-- [x] Redis TLS 使用 rustls；Pub/Sub 与 MONITOR 复用会话端点
-- [x] Sentinel 密码 AES-GCM 落盘，历史明文会迁移
-- [x] `list_connections` 不返回明文密码；导出 v2 保留 SSH/TLS 元数据
-- [x] `get_backend_capabilities` 标明 TLS / Sentinel / Cluster 状态
-- [x] `cargo test` 50 项通过，`cargo clippy -D warnings` 通过，前端 `tsc --noEmit` 通过
+- [x] CLI 拒绝 RESET 及改变认证、协议、事务、回复/订阅等共享会话状态的命令；常见读命令保持可用。
+- [x] SSH + TLS 仅跳过本地转发地址的主机名校验，仍验证证书链、有效期和签名；仅显式 `skipVerify` 使用整链 insecure。
+- [x] 懒建连在同锁内快照 endpoint + generation，插入前同锁校验；断开或重连后旧结果丢弃。
+- [x] 中英文 README 与 Cluster `unsupported`、Sentinel 需重连的真实能力一致。
+- [x] Redis / SSH / Sentinel 的 null/缺省保留、空字符串或 `clearPassword: true` 清空契约通过 IPC 反序列化和合并回归；文档见 `docs/CONNECTION_CONTRACT.md`。
+- [x] `just test-rust` 62 项通过（含真实 rustls 握手及可控时序重连测试）。
+- [x] `just lint-rust` 严格 clippy 通过，`just lint-web`、`just build-web`、`just i18n-check` 和 `just fmt` 通过；独立代码复核 PASS。
 
 ## 备注
 
-- Cluster 选择明确不支持，而不是半实现路由。
-- SSH + TLS 使用 `#insecure`，因为拨号地址是本地转发端口。
-- 前端导出警告、toast 和重命名确认由另一条本地分支处理，这里只加能力提示和复制连接命令。
+- 具体 TLS、generation 和密码契约已同步 `20-backend.md`；TLS 测试的 `rcgen` 仅为开发依赖，私钥在内存中生成，不进入仓库或磁盘。
+- UI 已接入 SSH 主机名校验限制和“跳过全部校验”文案；建议使用专用 CA 缩小信任范围，不宣称校验了 Redis 主机名。`just dev` 成功启动并打开新建连接/TLS 页；原生自动化开关点击会退出弹窗，未完成完整交互验收，不影响已通过的真实 TLS 握手回归。
+- 阿雅前端分支仅只读核对 tip `8bdd464`；本分支未引入其清除勾选表单，也未改变既有 `clearPassword` 字段及行为。
+- 交付仅允许提交并推送 `origin/cursor/security-connection-isolation-dd25` 更新 PR #3，不合并 main；最终 SHA 与推送结果以 Git / PR head 为准。
 
 ## 阻塞
 
-- 无
+- 无代码阻塞。原有 `russh 0.54.5` future-incompat 提示仍存在，未扩大范围升级依赖。

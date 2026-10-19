@@ -456,6 +456,78 @@ mod tests {
     }
 
     #[test]
+    fn password_ipc_preserves_or_clears_secrets_at_every_level() {
+        use serde_json::{json, Value};
+
+        let mut original = base_config();
+        original.password = Some("stored-test-secret".into());
+        let mut hop = ssh_hop_password("test-jump");
+        hop.password = original.password.clone();
+        original.ssh = Some(SshConfig {
+            enabled: true,
+            hops: vec![hop],
+        });
+        original.sentinel = Some(SentinelConfig {
+            nodes: vec![],
+            master_name: "test-master".into(),
+            sentinel_password: original.password.clone(),
+            has_sentinel_password: false,
+            clear_password: false,
+        });
+        let (existing, _) = into_stored(original.clone());
+
+        for (value, clear, expected) in [
+            (None, false, Some("stored-test-secret")),
+            (Some(Value::Null), false, Some("stored-test-secret")),
+            (Some(json!("")), false, None),
+            (None, true, None),
+            (Some(json!("new-test-secret")), true, None),
+            (
+                Some(json!("new-test-secret")),
+                false,
+                Some("new-test-secret"),
+            ),
+        ] {
+            let mut payload = serde_json::to_value(&original).unwrap();
+            for (pointer, field) in [
+                ("", "password"),
+                ("/ssh/hops/0", "password"),
+                ("/sentinel", "sentinelPassword"),
+            ] {
+                let object = payload
+                    .pointer_mut(pointer)
+                    .unwrap()
+                    .as_object_mut()
+                    .unwrap();
+                object.remove(field);
+                if let Some(value) = &value {
+                    object.insert(field.into(), value.clone());
+                }
+                object.insert("clearPassword".into(), json!(clear));
+            }
+            let config: ConnectionConfig = serde_json::from_value(payload).unwrap();
+            let (mut incoming, clear_password) = into_stored(config);
+            merge_connection_secrets(&mut incoming, Some(&existing), clear_password);
+            assert_eq!(incoming.password.as_deref(), expected);
+            assert_eq!(
+                incoming.ssh.as_ref().unwrap().hops[0].password.as_deref(),
+                expected
+            );
+            assert_eq!(
+                incoming
+                    .sentinel
+                    .as_ref()
+                    .unwrap()
+                    .sentinel_password
+                    .as_deref(),
+                expected
+            );
+            assert!(!incoming.ssh.as_ref().unwrap().hops[0].clear_password);
+            assert!(!incoming.sentinel.as_ref().unwrap().clear_password);
+        }
+    }
+
+    #[test]
     fn redact_connection_strips_every_secret() {
         let mut hop = ssh_hop_password("jump");
         hop.passphrase = Some("phrase".into());

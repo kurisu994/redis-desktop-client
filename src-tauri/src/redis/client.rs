@@ -10,6 +10,8 @@ pub use crate::redis::endpoint::sanitize_redis_error;
 
 /// 一条已建立的逻辑连接。不同 db 各有独立的 `ConnectionManager`，互不 SELECT。
 struct Session {
+    /// 每次重连生成新令牌，防止旧的异步建连结果混入同名新会话。
+    generation: uuid::Uuid,
     endpoint: RedisEndpoint,
     by_db: HashMap<u32, redis::aio::ConnectionManager>,
     /// 只为把隧道活到会话结束。字段本身不读取，drop 时关闭本地转发。
@@ -49,6 +51,7 @@ impl RedisClientManager {
         sessions.insert(
             config.id.clone(),
             Session {
+                generation: uuid::Uuid::new_v4(),
                 endpoint,
                 by_db: HashMap::from([(db, conn)]),
                 tunnel,
@@ -72,7 +75,7 @@ impl RedisClientManager {
         id: &str,
         db: u32,
     ) -> Result<redis::aio::ConnectionManager, String> {
-        {
+        let (endpoint, generation) = {
             let sessions = self.sessions.lock().await;
             let session = sessions
                 .get(id)
@@ -80,14 +83,16 @@ impl RedisClientManager {
             if let Some(conn) = session.by_db.get(&db) {
                 return Ok(conn.clone());
             }
-        }
-
-        let endpoint = self.endpoint_of(id).await?;
+            // 端点和令牌必须在同一把锁内快照，不能在重连后重新读取端点。
+            (session.endpoint.clone(), session.generation)
+        };
         let conn = endpoint.open_manager(db).await?;
         let mut sessions = self.sessions.lock().await;
         let session = sessions
             .get_mut(id)
+            .filter(|session| session.generation == generation)
             .ok_or_else(|| "error.connection.not_connected".to_string())?;
+        // 校验和插入持有同一把锁；过期结果直接丢弃，不返回给调用方。
         Ok(session
             .by_db
             .entry(db)
@@ -315,12 +320,91 @@ mod tests {
         assert_eq!(err, "error.sentinel.no_nodes");
     }
 
+    /// 挂起旧端点的真实 Redis 握手，在断开/重连后才放行，避免依赖 sleep 碰竞态。
+    async fn finish_stale_connection(reconnect: bool) {
+        use crate::redis::test_support::paused_redis_server;
+        use std::time::Duration;
+
+        let manager = Arc::new(RedisClientManager::new());
+        let (old_addr, accepted, resume, old_server) = paused_redis_server();
+        let mut old_config = bare_config("standalone");
+        old_config.port = old_addr.port();
+        let (old_endpoint, _) = prepare_data_endpoint(&old_config, None).await.unwrap();
+        manager.sessions.lock().await.insert(
+            old_config.id.clone(),
+            Session {
+                generation: uuid::Uuid::new_v4(),
+                endpoint: old_endpoint,
+                by_db: HashMap::new(),
+                tunnel: None,
+            },
+        );
+        let pending_manager = Arc::clone(&manager);
+        let pending = tokio::spawn(async move { pending_manager.get_connection("id", 3).await });
+        tokio::time::timeout(Duration::from_secs(5), accepted)
+            .await
+            .unwrap()
+            .unwrap();
+        manager.disconnect("id").await.unwrap();
+
+        let new_server = if reconnect {
+            let (addr, _, resume, server) = paused_redis_server();
+            resume.send(()).unwrap();
+            let mut config = old_config;
+            config.port = addr.port();
+            tokio::time::timeout(
+                Duration::from_secs(5),
+                manager.connect_with_config(&config, None),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+            Some(server)
+        } else {
+            None
+        };
+
+        resume.send(()).unwrap();
+        let result = tokio::time::timeout(Duration::from_secs(5), pending)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(matches!(result, Err(ref err) if err == "error.connection.not_connected"));
+        {
+            let sessions = manager.sessions.lock().await;
+            if reconnect {
+                let session = sessions.get("id").unwrap();
+                assert_eq!(session.by_db.len(), 1);
+                assert!(session.by_db.contains_key(&0));
+                assert!(!session.by_db.contains_key(&3), "旧连接不得插入新会话");
+            } else {
+                assert!(!sessions.contains_key("id"), "断开后不得复活旧会话");
+            }
+        }
+        manager.disconnect("id").await.unwrap();
+        old_server.await.unwrap();
+        if let Some(server) = new_server {
+            server.await.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn reconnect_rejects_old_lazy_connection() {
+        finish_stale_connection(true).await;
+    }
+
+    #[tokio::test]
+    async fn disconnect_rejects_pending_lazy_connection() {
+        finish_stale_connection(false).await;
+    }
+
     #[tokio::test]
     async fn disconnect_removes_session_and_tunnel() {
         let manager = RedisClientManager::new();
         manager.sessions.lock().await.insert(
             "conn-1".into(),
             Session {
+                generation: uuid::Uuid::new_v4(),
                 endpoint: RedisEndpoint {
                     host: "127.0.0.1".into(),
                     port: 1,

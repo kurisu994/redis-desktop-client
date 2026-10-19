@@ -15,7 +15,9 @@
 - Redis TLS 改走 rustls，支持 CA 与客户端证书。Pub/Sub 和 MONITOR 跟随 SSH 隧道与 TLS，不再明文直连。
 - Sentinel 密码与其它机密一样用 AES-256-GCM 保存，并迁移历史明文。列表接口不再返回密码明文。
 - 连接导出升级到 v2，保留 SSH / TLS / Sentinel / Cluster 元数据；默认省略机密。
-- CLI 禁用 EVAL / ACL / KEYS 以及会破坏连接隔离的 SELECT、MONITOR、SUBSCRIBE 等命令。
+- CLI 禁用 EVAL / ACL / KEYS 以及会破坏连接隔离的 SELECT、RESET、认证/协议切换、CLIENT、事务和订阅等会话状态命令，常见读命令保持可用。
+- SSH + TLS 不再隐式关闭全部证书验证：仅跳过本地转发地址的主机名校验，仍验证证书链、有效期与签名；界面明确区分此限制和显式跳过全部校验。
+- 懒建连绑定会话 generation，断开或重连后的旧异步结果不会混入新会话。
 
 ### 🔧 变更
 

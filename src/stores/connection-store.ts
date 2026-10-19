@@ -43,7 +43,7 @@ export interface TlsConfig {
   clientCertPath?: string;
   /** 客户端密钥文件路径 */
   clientKeyPath?: string;
-  /** 是否跳过证书验证（不推荐） */
+  /** 显式跳过全部证书校验（含证书链与主机名，不推荐）；SSH 默认仅放宽主机名。 */
   skipVerify?: boolean;
 }
 

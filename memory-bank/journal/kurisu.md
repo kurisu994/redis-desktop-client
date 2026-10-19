@@ -76,4 +76,13 @@ main 发布提交 f6919c1 的六项 CI 全成功后推送 v0.2.11 标签，Relea
 - 新增 get_backend_capabilities 与 duplicate_connection，给前端对齐文案和复制连接。
 - cargo test 50 项通过，clippy -D warnings 通过，tsc --noEmit 通过。
 
+## 2026-10-19 — PR #3 review 连接隔离修复
+
+- 核对当前仓库有效 Git 作者为 Kurisu（通过 `git var GIT_AUTHOR_IDENT` 及配置来源），仅在 `cursor/security-connection-isolation-dd25` 的 `8f9e02e` 基线上工作。
+- 补禁 RESET 及认证/协议、CLIENT、事务、订阅等共享会话命令；SSH + TLS 改为仅放宽主机名验证，保留证书链验证；懒建连用 generation 拒绝断开或重连后的旧结果。
+- 以真实 rustls 握手和 oneshot 控制竞态验证修复；新增三层密码 IPC 契约回归，未改 clearPassword 语义，也未合并前端 `8bdd464` 分支。证书私钥只在内存生成，rcgen 仅为测试依赖。
+- 独立复核 PASS：`just test-rust` 62/62、严格 `just lint-rust`、`just lint-web`、`just build-web`、`just i18n-check`、`just fmt` 均通过；现有 russh future-incompat 提示未扩围处理。
+- `just dev` 成功编译并启动原生窗口，确认新建连接与 SSL/TLS 页可打开；原生 UI 自动化点击开关会退出弹窗，未据此宣称完整交互验收。TLS 安全边界已有真实握手回归和源码独立复核。
+- 已同步中英文 README、连接契约文档、CHANGELOG 和必要记忆层；交付限定提交并推送 PR #3 同名分支，不合并 main。
+
 

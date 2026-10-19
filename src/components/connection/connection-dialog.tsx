@@ -475,6 +475,9 @@ export function ConnectionDialog() {
                 </div>
                 {tls.enabled && (
                   <>
+                    <p className="text-xs text-muted-foreground">
+                      {t("capability.tls.supported")}
+                    </p>
                     <div className="space-y-2">
                       <Label>{t("connection.tlsCaCert")}</Label>
                       <Input

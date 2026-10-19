@@ -89,7 +89,7 @@
     "tlsCaCert": "CA 证书",
     "tlsClientCert": "客户端证书",
     "tlsClientKey": "客户端密钥",
-    "tlsSkipVerify": "跳过证书验证（不安全）",
+    "tlsSkipVerify": "跳过全部证书校验，含证书链与主机名（不安全）",
     "sentinelMaster": "Master 名称",
     "sentinelNodes": "Sentinel 节点",
     "sentinelPasswordLabel": "Sentinel 密码",
@@ -438,7 +438,7 @@
   },
   "capability": {
     "tls": {
-      "supported": "TLS 使用 rustls。经 SSH 隧道拨号时会跳过证书主机名校验，因为流量走的是本地转发端口。"
+      "supported": "TLS 使用 rustls。SSH 隧道仅跳过本地转发地址的证书主机名校验；除非显式跳过全部校验，仍验证证书链、有效期和签名。此时不验证 Redis 主机名，建议使用专用 CA。"
     },
     "sentinel": {
       "degraded": "Sentinel 会连接到建立连接时发现的 master。不支持实时故障转移，也不支持 SSH 隧道。"

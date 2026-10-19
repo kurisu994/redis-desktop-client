@@ -13,7 +13,7 @@ pub struct CommandResult {
     pub elapsed_ms: u64,
 }
 
-/// 危险命令黑名单 — 禁止执行的 Redis 管理/危险命令
+/// 命令黑名单 — 禁止危险管理操作及改变共享连接会话状态的命令
 const BLOCKED_COMMANDS: &[&str] = &[
     "FLUSHALL",
     "FLUSHDB",
@@ -37,15 +37,38 @@ const BLOCKED_COMMANDS: &[&str] = &[
     "SCRIPT",
     "ACL",
     "KEYS",
-    // 会改掉按 db 钉住的连接，或把多路复用连接拖进独占模式
+    // 数据库由连接池钉住；RESET 还会重置认证、协议和事务等会话状态
     "SELECT",
     "SWAPDB",
+    "RESET",
+    // 认证、协议和连接生命周期不能由共享连接上的单次 CLI 调用改变
+    "AUTH",
+    "HELLO",
+    "QUIT",
+    // CLIENT REPLY / TRACKING 等会改变响应或推送行为，按命令级统一禁用
+    "CLIENT",
+    // 事务及 WATCH 状态属于整条连接，可能混入 Browser 或其他 CLI 请求
+    "MULTI",
+    "EXEC",
+    "DISCARD",
+    "WATCH",
+    "UNWATCH",
+    // 集群读写模式和一次性 ASKING 标志也会影响共享连接上的后续请求
+    "READONLY",
+    "READWRITE",
+    "ASKING",
+    // 独占流模式及订阅退出可能产生推送或多条响应，不走多路复用命令通道
     "MONITOR",
     "SUBSCRIBE",
     "PSUBSCRIBE",
     "SSUBSCRIBE",
+    "UNSUBSCRIBE",
+    "PUNSUBSCRIBE",
+    "SUNSUBSCRIBE",
+    // 复制握手不属于普通请求/响应；REPLCONF ACK 等调用不会返回普通响应
     "SYNC",
     "PSYNC",
+    "REPLCONF",
 ];
 
 /// 检查命令是否在黑名单中
@@ -70,7 +93,7 @@ pub async fn execute_command(
         return Err("空命令".to_string());
     }
 
-    // 检查危险命令黑名单。数据库由连接池按 db 参数钉住，不允许 CLI 再 SELECT。
+    // 先检查黑名单，避免 CLI 改变按 db 钉住的共享连接的会话状态。
     check_command_blocked(&args[0])?;
 
     let mut conn = pool.get_connection(&id, db).await?;
@@ -260,6 +283,55 @@ mod tests {
     fn test_parse_unclosed_quote() {
         let result = parse_command(r#"SET key "hello"#);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn blocks_reset_case_insensitively() {
+        for cmd in ["RESET", "reset", "ReSeT"] {
+            assert!(check_command_blocked(cmd).is_err(), "{cmd} 应被禁用");
+        }
+    }
+
+    #[test]
+    fn blocks_shared_connection_session_commands() {
+        for cmd in [
+            "AUTH",
+            "HELLO",
+            "CLIENT",
+            "QUIT",
+            "MULTI",
+            "EXEC",
+            "DISCARD",
+            "WATCH",
+            "UNWATCH",
+            "READONLY",
+            "READWRITE",
+            "ASKING",
+            "MONITOR",
+            "SUBSCRIBE",
+            "PSUBSCRIBE",
+            "SSUBSCRIBE",
+            "UNSUBSCRIBE",
+            "PUNSUBSCRIBE",
+            "SUNSUBSCRIBE",
+            "SYNC",
+            "PSYNC",
+            "REPLCONF",
+        ] {
+            assert!(check_command_blocked(cmd).is_err(), "{cmd} 应被禁用");
+            let lower = cmd.to_ascii_lowercase();
+            assert!(check_command_blocked(&lower).is_err(), "{lower} 应被禁用");
+        }
+    }
+
+    #[test]
+    fn allows_common_read_commands() {
+        for cmd in [
+            "GET", "mget", "SCAN", "scan", "HGET", "HGETALL", "LRANGE", "SMEMBERS", "ZRANGE",
+            "XRANGE", "TYPE", "TTL", "DBSIZE", "INFO", "PING",
+        ] {
+            assert!(check_command_blocked(cmd).is_ok(), "{cmd} 应保持可用");
+        }
     }
 
     #[test]

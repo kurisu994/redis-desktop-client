@@ -89,7 +89,7 @@
     "tlsCaCert": "CA Certificate",
     "tlsClientCert": "Client Certificate",
     "tlsClientKey": "Client Key",
-    "tlsSkipVerify": "Skip certificate verification (insecure)",
+    "tlsSkipVerify": "Skip all certificate checks, including trust chain and hostname (insecure)",
     "sentinelMaster": "Master Name",
     "sentinelNodes": "Sentinel Nodes",
     "sentinelPasswordLabel": "Sentinel Password",
@@ -438,7 +438,7 @@
   },
   "capability": {
     "tls": {
-      "supported": "TLS uses rustls. With an SSH tunnel, certificate hostname checks are skipped because traffic is dialed through the local forward."
+      "supported": "TLS uses rustls. SSH tunnels skip only certificate hostname checks for the local forward; certificate trust chains, validity periods and signatures are still verified unless you explicitly skip all checks. This does not verify the Redis hostname; use a dedicated CA where possible."
     },
     "sentinel": {
       "degraded": "Sentinel connects to the master discovered at connect time. Live failover and SSH tunnels are not supported."

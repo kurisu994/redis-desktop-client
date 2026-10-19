@@ -40,3 +40,7 @@ tauri-plugin-opener = "2.5.3"
 tauri-plugin-process = "2"
 tauri-plugin-updater = "2"
 russh = "0.54"
+
+[dev-dependencies]
+# TLS 回归测试在内存中生成临时证书，不提交或落盘测试私钥。
+rcgen = { version = "0.13", default-features = false, features = ["ring", "pem"] }

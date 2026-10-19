@@ -86,3 +86,7 @@ paths:
 | **regex**                  | 1         | 正则                                                  |
 | **log**                    | 0.4       | 日志门面                                              |
 | **russh**                  | 0.54      | SSH 隧道、N 跳串联与主机公钥校验                      |
+
+## 后端开发依赖
+
+- `rcgen` 0.13（MIT OR Apache-2.0，仅启用 ring / pem）：TLS 握手回归测试在内存中生成临时证书与私钥，不依赖 OpenSSL 或外部 Redis；不进入应用运行时依赖。
