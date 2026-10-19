@@ -13,7 +13,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "react-i18next";
 import { useConnectionStore } from "@/stores/connection-store";
 import { exportConnections } from "@/lib/tauri-api";
-import { Download, Loader2 } from "lucide-react";
+import { AlertTriangle, Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 /** 连接配置导出对话框 */
 export function ExportConnectionsDialog({
@@ -54,6 +55,7 @@ export function ExportConnectionsDialog({
       const json = await exportConnections(ids, includePassword);
 
       // 使用 Tauri 文件对话框保存，或在浏览器端直接下载
+      let saved = false;
       if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
         const { save } = await import("@tauri-apps/plugin-dialog");
         const { writeTextFile } = await import("@tauri-apps/plugin-fs");
@@ -63,6 +65,7 @@ export function ExportConnectionsDialog({
         });
         if (filePath) {
           await writeTextFile(filePath, json);
+          saved = true;
         }
       } else {
         // 浏览器 mock：下载 JSON
@@ -73,14 +76,19 @@ export function ExportConnectionsDialog({
         a.download = "redis-connections.json";
         a.click();
         URL.revokeObjectURL(url);
+        saved = true;
       }
-      onClose();
+      if (saved) {
+        toast.success(t("connection.exportSuccess"));
+        onClose();
+      }
     } catch (err) {
       console.error("导出连接失败:", err);
+      toast.error(t("connection.exportFailed"));
     } finally {
       setExporting(false);
     }
-  }, [selectedIds, includePassword, connections.length, onClose]);
+  }, [selectedIds, includePassword, connections.length, onClose, t]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -119,18 +127,26 @@ export function ExportConnectionsDialog({
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <Checkbox
-              id="include-password"
-              checked={includePassword}
-              onCheckedChange={(checked) => setIncludePassword(!!checked)}
-            />
-            <label
-              htmlFor="include-password"
-              className="text-sm cursor-pointer"
-            >
-              {t("connection.includePassword")}
-            </label>
+          <div className="space-y-2 mt-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="include-password"
+                checked={includePassword}
+                onCheckedChange={(checked) => setIncludePassword(!!checked)}
+              />
+              <label
+                htmlFor="include-password"
+                className="text-sm cursor-pointer"
+              >
+                {t("connection.includePassword")}
+              </label>
+            </div>
+            {includePassword && (
+              <div className="flex gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{t("connection.includePasswordWarning")}</span>
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter>
